@@ -1,0 +1,342 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DealDeck - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href=" {%static 'sales/main.css' %} ">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+   <div class="sidebar">
+    <div class="logo">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>DealDeck</span>
+    </div>
+
+    <div class="menu-category">Menu</div>
+    <a href=" {% url 'dashboard' %}" class="menu-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+    <a href=" {% url 'products' %}" class="menu-item"><i class="fa-solid fa-box-open"></i> Products</a>
+    
+    <div class="menu-category">Sales</div>
+    <a href="{% url 'sales_order' %}" class="menu-item"><i class="fa-solid fa-cart-plus"></i> Sales Orders</a>
+    <a href="{% url 'customers' %}" class="menu-item"><i class="fa-solid fa-users"></i> Customers</a>
+    <a href="{% url 'invoices' %} " class="menu-item"><i class="fa-solid fa-receipt"></i> Invoices</a>
+    
+    <div class="menu-category">Tools</div>
+    <a href="{% url 'settings' %} " class="menu-item"><i class="fa-solid fa-gear"></i> Settings</a>
+    
+    <div class="upgrade-card">
+        <h4>Upgrade to Pro</h4>
+        <p>Get advanced features</p>
+        <a href="#" class="upgrade-btn">Upgrade Now</a>
+    </div>
+</div>
+
+    <div class="main-content">
+        <div class="header">
+            <div class="page-title">
+                <h2>Dashboard</h2>
+                <span>Welcome back, John! Here's what's happening today.</span>
+            </div>
+            <div class="user-actions">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name=John+S&background=random" alt="User">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">John Sales</div>
+                        <div style="font-size: 0.75rem; color: #888;">Sales Executive</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Stat Cards Row 1 -->
+            <div class="card stat-card">
+                <div class="stat-header">
+                    <div class="icon-box">
+                        <i class="fa-solid fa-shopping-cart"></i>
+                    </div>
+                    <span class="badge success">+12%</span>
+                </div>
+                <div class="stat-val">$24,580</div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+            
+            <div class="card stat-card">
+                <div class="stat-header">
+                    <div class="icon-box">
+                        <i class="fa-solid fa-cart-plus"></i>
+                    </div>
+                    <span class="badge success">+8%</span>
+                </div>
+                <div class="stat-val">156</div>
+                <div class="stat-label">Orders Today</div>
+            </div>
+            
+            <div class="card stat-card blue">
+                <div class="stat-header">
+                    <div class="icon-box">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <span class="badge" style="background: rgba(255,255,255,0.3); color: white;">+24%</span>
+                </div>
+                <div class="stat-val">248</div>
+                <div class="stat-label">Total Customers</div>
+            </div>
+            
+            <div class="card stat-card">
+                <div class="stat-header">
+                    <div class="icon-box">
+                        <i class="fa-solid fa-box"></i>
+                    </div>
+                    <span class="badge danger">-3%</span>
+                </div>
+                <div class="stat-val">1,245</div>
+                <div class="stat-label">Products in Stock</div>
+            </div>
+            
+            <!-- Charts Row 2 -->
+            <div class="card col-span-3">
+                <div class="chart-header">
+                    <h3>Sales Overview</h3>
+                    <select style="border:none; color:#888; background: #f8f9fc; padding: 8px 15px; border-radius: 8px;">
+                        <option>Last 7 Days</option>
+                        <option>Last 30 Days</option>
+                        <option>Last Quarter</option>
+                    </select>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card col-span-1">
+                <div class="chart-header">
+                    <h3>Top Products</h3>
+                </div>
+                <div style="height: 300px;">
+                    <canvas id="productChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Recent Orders & Quick Stats Row 3 -->
+            <div class="card col-span-3">
+                <div class="chart-header">
+                    <h3>Recent Orders</h3>
+                    <a href="#" style="color: var(--primary); font-size: 0.85rem;">View All</a>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>SO-2023-156</td>
+                                <td>James Wilson</td>
+                                <td>Today, 10:30 AM</td>
+                                <td>$1,245.00</td>
+                                <td><span class="badge success">Completed</span></td>
+                                <td>
+                                    <a href="#" class="action-btn btn-edit">View</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>SO-2023-155</td>
+                                <td>Tech Solutions Inc.</td>
+                                <td>Today, 09:15 AM</td>
+                                <td>$3,450.00</td>
+                                <td><span class="badge success">Completed</span></td>
+                                <td>
+                                    <a href="#" class="action-btn btn-edit">View</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>SO-2023-154</td>
+                                <td>Sarah Johnson</td>
+                                <td>Today, 08:45 AM</td>
+                                <td>$789.00</td>
+                                <td><span class="badge" style="background:#fef3c7; color:#92400e;">Processing</span></td>
+                                <td>
+                                    <a href="#" class="action-btn btn-edit">Process</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>SO-2023-153</td>
+                                <td>Global Retail</td>
+                                <td>Yesterday</td>
+                                <td>$5,678.00</td>
+                                <td><span class="badge success">Shipped</span></td>
+                                <td>
+                                    <a href="#" class="action-btn btn-edit">Track</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>SO-2023-152</td>
+                                <td>Mike Brown</td>
+                                <td>Yesterday</td>
+                                <td>$450.00</td>
+                                <td><span class="badge danger">Cancelled</span></td>
+                                <td>
+                                    <a href="#" class="action-btn btn-edit">View</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card col-span-1">
+                <div class="chart-header">
+                    <h3>Quick Stats</h3>
+                </div>
+                <div class="quick-stats">
+                    <div class="stat-box">
+                        <div class="icon-box" style="background: #e0e7ff; color: #4e73df;">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div class="value">8</div>
+                        <div class="label">Pending Orders</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="icon-box" style="background: #d1fae5; color: #065f46;">
+                            <i class="fa-solid fa-check-circle"></i>
+                        </div>
+                        <div class="value">24</div>
+                        <div class="label">Completed Today</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="icon-box" style="background: #fef3c7; color: #92400e;">
+                            <i class="fa-solid fa-exclamation-circle"></i>
+                        </div>
+                        <div class="value">3</div>
+                        <div class="label">Low Stock Items</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="icon-box" style="background: #fee2e2; color: #991b1b;">
+                            <i class="fa-solid fa-times-circle"></i>
+                        </div>
+                        <div class="value">2</div>
+                        <div class="label">Overdue Invoices</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px;">
+                    <h4 style="margin-bottom: 15px;">Recent Activities</h4>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-top: 5px;"></div>
+                            <div>
+                                <div style="font-size: 0.85rem;">New order from James Wilson</div>
+                                <div style="font-size: 0.75rem; color: var(--secondary);">10 minutes ago</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <div style="width: 8px; height: 8px; background: var(--primary); border-radius: 50%; margin-top: 5px;"></div>
+                            <div>
+                                <div style="font-size: 0.85rem;">Product stock updated</div>
+                                <div style="font-size: 0.75rem; color: var(--secondary);">45 minutes ago</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <div style="width: 8px; height: 8px; background: var(--warning); border-radius: 50%; margin-top: 5px;"></div>
+                            <div>
+                                <div style="font-size: 0.85rem;">Payment reminder sent</div>
+                                <div style="font-size: 0.75rem; color: var(--secondary);">2 hours ago</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Sales Chart
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Revenue',
+                    data: [3200, 4200, 5100, 5800, 4900, 6200, 7300],
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            borderDash: [5, 5]
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Product Chart
+        const productCtx = document.getElementById('productChart').getContext('2d');
+        new Chart(productCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Electronics', 'Games', 'Furniture', 'Accessories'],
+                datasets: [{
+                    data: [45, 25, 15, 15],
+                    backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e', '#e74a3b'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    <script src="{%static 'sales/main.js' %}"></script>
+</body>
+</html>
