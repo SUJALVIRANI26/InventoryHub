@@ -1,0 +1,360 @@
+{% extends 'inventory_manager/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - DealDeck{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(67, 97, 238, 0.1); color: var(--primary);">
+            <i class="fa-solid fa-box"></i>
+        </div>
+        <div class="stat-details">
+            <h3>{{ total_products|default:"0" }}</h3>
+            <p>Total Products</p>
+            <span class="stat-trend positive">
+                <i class="fa-solid fa-arrow-up"></i> {{ product_growth|default:"+0%" }} from last month
+            </span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(76, 175, 80, 0.1); color: #4CAF50;">
+            <i class="fa-solid fa-tags"></i>
+        </div>
+        <div class="stat-details">
+            <h3>{{ total_categories|default:"0" }}</h3>
+            <p>Categories</p>
+            <span class="stat-trend">
+                <i class="fa-solid fa-layer-group"></i> {{ active_categories|default:"0" }} active
+            </span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(255, 152, 0, 0.1); color: #FF9800;">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="stat-details">
+            <h3>{{ total_suppliers|default:"0" }}</h3>
+            <p>Suppliers</p>
+            <span class="stat-trend">
+                <i class="fa-solid fa-truck"></i> Active partners
+            </span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(156, 39, 176, 0.1); color: #9C27B0;">
+            <i class="fa-solid fa-dollar-sign"></i>
+        </div>
+        <div class="stat-details">
+            <h3>${{ total_stock_value|floatformat:2|default:"0.00" }}</h3>
+            <p>Stock Value</p>
+            <span class="stat-trend">
+                <i class="fa-solid fa-boxes"></i> Total inventory value
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Product Status and Stock Alerts Row -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 25px;">
+    <!-- Product Status Card -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>Product Status</h3>
+            <a href="{% url 'inventory_manager:product_list' %}" style="color: var(--secondary); font-size: 0.9rem; text-decoration: none;">
+                View All <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span>Active Products</span>
+                    <span style="font-weight: 600;">{{ active_products|default:"0" }}</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                    <div style="width: {% widthratio active_products|default:0 total_products|default:1 100 %}%; height: 8px; background: var(--primary); border-radius: 4px;"></div>
+                </div>
+            </div>
+            
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span>Draft Products</span>
+                    <span style="font-weight: 600;">{{ draft_products|default:"0" }}</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                    <div style="width: {% widthratio draft_products|default:0 total_products|default:1 100 %}%; height: 8px; background: #FFC107; border-radius: 4px;"></div>
+                </div>
+            </div>
+            
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span>Inactive Products</span>
+                    <span style="font-weight: 600;">{{ inactive_products|default:"0" }}</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                    <div style="width: {% widthratio inactive_products|default:0 total_products|default:1 100 %}%; height: 8px; background: #DC3545; border-radius: 4px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stock Alert Card - FIXED LAYOUT -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>Stock Alerts</h3>
+        </div>
+        
+        <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px;">
+            <div style="flex: 1; text-align: center; padding: 15px; background: #FFF8E1; border-radius: 12px;">
+                <div style="font-size: 2.2rem; font-weight: 700; color: #FF9800; margin-bottom: 5px;">{{ low_stock_products|default:"0" }}</div>
+                <div style="color: #666; font-weight: 600; font-size: 0.95rem;">Low Stock</div>
+                <small style="color: #999; display: block; margin-top: 5px;">Below minimum level</small>
+            </div>
+            
+            <div style="width: 1px; height: 60px; background: #ddd;"></div>
+            
+            <div style="flex: 1; text-align: center; padding: 15px; background: #FFEBEE; border-radius: 12px;">
+                <div style="font-size: 2.2rem; font-weight: 700; color: #DC3545; margin-bottom: 5px;">{{ out_of_stock|default:"0" }}</div>
+                <div style="color: #666; font-weight: 600; font-size: 0.95rem;">Out of Stock</div>
+                <small style="color: #999; display: block; margin-top: 5px;">Need immediate restock</small>
+            </div>
+        </div>
+        
+        <a href="{% url 'inventory_manager:product_list' %}?stock_status=low" style="display: block; text-align: center; padding: 12px; background: var(--light); border-radius: 10px; color: var(--dark); text-decoration: none; font-weight: 500; transition: all 0.3s;">
+            <i class="fa-solid fa-boxes" style="margin-right: 8px;"></i> View Low Stock Products
+        </a>
+    </div>
+</div>
+
+<!-- Recent Products and Categories Row -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-top: 25px;">
+    <!-- Recent Products -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>Recently Added Products</h3>
+            <a href="{% url 'inventory_manager:product_add' %}" style="background: var(--primary); color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-plus"></i> Add New
+            </a>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            {% for product in recent_products %}
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: var(--light); border-radius: 12px; transition: all 0.3s;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    {% with primary_image=product.images.all|dictsortreversed:"is_primary"|first %}
+                        {% if primary_image %}
+                            <img src="{{ primary_image.image.url }}" alt="{{ product.name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 10px;">
+                        {% else %}
+                            <div style="width: 50px; height: 50px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                                <i class="fa-solid fa-box" style="color: #999; font-size: 1.5rem;"></i>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 4px;">{{ product.name|truncatechars:30 }}</div>
+                        <div style="font-size: 0.8rem; color: #666;">SKU: {{ product.sku }}</div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 700; color: var(--primary); margin-bottom: 4px;">${{ product.price|floatformat:2 }}</div>
+                    <div style="font-size: 0.8rem; padding: 3px 8px; background: {% if product.quantity < product.min_stock_level %}#FFEBEE{% else %}#E8F5E9{% endif %}; color: {% if product.quantity < product.min_stock_level %}#DC3545{% else %}#4CAF50{% endif %}; border-radius: 20px; display: inline-block;">
+                        Stock: {{ product.quantity }}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; padding: 50px 20px; background: var(--light); border-radius: 12px;">
+                <i class="fa-solid fa-box-open" style="font-size: 3rem; color: #ccc; margin-bottom: 15px;"></i>
+                <h4 style="margin-bottom: 10px; color: #666;">No Products Added Yet</h4>
+                <p style="color: #999; margin-bottom: 20px;">Get started by adding your first product</p>
+                <a href="{% url 'inventory_manager:product_add' %}" style="display: inline-block; padding: 12px 25px; background: var(--primary); color: white; border-radius: 8px; text-decoration: none; font-weight: 500;">
+                    <i class="fa-solid fa-plus"></i> Add Your First Product
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Categories & Quick Actions -->
+    <div class="card">
+        <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-tags" style="color: var(--primary);"></i> Categories
+        </h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 20px; margin-bottom: 35px;">
+            {% for category in products_by_category %}
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-weight: 500;">{{ category.name }}</span>
+                    <span style="font-weight: 600; color: var(--primary);">{{ category.product_count }} items</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                    <div style="width: {% widthratio category.product_count total_products|default:1 100 %}%; height: 8px; background: linear-gradient(90deg, var(--primary), #8B9DC3); border-radius: 4px;"></div>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: #999; text-align: center; padding: 20px;">No categories found</p>
+            {% endfor %}
+        </div>
+        
+        <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-bolt" style="color: var(--warning);"></i> Quick Actions
+        </h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <a href="{% url 'inventory_manager:product_add' %}" style="display: flex; flex-direction: column; align-items: center; padding: 20px 15px; background: var(--light); border-radius: 12px; text-decoration: none; color: var(--dark); transition: all 0.3s; border: 1px solid transparent;">
+                <i class="fa-solid fa-plus-circle" style="font-size: 1.8rem; color: var(--primary); margin-bottom: 10px;"></i>
+                <span style="font-size: 0.9rem; font-weight: 500;">Add Product</span>
+            </a>
+            
+            <a href="{% url 'inventory_manager:product_list' %}" style="display: flex; flex-direction: column; align-items: center; padding: 20px 15px; background: var(--light); border-radius: 12px; text-decoration: none; color: var(--dark); transition: all 0.3s; border: 1px solid transparent;">
+                <i class="fa-solid fa-list" style="font-size: 1.8rem; color: var(--secondary); margin-bottom: 10px;"></i>
+                <span style="font-size: 0.9rem; font-weight: 500;">View Products</span>
+            </a>
+            
+            <a href="{% url 'inventory_manager:stock_alerts' %}" style="display: flex; flex-direction: column; align-items: center; padding: 20px 15px; background: var(--light); border-radius: 12px; text-decoration: none; color: var(--dark); transition: all 0.3s; border: 1px solid transparent;">
+                <i class="fa-solid fa-chart-line" style="font-size: 1.8rem; color: #4CAF50; margin-bottom: 10px;"></i>
+                <span style="font-size: 0.9rem; font-weight: 500;">Stock Reports</span>
+            </a>
+            
+            <a href="#" style="display: flex; flex-direction: column; align-items: center; padding: 20px 15px; background: var(--light); border-radius: 12px; text-decoration: none; color: var(--dark); transition: all 0.3s; border: 1px solid transparent;">
+                <i class="fa-solid fa-cog" style="font-size: 1.8rem; color: #FF9800; margin-bottom: 10px;"></i>
+                <span style="font-size: 0.9rem; font-weight: 500;">Settings</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 25px;
+        margin-bottom: 25px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        transition: transform 0.3s, box-shadow 0.3s;
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    
+    .stat-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+    }
+    
+    .stat-details h3 {
+        font-size: 2rem;
+        margin: 0;
+        color: var(--dark);
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .stat-details p {
+        margin: 5px 0;
+        color: #666;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .stat-trend {
+        font-size: 0.8rem;
+        color: #666;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(76, 175, 80, 0.1);
+        padding: 4px 10px;
+        border-radius: 20px;
+        margin-top: 8px;
+    }
+    
+    .stat-trend.positive {
+        color: #4CAF50;
+        background: rgba(76, 175, 80, 0.1);
+    }
+    
+    .stat-trend.negative {
+        color: #DC3545;
+        background: rgba(220, 53, 69, 0.1);
+    }
+    
+    .card {
+        background: white;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        border: 1px solid rgba(0,0,0,0.03);
+        transition: all 0.3s;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    
+    .card h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+    
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-grid, 
+        [style*="grid-template-columns: 1fr 1fr"],
+        [style*="grid-template-columns: 2fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+        
+        .stat-card {
+            padding: 20px;
+        }
+        
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            font-size: 1.5rem;
+        }
+        
+        .stat-details h3 {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+{% endblock %}
