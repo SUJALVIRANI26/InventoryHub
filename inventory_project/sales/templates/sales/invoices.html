@@ -1,0 +1,186 @@
+{% extends "sales/base.html" %}
+
+{% load static %}
+
+{% block title %}
+  invoices
+{% endblock title %}
+
+{% block link %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'sales/main.css' %}">
+{% endblock link %}
+
+{% block main-content %}
+  
+<div class="main-content">
+        <div class="header">
+            <div class="page-title">
+                <h2>Invoices</h2>
+                <span>Manage and track customer invoices</span>
+            </div>
+            <div class="user-actions">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search invoices...">
+                </div>
+                <!-- Replace the existing "Create Invoice" button with this -->
+<a href="{% url 'invoice_form' %}" class="btn-primary" style="padding: 10px 20px; font-size: 0.9rem;">
+    <i class="fa-solid fa-file-invoice"></i> Create Invoice
+</a>
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name=John+S&background=random" alt="User">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">John Sales</div>
+                        <div style="font-size: 0.75rem; color: #888;">Sales Executive</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card col-span-3">
+                <div class="chart-header">
+                    <h3>Recent Invoices</h3>
+                    <select style="border:none; color:#888;">
+                        <option>All Status</option>
+                        <option>Paid</option>
+                        <option>Pending</option>
+                        <option>Overdue</option>
+                    </select>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Customer</th>
+                                <th>Order #</th>
+                                <th>Issue Date</th>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>INV-2023-001</td>
+                                <td>James Wilson</td>
+                                <td>SO-2023-001</td>
+                                <td>Dec 15, 2023</td>
+                                <td>Dec 30, 2023</td>
+                                <td>$1,445.00</td>
+                                <td><span class="badge success">Paid</span></td>
+                                <td>
+                                    <a href="{% url 'invoice_print' %}" class="action-btn btn-edit">View</a>
+                                    <a href="#" class="action-btn" style="background:#d1fae5; color:#065f46;">
+                                        <i class="fa-solid fa-download"></i> PDF
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>INV-2023-002</td>
+                                <td>Tech Solutions Inc.</td>
+                                <td>SO-2023-002</td>
+                                <td>Dec 14, 2023</td>
+                                <td>Dec 29, 2023</td>
+                                <td>$3,450.00</td>
+                                <td><span class="badge success">Paid</span></td>
+                                <td>
+                                    <a href="{% url 'invoice_print' %}" class="action-btn btn-edit">View</a>
+                                    <a href="#" class="action-btn" style="background:#d1fae5; color:#065f46;">PDF</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>INV-2023-003</td>
+                                <td>Sarah Johnson</td>
+                                <td>SO-2023-003</td>
+                                <td>Dec 13, 2023</td>
+                                <td>Dec 28, 2023</td>
+                                <td>$789.00</td>
+                                <td><span class="badge" style="background:#fef3c7; color:#92400e;">Pending</span></td>
+                                <td>
+                                    <a href="{% url 'invoice_print' %}" class="action-btn btn-edit">View</a>
+                                    <a href="#" class="action-btn" style="background:#fef3c7; color:#92400e;">Remind</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>INV-2023-004</td>
+                                <td>Global Retail</td>
+                                <td>SO-2023-004</td>
+                                <td>Dec 12, 2023</td>
+                                <td>Dec 27, 2023</td>
+                                <td>$5,678.00</td>
+                                <td><span class="badge success">Paid</span></td>
+                                <td>
+                                    <a href="{% url 'invoice_print' %} " class="action-btn btn-edit">View</a>
+                                    <a href="#" class="action-btn" style="background:#d1fae5; color:#065f46;">PDF</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>INV-2023-005</td>
+                                <td>ABC Corporation</td>
+                                <td>SO-2023-015</td>
+                                <td>Dec 10, 2023</td>
+                                <td>Dec 25, 2023</td>
+                                <td>$2,340.00</td>
+                                <td><span class="badge danger">Overdue</span></td>
+                                <td>
+                                    <a href="{% url 'invoice_print' %} " class="action-btn btn-edit">View</a>
+                                    <a href="#" class="action-btn" style="background:#fee2e2; color:#991b1b;">Collect</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <div style="color: var(--secondary); font-size: 0.85rem;">
+                        Total Outstanding: <span style="color: var(--danger); font-weight: 600;">$3,129.00</span>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button style="padding: 8px 15px; border: 1px solid #ddd; border-radius: 8px; background: white; color: var(--dark);">
+                            <i class="fa-solid fa-chevron-left"></i> Previous
+                        </button>
+                        <button style="padding: 8px 15px; background: var(--primary); color: white; border-radius: 8px; border: none;">
+                            Next <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card col-span-1">
+                <div class="chart-header">
+                    <h3>Invoice Summary</h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 10px;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--secondary);">Total Invoices</div>
+                        <div style="font-size: 1.5rem; font-weight: 700;">156</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--secondary);">Paid Amount</div>
+                        <div style="font-size: 1.5rem; font-weight: 700;">$124,567</div>
+                        <span class="badge success" style="margin-top: 5px;">85%</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--secondary);">Pending Amount</div>
+                        <div style="font-size: 1.5rem; font-weight: 700;">$2,340</div>
+                        <span class="badge" style="background:#fef3c7; color:#92400e; margin-top: 5px;">12%</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--secondary);">Overdue Amount</div>
+                        <div style="font-size: 1.5rem; font-weight: 700;">$789</div>
+                        <span class="badge danger" style="margin-top: 5px;">3%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock main-content %}
+
+{% block linkJs %}
+   <script src="{% static 'sales/main.js' %}"></script>
+{% endblock linkJs %}

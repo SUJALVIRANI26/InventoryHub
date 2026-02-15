@@ -1,0 +1,158 @@
+{% extends "sales/base.html" %}
+{% load static %}
+
+{% block title %}
+  sales_order_detail
+{% endblock title %}
+
+{% block link %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'sales/main.css' %}">
+{% endblock link %}
+
+
+{% block main-content %}
+  <div class="main-content">
+        <div class="header">
+            <div class="page-title">
+                <h2>Order Details</h2>
+                <span>Order #SO-2023-001</span>
+            </div>
+            <div class="user-actions">
+                <a href="#" class="btn-primary" style="padding: 10px 20px; font-size: 0.9rem;">
+                    <i class="fa-solid fa-print"></i> Print Invoice
+                </a>
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name=John+S&background=random" alt="User">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">John Sales</div>
+                        <div style="font-size: 0.75rem; color: #888;">Sales Executive</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card col-span-3">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h3>Order Information</h3>
+                    <a href="{% url 'sales_order'%} " style="color: var(--secondary); font-size: 0.9rem;">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Orders
+                    </a>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                    <div>
+                        <h4 style="margin-bottom: 15px; color: var(--dark);">Customer Information</h4>
+                        <div style="background: #f8f9fc; padding: 20px; border-radius: 10px;">
+                            <p><strong>Name:</strong> James Wilson</p>
+                            <p><strong>Email:</strong> james@example.com</p>
+                            <p><strong>Phone:</strong> (555) 123-4567</p>
+                            <p><strong>Address:</strong> 123 Main St, New York, NY 10001</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 style="margin-bottom: 15px; color: var(--dark);">Order Details</h4>
+                        <div style="background: #f8f9fc; padding: 20px; border-radius: 10px;">
+                            <p><strong>Order Date:</strong> December 15, 2023</p>
+                            <p><strong>Order Status:</strong> <span class="badge success">Completed</span></p>
+                            <p><strong>Payment Method:</strong> Credit Card</p>
+                            <p><strong>Payment Status:</strong> <span class="badge success">Paid</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h4 style="margin-bottom: 15px; color: var(--dark);">Order Items</h4>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Stock After Sale</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Gaming Laptop Pro</td>
+                                <td>SKU-ELEC-001</td>
+                                <td>$1,200.00</td>
+                                <td>1</td>
+                                <td>12 units</td>
+                                <td>$1,200.00</td>
+                            </tr>
+                            <tr>
+                                <td>Wireless Mouse</td>
+                                <td>SKU-ELEC-045</td>
+                                <td>$35.00</td>
+                                <td>2</td>
+                                <td>48 units</td>
+                                <td>$70.00</td>
+                            </tr>
+                            <tr>
+                                <td>Laptop Bag</td>
+                                <td>SKU-ACC-012</td>
+                                <td>$45.00</td>
+                                <td>1</td>
+                                <td>23 units</td>
+                                <td>$45.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; margin-top: 30px;">
+                    <div style="width: 300px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Subtotal:</span>
+                            <span>$1,315.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Tax (8%):</span>
+                            <span>$105.20</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Shipping:</span>
+                            <span>$24.80</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 700; font-size: 1.1rem; padding-top: 10px; border-top: 2px solid #eee;">
+                            <span>Total:</span>
+                            <span>$1,445.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- <div style="display: flex; gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <button class="btn-primary">
+                        <i class="fa-solid fa-check"></i> Mark as Shipped
+                    </button>
+                    <button style="padding: 12px 30px; border: 1px solid var(--danger); border-radius: 10px; background: white; color: var(--danger);">
+                        <i class="fa-solid fa-times"></i> Cancel Order
+                    </button>
+                    <a href="sales_order_form.html?edit=SO-2023-001" style="padding: 12px 30px; border: 1px solid var(--primary); border-radius: 10px; background: white; color: var(--primary);">
+                        <i class="fa-solid fa-edit"></i> Edit Order
+                    </a>
+                </div> -->
+                <div style="display: flex; gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <button class="btn-primary">
+                <i class="fa-solid fa-check"></i> Mark as Shipped
+                 </button>
+                 <button class="btn-danger">
+                 <i class="fa-solid fa-times"></i> Cancel Order
+                 </button>
+                 <!-- <a href="sales_order_form.html?edit=SO-2023-001" class="btn-outline">
+                     <i class="fa-solid fa-edit"></i> Edit Order
+                  </a> -->
+            </div>
+            </div>
+        </div>
+    </div>
+{% endblock main-content %}
+
+{% block linkJs %}
+  <script src="{% static 'sales/main.js' %}"></script>
+{% endblock linkJs %}

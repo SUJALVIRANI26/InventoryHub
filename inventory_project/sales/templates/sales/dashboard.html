@@ -1,43 +1,18 @@
+{% extends "sales/base.html" %}
 {% load static %}
+    {% block title %}
+    Dashboard
+    {% endblock title %}
+ 
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DealDeck - Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block link %}
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href=" {%static 'sales/main.css' %} ">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
+    {% endblock link %}
 
-   <div class="sidebar">
-    <div class="logo">
-        <i class="fa-solid fa-layer-group"></i>
-        <span>DealDeck</span>
-    </div>
-
-    <div class="menu-category">Menu</div>
-    <a href=" {% url 'dashboard' %}" class="menu-item"><i class="fa-solid fa-house"></i> Dashboard</a>
-    <a href=" {% url 'products' %}" class="menu-item"><i class="fa-solid fa-box-open"></i> Products</a>
-    
-    <div class="menu-category">Sales</div>
-    <a href="{% url 'sales_order' %}" class="menu-item"><i class="fa-solid fa-cart-plus"></i> Sales Orders</a>
-    <a href="{% url 'customers' %}" class="menu-item"><i class="fa-solid fa-users"></i> Customers</a>
-    <a href="{% url 'invoices' %} " class="menu-item"><i class="fa-solid fa-receipt"></i> Invoices</a>
-    
-    <div class="menu-category">Tools</div>
-    <a href="{% url 'settings' %} " class="menu-item"><i class="fa-solid fa-gear"></i> Settings</a>
-    
-    <div class="upgrade-card">
-        <h4>Upgrade to Pro</h4>
-        <p>Get advanced features</p>
-        <a href="#" class="upgrade-btn">Upgrade Now</a>
-    </div>
-</div>
-
-    <div class="main-content">
+   {% block main-content %}
+     <div class="main-content">
         <div class="header">
             <div class="page-title">
                 <h2>Dashboard</h2>
@@ -267,7 +242,9 @@
         </div>
     </div>
     
-    <script>
+   {% endblock main-content %}
+    {% block linkJs %}
+      <script>
         // Sales Chart
         const salesCtx = document.getElementById('salesChart').getContext('2d');
         new Chart(salesCtx, {
@@ -338,5 +315,5 @@
         });
     </script>
     <script src="{%static 'sales/main.js' %}"></script>
-</body>
-</html>
+    {% endblock linkJs %}
+    
