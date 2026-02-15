@@ -1,0 +1,117 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Inventory</title>
+
+<link rel="stylesheet" href="{% static 'accounts/style.css' %}">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="main">
+
+    <!-- LEFT PANEL -->
+    <div class="left">
+        <div class="logo">
+            <div class="logo-box">
+                <i class="fa-solid fa-boxes-stacked"></i>
+            </div>
+            <div>
+                <h2>Smart Inventory</h2>
+                <p>Management System</p>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="icon"><i class="fa-solid fa-microchip"></i></div>
+                <div>
+                    <h4>AI-Powered Analytics</h4>
+                    <p>Predict demand and optimize stock levels automatically</p>
+                </div>
+            </div>
+
+            <div class="feature">
+                <div class="icon"><i class="fa-solid fa-bolt"></i></div>
+                <div>
+                    <h4>Real-Time Tracking</h4>
+                    <p>Monitor inventory across multiple locations instantly</p>
+                </div>
+            </div>
+
+            <div class="feature">
+                <div class="icon"><i class="fa-solid fa-chart-line"></i></div>
+                <div>
+                    <h4>Smart Reports</h4>
+                    <p>Generate insights with automated reporting tools</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right">
+        <div class="login-box">
+
+            <h1>Welcome Back</h1>
+            <p class="subtitle">Sign in to access your inventory dashboard</p>
+
+            <form id="loginForm" method="post">
+                {% csrf_token %}
+
+                <label>Email Address</label>
+                <div class="input-box">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input id="email" name="email" type="email" placeholder="Enter your email">
+                </div>
+                <small class="error" id="emailError"></small>
+
+                <label>Password</label>
+                <div class="input-box">
+                    <i class="fa-solid fa-lock"></i>
+                    <input id="password" name="password" type="password" placeholder="Enter your password">
+                </div>
+                <small class="error" id="passwordError"></small>
+
+                <label>Select Role</label>
+                <div class="input-box">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <select name="role" id="role">
+                        <option value="">Select role</option>
+                        <option value="inventory_manager">Inventory Manager</option>
+                        <option value="sales">Sales</option>
+                        <option value="admin">Admin</option>
+                        <option value="owner">Owner</option>
+                    </select>
+                </div>
+                <small class="error" id="roleError"></small>
+
+                <div class="row">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input name="remember_me" type="checkbox" style="width: auto;"> 
+                        Remember me
+                    </label>
+                </div>
+
+                <button class="login-btn" type="submit">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    Sign In
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<script src="{% static 'accounts/validation.js'%}"></script>
+
+</body>
+</html>
