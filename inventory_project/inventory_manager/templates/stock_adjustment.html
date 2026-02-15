@@ -1,0 +1,278 @@
+{% extends 'inventory_manager/base.html' %}
+{% load static %}
+
+{% block title %}Stock Adjustment - DealDeck{% endblock %}
+
+{% block page_title %}Stock Adjustment{% endblock %}
+{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'inventory_manager:stock_list' %}" style="color: var(--secondary); font-size: 0.9rem; text-decoration: none; margin-right: 20px;">
+    <i class="fa-solid fa-arrow-left"></i> Back to Stock
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card col-span-3">
+    {% if messages %}
+    <div style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div style="padding: 15px; border-radius: 10px; margin-bottom: 10px; 
+                    {% if message.tags == 'success' %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+                    {% elif message.tags == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                    {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <div>
+            <h3>Bulk Stock Adjustment</h3>
+            <p style="color: var(--secondary); margin-top: 5px;">
+                Use this form to adjust multiple products at once. Upload a CSV file or enter manually.
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'inventory_manager:export_adjustment_template' %}" style="padding: 10px 20px; background: var(--light); color: var(--dark); border-radius: 10px; border: none; cursor: pointer; margin-right: 10px; text-decoration: none; display: inline-block;">
+                <i class="fa-solid fa-download"></i> Download Template
+            </a>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div style="border: 2px dashed #ddd; border-radius: 15px; padding: 40px; text-align: center; margin-bottom: 30px;">
+            <i class="fa-solid fa-file-csv" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
+            <h4 style="margin-bottom: 10px;">Upload Adjustment File</h4>
+            <p style="color: var(--secondary); margin-bottom: 20px;">
+                Drag and drop your CSV file here, or click to browse
+            </p>
+            <div style="position: relative; display: inline-block;">
+                <button type="button" onclick="document.getElementById('csvFile').click()" style="padding: 10px 25px; background: var(--light); color: var(--dark); border-radius: 8px; border: none; cursor: pointer;">
+                    Browse Files
+                </button>
+                {{ form.csv_file }}
+            </div>
+            <p style="font-size: 0.85rem; color: var(--secondary); margin-top: 15px;">
+                File should contain columns: SKU, Adjustment_Quantity, Reason, Notes
+            </p>
+        </div>
+
+        <h4 style="margin-bottom: 20px;">Or Enter Adjustments Manually</h4>
+        
+        <div class="table-container" style="margin-bottom: 20px;">
+            <table id="adjustment-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>Product</th>
+                        <th>Current Stock</th>
+                        <th>Adjustment Type</th>
+                        <th>Quantity</th>
+                        <th>New Stock</th>
+                        <th>Reason</th>
+                        <th>Notes</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adjustment-items">
+                    {% for i in "123"|make_list %}
+                    <tr class="adjustment-row">
+                        <td class="row-number">{{ forloop.counter }}</td>
+                        <td>
+                            <select name="adjustments[{{ forloop.counter0 }}][product]" class="form-control product-select" style="width: 200px;">
+                                <option value="">Select Product</option>
+                                {% for product in products %}
+                                <option value="{{ product.id }}" data-sku="{{ product.sku }}" data-stock="{{ product.quantity }}">
+                                    {{ product.name }} ({{ product.sku }}) - Stock: {{ product.quantity }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="current-stock">0</td>
+                        <td>
+                            <select name="adjustments[{{ forloop.counter0 }}][type]" class="form-control adjustment-type">
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="set">Set to</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" name="adjustments[{{ forloop.counter0 }}][quantity]" value="0" min="0" class="form-control adjustment-qty" style="width: 80px;">
+                        </td>
+                        <td class="new-stock">0</td>
+                        <td>
+                            <select name="adjustments[{{ forloop.counter0 }}][reason]" class="form-control">
+                                <option value="count">Physical Count</option>
+                                <option value="damage">Damaged Goods</option>
+                                <option value="theft">Theft/Loss</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" name="adjustments[{{ forloop.counter0 }}][notes]" placeholder="Notes" class="form-control">
+                        </td>
+                        <td>
+                            <button type="button" class="remove-row-btn" style="color: var(--danger); background: none; border: none; cursor: pointer;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button type="button" id="add-row-btn" style="padding: 10px 20px; background: var(--light); color: var(--dark); border-radius: 10px; border: none; cursor: pointer;">
+                <i class="fa-solid fa-plus"></i> Add Another Product
+            </button>
+        </div>
+
+        <div id="adjustment-summary" style="background: #f8f9fc; border-radius: 15px; padding: 20px; margin-bottom: 30px;">
+            <h4 style="margin-bottom: 15px;">Adjustment Summary</h4>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 0.85rem; color: var(--secondary);">Total Products</div>
+                    <div id="summary-total" style="font-size: 1.5rem; font-weight: 700;">0</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 0.85rem; color: var(--secondary);">Total Increase</div>
+                    <div id="summary-increase" style="font-size: 1.5rem; font-weight: 700; color: var(--success);">0</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 0.85rem; color: var(--secondary);">Total Decrease</div>
+                    <div id="summary-decrease" style="font-size: 1.5rem; font-weight: 700; color: var(--danger);">0</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 0.85rem; color: var(--secondary);">Net Change</div>
+                    <div id="summary-net" style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px; border-top: 1px solid #eee;">
+            <div>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    {{ form.notify }}
+                    <span>Send notification to warehouse manager</span>
+                </label>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <a href="{% url 'inventory_manager:stock_list' %}" style="padding: 12px 30px; border: 1px solid #ddd; border-radius: 10px; color: var(--dark); text-decoration: none;">
+                    Cancel
+                </a>
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-check"></i> Apply Adjustments
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tbody = document.getElementById('adjustment-items');
+    const addBtn = document.getElementById('add-row-btn');
+
+    function updateRowNumbers() {
+        document.querySelectorAll('.adjustment-row').forEach((row, index) => {
+            row.querySelector('.row-number').textContent = index + 1;
+            row.querySelectorAll('[name*="adjustments"]').forEach(input => {
+                const name = input.getAttribute('name');
+                input.setAttribute('name', name.replace(/\[\d+\]/, `[${index}]`));
+            });
+        });
+        updateSummary();
+    }
+
+    function attachRowEvents(row) {
+        const productSelect = row.querySelector('.product-select');
+        const currentStockCell = row.querySelector('.current-stock');
+        const newStockCell = row.querySelector('.new-stock');
+        const adjustmentType = row.querySelector('.adjustment-type');
+        const adjustmentQty = row.querySelector('.adjustment-qty');
+
+        function updateStockDisplay() {
+            const selected = productSelect.selectedOptions[0];
+            const currentStock = selected?.dataset?.stock ? parseInt(selected.dataset.stock) : 0;
+            currentStockCell.textContent = currentStock;
+            
+            const qty = parseInt(adjustmentQty.value) || 0;
+            const type = adjustmentType.value;
+            
+            let newStock = currentStock;
+            if (type === 'increase') {
+                newStock = currentStock + qty;
+            } else if (type === 'decrease') {
+                newStock = Math.max(currentStock - qty, 0);
+            } else if (type === 'set') {
+                newStock = qty;
+            }
+            
+            newStockCell.textContent = newStock;
+            updateSummary();
+        }
+
+        productSelect?.addEventListener('change', updateStockDisplay);
+        adjustmentType?.addEventListener('change', updateStockDisplay);
+        adjustmentQty?.addEventListener('input', updateStockDisplay);
+        
+        row.querySelector('.remove-row-btn')?.addEventListener('click', function() {
+            if (document.querySelectorAll('.adjustment-row').length > 1) {
+                row.remove();
+                updateRowNumbers();
+            }
+        });
+    }
+
+    function updateSummary() {
+        let totalProducts = 0;
+        let totalIncrease = 0;
+        let totalDecrease = 0;
+        
+        document.querySelectorAll('.adjustment-row').forEach(row => {
+            const productSelect = row.querySelector('.product-select');
+            if (productSelect.value) {
+                totalProducts++;
+                const qty = parseInt(row.querySelector('.adjustment-qty').value) || 0;
+                const type = row.querySelector('.adjustment-type').value;
+                
+                if (type === 'increase') {
+                    totalIncrease += qty;
+                } else if (type === 'decrease') {
+                    totalDecrease += qty;
+                }
+            }
+        });
+        
+        document.getElementById('summary-total').textContent = totalProducts;
+        document.getElementById('summary-increase').textContent = `+${totalIncrease}`;
+        document.getElementById('summary-decrease').textContent = `-${totalDecrease}`;
+        document.getElementById('summary-net').textContent = totalIncrease - totalDecrease > 0 ? `+${totalIncrease - totalDecrease}` : totalIncrease - totalDecrease;
+    }
+
+    addBtn?.addEventListener('click', function() {
+        const firstRow = document.querySelector('.adjustment-row');
+        const newRow = firstRow.cloneNode(true);
+        
+        newRow.querySelectorAll('input, select').forEach(input => {
+            if (input.type !== 'button') {
+                input.value = '';
+            }
+        });
+        newRow.querySelector('.current-stock').textContent = '0';
+        newRow.querySelector('.new-stock').textContent = '0';
+        
+        tbody.appendChild(newRow);
+        attachRowEvents(newRow);
+        updateRowNumbers();
+    });
+
+    document.querySelectorAll('.adjustment-row').forEach(attachRowEvents);
+    updateRowNumbers();
+});
+</script>
+{% endblock %}

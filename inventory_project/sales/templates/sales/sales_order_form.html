@@ -1,0 +1,155 @@
+{% extends "sales/base.html" %}
+{% load static %}
+
+{% block title %}
+sales-order_form
+{% endblock title %}
+
+{% block link %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'sales/main.css' %}">
+{% endblock link %}
+
+{% block main-content %}
+   <div class="main-content">
+        <div class="header">
+            <div class="page-title">
+                <h2>Create Sales Order</h2>
+                <span>Process new customer order</span>
+            </div>
+            <div class="user-actions">
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name=John+S&background=random" alt="User">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">John Sales</div>
+                        <div style="font-size: 0.75rem; color: #888;">Sales Executive</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card col-span-3">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h3>New Sales Order</h3>
+                    <a href="{% url 'sales_order' %}" style="color: var(--secondary); font-size: 0.9rem;">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Orders
+                    </a>
+                </div>
+                
+                <form>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="customerSelect">Customer *</label>
+                            <select id="customerSelect" class="form-control" required>
+                                <option value="">Select Customer</option>
+                                <option value="1">James Wilson</option>
+                                <option value="2">Tech Solutions Inc.</option>
+                                <option value="3">Sarah Johnson</option>
+                                <option value="4">Global Retail</option>
+                                <option value="5">Mike Brown</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="orderDate">Order Date *</label>
+                            <input type="date" id="orderDate" class="form-control" value="2023-12-15" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="paymentMethod">Payment Method</label>
+                            <select id="paymentMethod" class="form-control">
+                                <option value="credit_card">Credit Card</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="cash">Cash</option>
+                                <option value="paypal">PayPal</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="shippingMethod">Shipping Method</label>
+                            <select id="shippingMethod" class="form-control">
+                                <option value="standard">Standard Shipping</option>
+                                <option value="express">Express Shipping</option>
+                                <option value="pickup">Store Pickup</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <h4 style="margin: 30px 0 15px 0; color: var(--dark);">Order Items</h4>
+                    <div style="background: #f8f9fc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 15px; font-weight: 600; color: var(--secondary);">
+                            <div>Product</div>
+                            <div>Price</div>
+                            <div>Available Stock</div>
+                            <div>Quantity</div>
+                            <div>Action</div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 15px; padding: 10px; background: white; border-radius: 8px;">
+                            <select class="form-control" style="margin: 0;">
+                                <option value="">Select Product</option>
+                                <option value="1">Gaming Laptop Pro (12 in stock)</option>
+                                <option value="2">Wireless Mouse (50 in stock)</option>
+                                <option value="3">Laptop Bag (24 in stock)</option>
+                                <option value="4" style="color: var(--danger);">Office Chair (0 in stock)</option>
+                            </select>
+                            <input type="number" class="form-control" placeholder="0.00" step="0.01" value="1200.00">
+                            <div style="padding: 10px; background: #e7f5ff; border-radius: 5px; text-align: center;">12</div>
+                            <input type="number" class="form-control" value="1" min="1" max="12">
+                            <button type="button" style="color: var(--danger); background: none; border: none; cursor: pointer;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                        
+                        <button type="button" style="background: var(--light); color: var(--primary); padding: 10px 20px; border-radius: 8px; border: 1px dashed var(--primary); width: 100%; cursor: pointer;">
+                            <i class="fa-solid fa-plus"></i> Add Another Item
+                        </button>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
+                        <div>
+                            <h4 style="margin-bottom: 15px; color: var(--dark);">Order Notes</h4>
+                            <textarea class="form-control" rows="4" placeholder="Add any special instructions or notes for this order..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <h4 style="margin-bottom: 15px; color: var(--dark);">Order Summary</h4>
+                            <div style="background: #f8f9fc; padding: 20px; border-radius: 10px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span>Subtotal:</span>
+                                    <span>$1,200.00</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span>Tax (8%):</span>
+                                    <span>$96.00</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span>Shipping:</span>
+                                    <span>$24.80</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 700; font-size: 1.1rem; padding-top: 10px; border-top: 2px solid #ddd;">
+                                    <span>Total:</span>
+                                    <span>$1,320.80</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;">
+                        <a href="{% url 'sales_order' %}" style="padding: 12px 30px; border: 1px solid #ddd; border-radius: 10px; color: var(--dark);">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-check"></i> Create Order & Update Stock
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock main-content %}
+
+{% block linkJs %}
+  <script src="{% static 'sales/main.js' %}"></script>
+{% endblock linkJs %}

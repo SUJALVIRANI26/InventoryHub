@@ -1,0 +1,252 @@
+{% extends "sales/base.html" %}
+
+{% load static %}
+
+{% block title %}
+  invoice_form
+{% endblock title %}
+
+{% block link %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{% static 'sales/main.css' %}">
+<style>
+.invoice-preview{
+border:1px solid #e3e6f0;
+border-radius:10px;
+padding:20px;
+background:white;
+margin-top:20px;
+}
+
+.customer-selector{
+display:grid;
+grid-template-columns:1fr auto;
+gap:10px;
+margin-bottom:20px;
+}
+
+.add-item-row{
+display:grid;
+grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;
+gap:10px;
+align-items:center;
+margin-bottom:10px;
+}
+
+.item-total{
+font-weight:600;
+color:#4e73df;
+}
+
+.customer-form-fields{
+background:#f8f9fc;
+padding:20px;
+border-radius:10px;
+margin-top:20px;
+}
+</style>
+{% endblock link %}
+
+{% block main-content %}
+  <div class="main-content">
+
+<h2>Create Invoice</h2>
+
+<form id="invoiceForm">
+
+<div class="form-grid">
+
+<div class="form-group">
+<label>Invoice Number</label>
+<input type="text" class="form-control" value="INV-2026-001" readonly>
+</div>
+
+<div class="form-group">
+<label>Invoice Date</label>
+<input type="date" id="invoiceDate" class="form-control" required>
+</div>
+
+<div class="form-group">
+<label>Due Date</label>
+<input type="date" id="dueDate" class="form-control" required>
+</div>
+
+</div>
+
+<!-- Customer -->
+<div class="form-group">
+<label>Select Customer</label>
+
+<div class="customer-selector">
+<select id="customer" class="form-control" required>
+<option value="">Select Customer</option>
+<option value="1">James Wilson</option>
+<option value="2">Sarah Johnson</option>
+<option value="3">Tech Solutions</option>
+<option value="new">+ Add New Customer</option>
+</select>
+
+<button type="button" class="btn-outline" onclick="showNewCustomerForm()">
+New Customer
+</button>
+
+</div>
+</div>
+
+<!-- New Customer -->
+<div id="new-customer-form" class="customer-form-fields" style="display:none">
+
+<h4>New Customer</h4>
+
+<input type="text" id="newCustomerName" placeholder="Name" class="form-control">
+<input type="email" id="newCustomerEmail" placeholder="Email" class="form-control">
+
+</div>
+
+<!-- Items -->
+<h4>Invoice Items</h4>
+
+<button type="button" onclick="addItemRow()">Add Item</button>
+
+<div class="invoice-preview">
+
+<div id="items-container">
+
+<div class="add-item-row item-row">
+
+<select class="form-control item-product">
+<option value="">Select Product</option>
+<option value="1" data-price="100">Laptop</option>
+<option value="2" data-price="50">Mouse</option>
+<option value="3" data-price="30">Keyboard</option>
+</select>
+
+<input type="number" class="form-control item-quantity" value="1" min="1">
+
+<input type="number" class="form-control item-price" value="0">
+
+<select class="form-control item-tax">
+<option value="0">0%</option>
+<option value="8" selected>8%</option>
+<option value="18">18%</option>
+</select>
+
+<div class="item-total" data-total="0">$0.00</div>
+
+<button type="button" onclick="removeItem(this)">X</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- Summary -->
+<h3>Total: <span id="invoiceTotal">$0.00</span></h3>
+
+<button type="submit">Create Invoice</button>
+
+</form>
+
+</div>
+{% endblock main-content %}
+
+{% block linkJs %}
+  <script>
+let itemCounter=0;
+
+function showNewCustomerForm(){
+document.getElementById("new-customer-form").style.display="block";
+}
+
+function addItemRow(){
+
+itemCounter++;
+
+const container=document.getElementById("items-container");
+
+const row=document.createElement("div");
+row.className="add-item-row item-row";
+
+row.innerHTML=`
+<select class="form-control item-product">
+<option value="">Select Product</option>
+<option value="1" data-price="100">Laptop</option>
+<option value="2" data-price="50">Mouse</option>
+<option value="3" data-price="30">Keyboard</option>
+</select>
+
+<input type="number" class="form-control item-quantity" value="1">
+
+<input type="number" class="form-control item-price" value="0">
+
+<select class="form-control item-tax">
+<option value="0">0%</option>
+<option value="8">8%</option>
+<option value="18">18%</option>
+</select>
+
+<div class="item-total" data-total="0">$0.00</div>
+
+<button type="button" onclick="removeItem(this)">X</button>
+`;
+
+container.appendChild(row);
+}
+
+function removeItem(btn){
+btn.parentElement.remove();
+updateInvoiceSummary();
+}
+
+document.addEventListener("input",function(e){
+
+if(e.target.closest(".item-row")){
+calculateItemTotal(e.target.closest(".item-row"));
+}
+
+});
+
+function calculateItemTotal(row){
+
+const qty=parseFloat(row.querySelector(".item-quantity").value)||0;
+const price=parseFloat(row.querySelector(".item-price").value)||0;
+const tax=parseFloat(row.querySelector(".item-tax").value)||0;
+
+const subtotal=qty*price;
+const taxAmt=subtotal*(tax/100);
+const total=subtotal+taxAmt;
+
+row.querySelector(".item-total").innerText="$"+total.toFixed(2);
+row.querySelector(".item-total").dataset.total=total;
+
+updateInvoiceSummary();
+}
+
+function updateInvoiceSummary(){
+
+let total=0;
+
+document.querySelectorAll(".item-total").forEach(el=>{
+total+=parseFloat(el.dataset.total)||0;
+});
+
+document.getElementById("invoiceTotal").innerText="$"+total.toFixed(2);
+
+}
+
+document.getElementById("invoiceForm").addEventListener("submit",function(e){
+
+const customer=document.getElementById("customer").value;
+
+if(customer===""){
+alert("Select customer");
+e.preventDefault();
+return;
+}
+
+});
+
+</script>
+{% endblock linkJs %}
+</body>
+</html>

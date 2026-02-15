@@ -1,0 +1,297 @@
+{% extends 'inventory_manager/base.html' %}
+{% load static %}
+
+{% block title %}Update Stock - DealDeck{% endblock %}
+
+{% block page_title %}Update Stock{% endblock %}
+{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'inventory_manager:stock_list' %}" style="color: var(--secondary); font-size: 0.9rem; text-decoration: none; margin-right: 20px;">
+    <i class="fa-solid fa-arrow-left"></i> Back to Stock
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <div class="card col-span-3">
+        {% if messages %}
+        <div style="margin-bottom: 20px;">
+            {% for message in messages %}
+            <div style="padding: 15px; border-radius: 10px; margin-bottom: 10px; 
+                        {% if message.tags == 'success' %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+                        {% elif message.tags == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                        {% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h3>Update Stock Quantity</h3>
+            <div style="display: flex; gap: 10px;">
+                <a href="{% url 'inventory_manager:stock_movement' %}" style="padding: 10px 20px; background: var(--light); color: var(--dark); border-radius: 10px; border: none; cursor: pointer; text-decoration: none; display: inline-block;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> History
+                </a>
+                <a href="{% url 'inventory_manager:stock_adjustment' %}" style="padding: 10px 20px; background: var(--light); color: var(--dark); border-radius: 10px; border: none; cursor: pointer; text-decoration: none; display: inline-block;">
+                    <i class="fa-solid fa-arrows-rotate"></i> Bulk Update
+                </a>
+            </div>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="{{ form.product.id_for_label }}">Select Product *</label>
+                    {{ form.product }}
+                    {% if form.product.errors %}
+                    <small style="color: #dc3545;">{{ form.product.errors.0 }}</small>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="currentStock">Current Stock</label>
+                    <input type="number" id="currentStock" class="form-control" value="0" readonly style="background: #f0f0f0;">
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.update_type.id_for_label }}">Update Type *</label>
+                    {{ form.update_type }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.quantity.id_for_label }}">Quantity *</label>
+                    {{ form.quantity }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.reason.id_for_label }}">Reason *</label>
+                    {{ form.reason }}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.reference.id_for_label }}">Reference Number</label>
+                    {{ form.reference }}
+                </div>
+            </div>
+
+            <div class="form-group" style="grid-column: span 2;">
+                <label for="{{ form.notes.id_for_label }}">Notes</label>
+                {{ form.notes }}
+            </div>
+
+            <!-- Product Info Display -->
+            <div id="product-info-container" style="grid-column: span 2; background: #f8f9fc; border-radius: 15px; padding: 20px; margin-bottom: 20px; display: none;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <img id="product-image" src="" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover; display: none;">
+                    <div id="product-image-placeholder" style="width: 80px; height: 80px; background: var(--light); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-box" style="font-size: 2rem; color: var(--secondary);"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 id="product-name" style="margin-bottom: 5px;"></h4>
+                        <div style="display: flex; gap: 20px; margin-bottom: 10px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 0.85rem; color: var(--secondary);">SKU</div>
+                                <div id="product-sku" style="font-weight: 600;"></div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: var(--secondary);">Category</div>
+                                <div id="product-category" style="font-weight: 600;"></div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: var(--secondary);">Price</div>
+                                <div id="product-price" style="font-weight: 600;"></div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: var(--secondary);">Min Stock</div>
+                                <div id="product-min-stock" style="font-weight: 600;"></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="font-size: 0.85rem; color: var(--secondary);">Stock Status:</div>
+                            <span id="product-status-badge" class="badge"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculation Preview -->
+            <div id="preview-container" style="grid-column: span 2; background: #f0f7ff; border-radius: 15px; padding: 20px; margin-bottom: 20px; display: none;">
+                <h4 style="margin-bottom: 15px;">Update Preview</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--secondary);">Current Stock</div>
+                        <div id="preview-current" style="font-size: 1.5rem; font-weight: 700;">0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--secondary);">Update Type</div>
+                        <div id="preview-type" style="font-size: 1.2rem; font-weight: 700; color: var(--success);">+ Add</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--secondary);">Quantity</div>
+                        <div id="preview-quantity" style="font-size: 1.5rem; font-weight: 700;">0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--secondary);">New Stock</div>
+                        <div id="preview-new" style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; grid-column: span 2;">
+                <a href="{% url 'inventory_manager:stock_list' %}" style="padding: 12px 30px; border: 1px solid #ddd; border-radius: 10px; color: var(--dark); text-decoration: none;">
+                    Cancel
+                </a>
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-check"></i> Update Stock
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Recent Updates -->
+    <div class="card col-span-1">
+        <h3 style="margin-bottom: 20px;">Recent Updates</h3>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            {% for movement in recent_movements|slice:":4" %}
+            <div style="padding: 15px; background: #f8f9fc; border-radius: 10px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <div style="font-weight: 600;">{{ movement.product.name|truncatechars:20 }}</div>
+                    <span style="color: {% if movement.quantity_change > 0 %}var(--success){% else %}var(--danger){% endif %}; font-weight: 600;">
+                        {{ movement.quantity_change|stringformat:"+d" }}
+                    </span>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--secondary);">
+                    {{ movement.get_movement_type_display }} • {{ movement.created_at|date:"M d" }}
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: var(--secondary); text-align: center;">No recent updates</p>
+            {% endfor %}
+        </div>
+        
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+            <a href="{% url 'inventory_manager:stock_movement' %}" style="display: block; text-align: center; padding: 10px; background: var(--light); color: var(--dark); border-radius: 10px; text-decoration: none;">
+                <i class="fa-solid fa-history"></i> View All History
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productSelect = document.querySelector('[name="product"]');
+    const currentStockInput = document.getElementById('currentStock');
+    const updateTypeSelect = document.querySelector('[name="update_type"]');
+    const quantityInput = document.querySelector('[name="quantity"]');
+    const previewCurrent = document.getElementById('preview-current');
+    const previewType = document.getElementById('preview-type');
+    const previewQuantity = document.getElementById('preview-quantity');
+    const previewNew = document.getElementById('preview-new');
+    const productInfoContainer = document.getElementById('product-info-container');
+    const previewContainer = document.getElementById('preview-container');
+    const productName = document.getElementById('product-name');
+    const productSku = document.getElementById('product-sku');
+    const productCategory = document.getElementById('product-category');
+    const productPrice = document.getElementById('product-price');
+    const productMinStock = document.getElementById('product-min-stock');
+    const productStatusBadge = document.getElementById('product-status-badge');
+    const productImage = document.getElementById('product-image');
+    const productImagePlaceholder = document.getElementById('product-image-placeholder');
+
+    function fetchProductInfo(productId) {
+        if (!productId) {
+            productInfoContainer.style.display = 'none';
+            previewContainer.style.display = 'none';
+            return;
+        }
+
+        fetch(`{% url 'inventory_manager:get_product_info' %}?product_id=${productId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const product = data.product;
+                    currentStockInput.value = product.quantity;
+                    productName.textContent = product.name;
+                    productSku.textContent = product.sku;
+                    productCategory.textContent = product.category;
+                    productPrice.textContent = `$${product.price}`;
+                    productMinStock.textContent = `${product.min_stock_level} units`;
+                    productStatusBadge.textContent = product.status_display;
+                    productStatusBadge.className = `badge ${product.status_color}`;
+                    
+                    if (product.image) {
+                        productImage.src = product.image;
+                        productImage.style.display = 'block';
+                        productImagePlaceholder.style.display = 'none';
+                    } else {
+                        productImage.style.display = 'none';
+                        productImagePlaceholder.style.display = 'flex';
+                    }
+                    
+                    productInfoContainer.style.display = 'block';
+                    previewContainer.style.display = 'block';
+                    updatePreview();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching product info:', error);
+            });
+    }
+
+    function updatePreview() {
+        const current = parseInt(currentStockInput.value) || 0;
+        const quantity = parseInt(quantityInput.value) || 0;
+        const updateType = updateTypeSelect.value;
+        
+        let newStock = current;
+        let typeText = '';
+        let typeColor = '';
+        
+        if (updateType === 'add') {
+            newStock = current + quantity;
+            typeText = '+ Add';
+            typeColor = 'var(--success)';
+        } else if (updateType === 'remove') {
+            newStock = Math.max(current - quantity, 0);
+            typeText = '- Remove';
+            typeColor = 'var(--danger)';
+        } else if (updateType === 'set') {
+            newStock = quantity;
+            typeText = '= Set to';
+            typeColor = 'var(--primary)';
+        }
+        
+        previewCurrent.textContent = current;
+        previewType.textContent = typeText;
+        previewType.style.color = typeColor;
+        previewQuantity.textContent = quantity;
+        previewNew.textContent = newStock;
+    }
+
+    if (productSelect) {
+        productSelect.addEventListener('change', function() {
+            fetchProductInfo(this.value);
+        });
+    }
+
+    if (updateTypeSelect) {
+        updateTypeSelect.addEventListener('change', updatePreview);
+    }
+    
+    if (quantityInput) {
+        quantityInput.addEventListener('input', updatePreview);
+    }
+
+    // Pre-select product if provided in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('product');
+    if (productId && productSelect) {
+        productSelect.value = productId;
+        fetchProductInfo(productId);
+    }
+});
+</script>
+{% endblock %}

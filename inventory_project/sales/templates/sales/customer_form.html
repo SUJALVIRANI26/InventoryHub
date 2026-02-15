@@ -1,0 +1,146 @@
+{% extends "sales/base.html" %}
+
+{% load static %}
+{% block title %}
+  Customer Form
+{% endblock title %}
+{% block link %}
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'sales/main.css' %}">
+{% endblock link %}
+
+{% block main-content %}
+  <div class="main-content">
+    <div class="header">
+        <div class="page-title">
+            <h2>Add New Customer</h2>
+            <span>Add a new customer to the system</span>
+        </div>
+
+        <div class="user-actions">
+            <a href="{% url 'customers'%}" class="btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Back to Customers
+            </a>
+
+            <div class="profile">
+                <img src="https://ui-avatars.com/api/?name=John+S&background=random">
+                <div>
+                    <div style="font-weight:600;font-size:0.9rem;">John Sales</div>
+                    <div style="font-size:0.75rem;color:#888;">Sales Executive</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="dashboard-grid">
+        <div class="card col-span-3">
+
+            <h3>Customer Information</h3>
+
+            <form method="POST" action="#">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="customerName" name="name" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email Address *</label>
+                        <input type="email" id="customerEmail" name="email" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" name="phone" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Company</label>
+                        <input type="text" name="company" class="form-control">
+                    </div>
+
+                </div>
+
+                <h4 style="margin-top:20px;">Address Information</h4>
+
+                <div class="form-grid">
+                    <input type="text" name="address_line1" placeholder="Address Line 1" class="form-control">
+                    <input type="text" name="address_line2" placeholder="Address Line 2" class="form-control">
+                    <input type="text" name="city" placeholder="City" class="form-control">
+                    <input type="text" name="state" placeholder="State" class="form-control">
+                    <input type="text" name="zip_code" placeholder="ZIP" class="form-control">
+
+                    <select name="country" class="form-control">
+                        <option value="">Select Country</option>
+                        <option>United States</option>
+                        <option>Canada</option>
+                        <option>United Kingdom</option>
+                        <option>Australia</option>
+                        <option>Germany</option>
+                    </select>
+                </div>
+
+                <h4 style="margin-top:20px;">Additional Information</h4>
+
+                <div class="form-grid">
+                    <input type="date" name="customer_since" class="form-control">
+
+                    <select name="status" class="form-control">
+                        <option>Active</option>
+                        <option>Inactive</option>
+                        <option>Pending</option>
+                    </select>
+
+                    <select name="customer_type" class="form-control">
+                        <option>Individual</option>
+                        <option>Business</option>
+                        <option>Wholesale</option>
+                    </select>
+
+                    <input type="text" name="tax_id" placeholder="Tax ID" class="form-control">
+
+                    <select name="payment_terms" class="form-control">
+                        <option>Net 15</option>
+                        <option>Net 30</option>
+                        <option>Net 60</option>
+                        <option>Cash on Delivery</option>
+                    </select>
+
+                    <input type="number" name="credit_limit" value="0.00" step="0.01" class="form-control">
+                </div>
+
+                <textarea name="notes" rows="3" placeholder="Notes..." class="form-control"></textarea>
+
+                <div style="margin-top:30px;">
+                    <a href="{% url 'customers' %}" class="btn-secondary">Cancel</a>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i> Create Customer
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock main-content %}
+{% block linkJs %}
+  <script>
+document.querySelector('form').addEventListener('submit', function(e){
+    const name = document.getElementById('customerName').value.trim();
+    const email = document.getElementById('customerEmail').value.trim();
+
+    if(!name){
+        alert("Customer name required");
+        e.preventDefault();
+    }
+
+    if(!email){
+        alert("Email required");
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock linkJs %}
