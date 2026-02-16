@@ -39,10 +39,6 @@
                 <div style="font-size: 0.85rem; color: var(--secondary);">Avg Order Value</div>
                 <div style="font-size: 2rem; font-weight: 700; color: var(--warning);">${{ avg_order_value|floatformat:2 }}</div>
             </div>
-            <div style="text-align: center; padding: 20px; background: #f8f9fc; border-radius: 10px;">
-                <div style="font-size: 0.85rem; color: var(--secondary);">Documents</div>
-                <div style="font-size: 2rem; font-weight: 700; color: var(--info);">{{ documents.count }}</div>
-            </div>
         </div>
     </div>
 
@@ -184,30 +180,7 @@
             </table>
         </div>
     </div>
-
-    <!-- Documents History -->
-    <div class="card col-span-1">
-        <h3 style="margin-bottom: 20px;">Document History</h3>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            {% for doc in documents %}
-            <div style="padding: 10px; background: #f8f9fc; border-radius: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fa-solid fa-file-{% if doc.file.name|slice:'-3:' == 'pdf' %}pdf{% else %}contract{% endif %}" 
-                       style="color: {% if doc.document_type == 'contract' %}var(--primary){% elif doc.document_type == 'tax' %}var(--success){% else %}var(--danger){% endif %};"></i>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; font-size: 0.9rem;">{{ doc.name }}</div>
-                        <div style="font-size: 0.8rem; color: var(--secondary);">
-                            {{ doc.uploaded_at|date:"M d, Y" }} • {{ doc.get_document_type_display }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <p style="color: var(--secondary); text-align: center;">No documents uploaded</p>
-            {% endfor %}
-        </div>
-    </div>
-
+    
     <!-- Export Buttons -->
     <div class="card col-span-3" style="display: flex; justify-content: flex-end; gap: 15px;">
         <a href="{% url 'inventory_manager:export_supplier_data' supplier.pk %}" class="btn-primary" style="padding: 12px 25px; text-decoration: none;">

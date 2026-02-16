@@ -353,37 +353,6 @@
 
     <!-- Supplier Documents -->
     <div class="card col-span-1">
-        <h3 style="margin-bottom: 20px;">
-            <i class="fa-solid fa-folder"></i> Documents
-        </h3>
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-            {% for document in documents %}
-            <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fc; border-radius: 8px;">
-                <i class="fa-solid fa-file-{% if document.file.name|slice:'-3:' == 'pdf' %}pdf{% elif document.document_type == 'contract' %}contract{% else %}invoice{% endif %}" 
-                   style="color: {% if document.document_type == 'contract' %}var(--primary){% elif document.document_type == 'tax' %}var(--success){% else %}var(--danger){% endif %}; font-size: 1.2rem;"></i>
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; font-size: 0.9rem;">{{ document.name }}</div>
-                    <div style="font-size: 0.8rem; color: var(--secondary);">{{ document.uploaded_at|date:"M d, Y" }}</div>
-                </div>
-                <a href="{{ document.file.url }}" download style="color: var(--primary); text-decoration: none;">
-                    <i class="fa-solid fa-download"></i>
-                </a>
-            </div>
-            {% empty %}
-            <p style="color: var(--secondary); text-align: center;">No documents uploaded</p>
-            {% endfor %}
-        </div>
-        
-        <div style="margin-top: 20px; text-align: center;">
-            <button onclick="document.getElementById('doc-upload').click()" style="padding: 10px 15px; background: var(--light); color: var(--dark); border-radius: 10px; border: none; cursor: pointer; width: 100%;">
-                <i class="fa-solid fa-upload"></i> Upload New Document
-            </button>
-            <form id="doc-upload-form" method="POST" enctype="multipart/form-data" style="display: none;">
-                {% csrf_token %}
-                <input type="file" name="document" id="doc-upload" multiple>
-            </form>
-        </div>
-        
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
             <h4 style="margin-bottom: 15px;">Supplier Timeline</h4>
             <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -409,12 +378,4 @@
         </div>
     </div>
 </div>
-
-<script>
-document.getElementById('doc-upload')?.addEventListener('change', function() {
-    if (this.files.length > 0) {
-        document.getElementById('doc-upload-form').submit();
-    }
-});
-</script>
 {% endblock %}

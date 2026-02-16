@@ -149,15 +149,6 @@
             {% for product in recent_products %}
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: var(--light); border-radius: 12px; transition: all 0.3s;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    {% with primary_image=product.images.all|dictsortreversed:"is_primary"|first %}
-                        {% if primary_image %}
-                            <img src="{{ primary_image.image.url }}" alt="{{ product.name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 10px;">
-                        {% else %}
-                            <div style="width: 50px; height: 50px; background: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                                <i class="fa-solid fa-box" style="color: #999; font-size: 1.5rem;"></i>
-                            </div>
-                        {% endif %}
-                    {% endwith %}
                     <div>
                         <div style="font-weight: 600; margin-bottom: 4px;">{{ product.name|truncatechars:30 }}</div>
                         <div style="font-size: 0.8rem; color: #666;">SKU: {{ product.sku }}</div>
