@@ -1,0 +1,41 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Edit User{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h3>Edit User</h3>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="name" value="{{ user_obj.first_name }}" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" value="{{ user_obj.email }}" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Contact</label>
+                <input type="text" name="contact" value="{{ profile.contact }}" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Role</label>
+                <select name="role" class="form-control">
+                    <option value="ADMIN" {% if profile.role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                    <option value="MANAGER" {% if profile.role == 'MANAGER' %}selected{% endif %}>Manager</option>
+                    <option value="STAFF" {% if profile.role == 'STAFF' %}selected{% endif %}>Staff</option>
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Update User</button>
+    </form>
+</div>
+{% endblock %}
