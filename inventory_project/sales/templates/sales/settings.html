@@ -1,0 +1,226 @@
+{% extends "sales/base.html" %}
+
+{% load static %}
+
+{% block title %}
+  setting
+{% endblock title %}
+
+{% block link %}
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'sales/main.css' %}">
+{% endblock link %}
+
+{% block main-content %}
+  <div class="main-content">
+        <div class="header">
+            <div class="page-title">
+                <h2>Settings</h2>
+                <span>Manage your system preferences</span>
+            </div>
+            <div class="user-actions">
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name=John+S&background=random" alt="User">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">John Sales</div>
+                        <div style="font-size: 0.75rem; color: #888;">Sales Executive</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card col-span-3">
+                <div style="margin-bottom: 30px;">
+                    <h3>System Settings</h3>
+                    <p style="color: var(--secondary); margin-top: 5px;">Configure your inventory management system</p>
+                </div>
+                
+                <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+                    <div style="flex: 1;">
+                        <h4 style="margin-bottom: 20px; color: var(--dark);">General Settings</h4>
+                        <div class="form-group">
+                            <label for="companyName">Company Name</label>
+                            <input type="text" id="companyName" class="form-control" value="DealDeck">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="currency">Default Currency</label>
+                            <select id="currency" class="form-control">
+                                <option value="USD" selected>US Dollar ($)</option>
+                                <option value="EUR">Euro (€)</option>
+                                <option value="GBP">British Pound (£)</option>
+                                <option value="CAD">Canadian Dollar ($)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="timezone">Timezone</label>
+                            <select id="timezone" class="form-control">
+                                <option value="EST" selected>Eastern Time (ET)</option>
+                                <option value="CST">Central Time (CT)</option>
+                                <option value="PST">Pacific Time (PT)</option>
+                                <option value="GMT">Greenwich Mean Time (GMT)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 1;">
+                        <h4 style="margin-bottom: 20px; color: var(--dark);">Invoice Settings</h4>
+                        <div class="form-group">
+                            <label for="invoicePrefix">Invoice Prefix</label>
+                            <input type="text" id="invoicePrefix" class="form-control" value="INV-">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="invoiceStartingNumber">Starting Invoice Number</label>
+                            <input type="number" id="invoiceStartingNumber" class="form-control" value="1001">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="defaultTaxRate">Default Tax Rate (%)</label>
+                            <input type="number" id="defaultTaxRate" class="form-control" value="8" step="0.1">
+                        </div>
+                    </div>
+                </div>
+                
+                <h4 style="margin-bottom: 15px; color: var(--dark);">Email Notifications</h4>
+                <div style="background: #f8f9fc; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div>
+                            <div style="font-weight: 600;">Invoice Notifications</div>
+                            <div style="font-size: 0.85rem; color: var(--secondary);">Send email when invoice is created or paid</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div>
+                            <div style="font-weight: 600;">Low Stock Alerts</div>
+                            <div style="font-size: 0.85rem; color: var(--secondary);">Get notified when products are running low</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600;">New Order Alerts</div>
+                            <div style="font-size: 0.85rem; color: var(--secondary);">Notify when new orders are placed</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;">
+                    <button class="btn-secondary">Cancel</button>
+                    <button class="btn-primary">Save Settings</button>
+                </div>
+            </div>
+            
+            <div class="card col-span-1">
+                <div class="chart-header">
+                    <h3>Quick Links</h3>
+                </div>
+                
+                <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                    <a href="#" class="btn-outline btn-sm" style="text-align: left; justify-content: flex-start;">
+                        <i class="fa-solid fa-user"></i> User Management
+                    </a>
+                    
+                    <a href="#" class="btn-outline btn-sm" style="text-align: left; justify-content: flex-start;">
+                        <i class="fa-solid fa-database"></i> Backup & Restore
+                    </a>
+                    
+                    <a href="#" class="btn-outline btn-sm" style="text-align: left; justify-content: flex-start;">
+                        <i class="fa-solid fa-chart-line"></i> Reports & Analytics
+                    </a>
+                    
+                    <a href="#" class="btn-outline btn-sm" style="text-align: left; justify-content: flex-start;">
+                        <i class="fa-solid fa-credit-card"></i> Billing & Subscription
+                    </a>
+                    
+                    <a href="#" class="btn-outline btn-sm" style="text-align: left; justify-content: flex-start;">
+                        <i class="fa-solid fa-shield"></i> Security Settings
+                    </a>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h4 style="margin-bottom: 15px;">System Info</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--secondary);">Version</span>
+                            <span style="font-weight: 600;">v2.1.0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--secondary);">Last Updated</span>
+                            <span>Dec 15, 2023</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--secondary);">Storage Used</span>
+                            <span>245 MB / 1 GB</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--secondary);">Users</span>
+                            <span>5 Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+{% endblock main-content %}

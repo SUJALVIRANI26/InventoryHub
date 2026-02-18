@@ -1,0 +1,181 @@
+{% extends 'inventory_manager/base.html' %}
+{% load static %}
+
+{% block title %}Add Product - DealDeck{% endblock %}
+
+{% block page_title %}Add New Product{% endblock %}
+{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
+
+{% block content %}
+<div class="card col-span-3">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h3>Add New Product</h3>
+        <a href="{% url 'inventory_manager:product_list' %}" style="color: var(--secondary); font-size: 0.9rem; text-decoration: none;">
+            <i class="fa-solid fa-arrow-left"></i> Back to Products
+        </a>
+    </div>
+
+    {% if messages %}
+    <div style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div style="padding: 15px; border-radius: 10px; margin-bottom: 10px; 
+                    {% if message.tags == 'success' %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+                    {% elif message.tags == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                    {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="POST" id="productForm">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">Product Name *</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <small style="color: #dc3545;">{{ form.name.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.sku.id_for_label }}">SKU (Stock Keeping Unit) *</label>
+                {{ form.sku }}
+                {% if form.sku.errors %}
+                <small style="color: #dc3545;">{{ form.sku.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.category.id_for_label }}">Category *</label>
+                {{ form.category }}
+                {% if form.category.errors %}
+                <small style="color: #dc3545;">{{ form.category.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.brand.id_for_label }}">Brand</label>
+                {{ form.brand }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.price.id_for_label }}">Price *</label>
+                {{ form.price }}
+                {% if form.price.errors %}
+                <small style="color: #dc3545;">{{ form.price.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.cost_price.id_for_label }}">Cost Price</label>
+                {{ form.cost_price }}
+            </div>
+            
+
+            <div class="form-group">
+            <label for="{{ form.quantity.id_for_label }}">Initial Quantity *</label>
+            {{ form.quantity }}
+            {% if form.quantity.errors %}
+            <small style="color: #dc3545;">{{ form.quantity.errors.0 }}</small>
+            {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.min_stock_level.id_for_label }}">Minimum Stock Level</label>
+                {{ form.min_stock_level }}
+            </div>
+
+            <!-- ✅ ADD THIS MISSING FIELD -->
+            <div class="form-group">
+                <label for="{{ form.reorder_point.id_for_label }}">Reorder Point</label>
+                {{ form.reorder_point }}
+                {% if form.reorder_point.errors %}
+                <small style="color: #dc3545;">{{ form.reorder_point.errors.0 }}</small>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.supplier.id_for_label }}">Supplier</label>
+                {{ form.supplier }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.status.id_for_label }}">Status</label>
+                {{ form.status }}
+            </div>        
+
+
+            <div class="form-group" style="grid-column: span 2;">
+                <label for="{{ form.description.id_for_label }}">Product Description</label>
+                {{ form.description }}
+            </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; grid-column: span 2;">
+            <a href="{% url 'inventory_manager:product_list' %}" style="padding: 15px 20px; border: 1px solid #ddd; border-radius: 10px; color: var(--dark); text-decoration: none;">
+                Cancel
+            </a>
+            <button type="submit" class="btn-primary" style="padding: 12px 30px; border: none; border-radius: 10px; background: var(--primary); color: white; cursor: pointer; font-weight: 600;">
+                <i class="fa-solid fa-plus"></i> Add Product
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--dark);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary:hover {
+        background: var(--secondary);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

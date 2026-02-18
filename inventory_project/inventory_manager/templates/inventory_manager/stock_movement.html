@@ -1,0 +1,278 @@
+{% extends 'inventory_manager/base.html' %}
+{% load static %}
+
+{% block title %}Stock Movement - DealDeck{% endblock %}
+
+{% block page_title %}Stock Movement History{% endblock %}
+{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
+
+{% block header_actions %}
+<div class="search-bar">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" placeholder="Search movement..." id="search-input">
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 25px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h3 style="margin-bottom: 5px;">Movement History</h3>
+            <p style="color: var(--secondary); font-size: 0.9rem;">Total records: {{ total_records|default:"1,245" }} transactions</p>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <div>
+                <label style="font-size: 0.85rem; color: var(--secondary);">Date Range:</label>
+                <select id="date-range" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd; margin-left: 10px;">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 0.85rem; color: var(--secondary);">Type:</label>
+                <select id="movement-type" style="padding: 8px; border-radius: 8px; border: 1px solid #ddd; margin-left: 10px;">
+                    <option value="all">All Types</option>
+                    <option value="purchase">Purchase</option>
+                    <option value="sale">Sales</option>
+                    <option value="adjustment">Adjustment</option>
+                    <option value="return">Return</option>
+                </select>
+            </div>
+            <a href="{% url 'inventory_manager:export_stock_movement' %}" style="padding: 8px 15px; background: var(--primary); color: white; border-radius: 8px; border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;">
+                <i class="fa-solid fa-download"></i> Export
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card col-span-3">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Transaction ID</th>
+                    <th>Product</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>Before</th>
+                    <th>After</th>
+                    <th>Reference</th>
+                    <th>User</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movement in movements %}
+                <tr>
+                    <td>{{ movement.created_at|date:"M d, Y" }}<br>{{ movement.created_at|date:"h:i A" }}</td>
+                    <td><strong>{{ movement.transaction_id }}</strong></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            {% with primary_image=movement.product.images.all|dictsortreversed:"is_primary"|first %}
+                                {% if primary_image %}
+                                    <img src="{{ primary_image.image.url }}" style="width: 30px; height: 30px; border-radius: 6px; object-fit: cover;">
+                                {% else %}
+                                    <div style="width: 30px; height: 30px; background: var(--light); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fa-solid fa-box" style="color: var(--secondary);"></i>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                            <div>
+                                <div style="font-weight: 600; font-size: 0.9rem;">{{ movement.product.name }}</div>
+                                <div style="font-size: 0.75rem; color: #888;">{{ movement.product.sku }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge 
+                            {% if movement.movement_type == 'purchase' %}success
+                            {% elif movement.movement_type == 'sale' %}danger
+                            {% elif movement.movement_type == 'adjustment' %}primary
+                            {% elif movement.movement_type == 'return' %}warning
+                            {% endif %}">
+                            {{ movement.get_movement_type_display }}
+                        </span>
+                    </td>
+                    <td style="color: {% if movement.quantity_change > 0 %}var(--success){% else %}var(--danger){% endif %}; font-weight: 600;">
+                        {{ movement.quantity_change|stringformat:"+d" }}
+                    </td>
+                    <td>{{ movement.previous_quantity }}</td>
+                    <td>{{ movement.new_quantity }}</td>
+                    <td>{{ movement.reference_number|default:"—" }}</td>
+                    <td>
+                        {% if movement.created_by %}
+                            {{ movement.created_by.get_full_name|default:movement.created_by.username }}
+                        {% else %}
+                            System
+                        {% endif %}
+                    </td>
+                    <td>{{ movement.notes|truncatechars:30|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" style="text-align: center; padding: 40px;">
+                        <i class="fa-solid fa-truck-ramp-box" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
+                        <h4 style="margin-bottom: 10px;">No Stock Movements Found</h4>
+                        <p style="color: var(--secondary);">Stock movements will appear here when products are purchased, sold, or adjusted.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if is_paginated %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+        <div style="color: var(--secondary); font-size: 0.85rem;">
+            Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }} transactions
+        </div>
+        <div style="display: flex; gap: 10px;">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.movement_type %}&movement_type={{ request.GET.movement_type }}{% endif %}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">Previous</a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: var(--primary); color: white;">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.movement_type %}&movement_type={{ request.GET.movement_type }}{% endif %}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.date_range %}&date_range={{ request.GET.date_range }}{% endif %}{% if request.GET.movement_type %}&movement_type={{ request.GET.movement_type }}{% endif %}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">Next</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="dashboard-grid" style="margin-top: 25px;">
+    <!-- Movement Summary -->
+    <div class="card col-span-2">
+        <h3 style="margin-bottom: 20px;">Movement Summary (Last 30 Days)</h3>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center;">
+            <div style="padding: 20px; background: #f0f7ff; border-radius: 10px;">
+                <div style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 5px;">Total Transactions</div>
+                <div style="font-size: 1.8rem; font-weight: 700;">{{ total_transactions|default:"0" }}</div>
+            </div>
+            <div style="padding: 20px; background: #f0f7ff; border-radius: 10px;">
+                <div style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 5px;">Stock In</div>
+                <div style="font-size: 1.8rem; font-weight: 700; color: var(--success);">+{{ total_stock_in|default:"0" }}</div>
+            </div>
+            <div style="padding: 20px; background: #f0f7ff; border-radius: 10px;">
+                <div style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 5px;">Stock Out</div>
+                <div style="font-size: 1.8rem; font-weight: 700; color: var(--danger);">-{{ total_stock_out|default:"0" }}</div>
+            </div>
+            <div style="padding: 20px; background: #f0f7ff; border-radius: 10px;">
+                <div style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 5px;">Net Change</div>
+                <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);">+{{ net_change|default:"0" }}</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <h4 style="margin-bottom: 15px;">Movement by Type</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Purchase Orders</span>
+                        <span style="font-weight: 600;">{{ movement_by_type.purchase|default:"0" }} transactions</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                        <div style="width: {% widthratio movement_by_type.purchase|default:0 100 100 %}%; height: 100%; background: var(--success);"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Sales Orders</span>
+                        <span style="font-weight: 600;">{{ movement_by_type.sale|default:"0" }} transactions</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                        <div style="width: {% widthratio movement_by_type.sale|default:0 100 100 %}%; height: 100%; background: var(--danger);"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Adjustments</span>
+                        <span style="font-weight: 600;">{{ movement_by_type.adjustment|default:"0" }} transactions</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                        <div style="width: {% widthratio movement_by_type.adjustment|default:0 100 100 %}%; height: 100%; background: var(--primary);"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Returns</span>
+                        <span style="font-weight: 600;">{{ movement_by_type.return|default:"0" }} transactions</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                        <div style="width: {% widthratio movement_by_type.return|default:0 100 100 %}%; height: 100%; background: var(--warning);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Products by Movement -->
+    <div class="card col-span-1">
+        <h3 style="margin-bottom: 20px;">Top Products by Movement</h3>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            {% for product in top_products %}
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                    {% with primary_image=product.product__images__all|dictsortreversed:"is_primary"|first %}
+                        {% if primary_image %}
+                            <img src="{{ primary_image.image.url }}" style="width: 30px; height: 30px; border-radius: 6px; object-fit: cover;">
+                        {% else %}
+                            <div style="width: 30px; height: 30px; background: var(--light); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-box" style="color: var(--secondary);"></i>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    <div style="font-weight: 600; font-size: 0.9rem;">{{ product.product__name }}</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                    <span>{{ product.total_movements }} movements</span>
+                    <span style="color: {% if product.net_change > 0 %}var(--success){% else %}var(--danger){% endif %};">
+                        Net: {{ product.net_change|stringformat:"+d" }}
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: var(--secondary); text-align: center;">No movement data available</p>
+            {% endfor %}
+        </div>
+        
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+            <a href="#" style="display: block; text-align: center; padding: 10px; background: var(--light); color: var(--dark); border-radius: 10px; text-decoration: none;">
+                <i class="fa-solid fa-chart-line"></i> View Detailed Analytics
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('date-range')?.addEventListener('change', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('date_range', this.value);
+    window.location.search = urlParams.toString();
+});
+
+document.getElementById('movement-type')?.addEventListener('change', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('movement_type', this.value);
+    window.location.search = urlParams.toString();
+});
+
+document.getElementById('search-input')?.addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('search', this.value);
+        window.location.search = urlParams.toString();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,224 @@
+{% extends "sales/base.html" %}
+{% load static %}
+
+{% block title %}
+  product_form
+{% endblock title %}
+
+{% block link %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'sales/main.css' %}">
+{% endblock link %}
+
+{% block main-content %}
+<div class="main-content">
+        <div class="header">
+            <div class="page-title">
+                <h2>Edit Product</h2>
+                <span>Update product details and inventory</span>
+            </div>
+            <div class="user-actions">
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name=John+S&background=random" alt="User">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">John Sales</div>
+                        <div style="font-size: 0.75rem; color: #888;">Sales Executive</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card col-span-3">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h3>Product Information</h3>
+                    <a href="product_list.html" style="color: var(--secondary); font-size: 0.9rem;">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Products
+                    </a>
+                </div>
+                
+                <form>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="productName">Product Name *</label>
+                            <input type="text" id="productName" class="form-control" value="Gaming Laptop Pro" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sku">SKU *</label>
+                            <input type="text" id="sku" class="form-control" value="SKU-ELEC-001" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category">Category *</label>
+                            <select id="category" class="form-control" required>
+                                <option value="electronics" selected>Electronics</option>
+                                <option value="games">Games</option>
+                                <option value="furniture">Furniture</option>
+                                <option value="accessories">Accessories</option>
+                                <option value="clothing">Clothing</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="brand">Brand</label>
+                            <input type="text" id="brand" class="form-control" value="TechPro">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label for="description">Description</label>
+                        <textarea id="description" class="form-control" rows="3" placeholder="Enter product description...">High-performance gaming laptop with 16GB RAM, 1TB SSD, NVIDIA RTX 4060, and 15.6" 144Hz display.</textarea>
+                    </div>
+                    
+                    <div class="form-grid" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label for="price">Price *</label>
+                            <input type="number" id="price" class="form-control" value="1200.00" step="0.01" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cost">Cost Price</label>
+                            <input type="number" id="cost" class="form-control" value="950.00" step="0.01">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="stock">Current Stock *</label>
+                            <input type="number" id="stock" class="form-control" value="12" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="minStock">Minimum Stock Level</label>
+                            <input type="number" id="minStock" class="form-control" value="5">
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid" style="margin-top: 20px;">
+                        <div class="form-group">
+                            <label for="weight">Weight (kg)</label>
+                            <input type="number" id="weight" class="form-control" value="2.5" step="0.1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dimensions">Dimensions (L×W×H)</label>
+                            <input type="text" id="dimensions" class="form-control" value="36×25×2.5 cm">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="supplier">Supplier</label>
+                            <select id="supplier" class="form-control">
+                                <option value="">Select Supplier</option>
+                                <option value="1" selected>Tech Suppliers Inc.</option>
+                                <option value="2">Global Electronics</option>
+                                <option value="3">Premium Tech</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="barcode">Barcode / UPC</label>
+                            <input type="text" id="barcode" class="form-control" value="123456789012">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h4 style="margin-bottom: 15px;">Product Images</h4>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <div style="width: 100px; height: 100px; border: 2px dashed #ddd; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--secondary); cursor: pointer;">
+                                <div style="text-align: center;">
+                                    <i class="fa-solid fa-plus" style="font-size: 1.5rem;"></i>
+                                    <div style="font-size: 0.8rem; margin-top: 5px;">Add Image</div>
+                                </div>
+                            </div>
+                            <div style="width: 100px; height: 100px; background: #e0e7ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; position: relative;">
+                                <i class="fa-solid fa-laptop" style="font-size: 2rem; color: #4e73df;"></i>
+                                <button style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem;">
+                                    ×
+                                </button>
+                            </div>
+                            <div style="width: 100px; height: 100px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center; position: relative;">
+                                <i class="fa-solid fa-image" style="font-size: 2rem; color: var(--secondary);"></i>
+                                <button style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem;">
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <a href="product_list.html" style="padding: 12px 30px; border: 1px solid #ddd; border-radius: 10px; color: var(--dark); text-decoration: none;">
+                            Cancel
+                        </a>
+                        <button type="button" style="padding: 12px 30px; border: 1px solid var(--danger); border-radius: 10px; background: white; color: var(--danger);">
+                            <i class="fa-solid fa-trash"></i> Delete Product
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="card col-span-1">
+                <div class="chart-header">
+                    <h3>Product Stats</h3>
+                </div>
+                <div style="margin-top: 15px;">
+                    <div class="stat-card">
+                        <div class="stat-card-label">Total Sold</div>
+                        <div class="stat-card-value">156 units</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-card-label">Revenue Generated</div>
+                        <div class="stat-card-value">$187,200</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-card-label">Profit Margin</div>
+                        <div class="stat-card-value">26.3%</div>
+                        <span class="badge success" style="margin-top: 5px;">+2.1%</span>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-card-label">Avg. Monthly Sales</div>
+                        <div class="stat-card-value">12 units</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h4 style="margin-bottom: 15px;">Stock History</h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                            <span>Dec 15, 2023</span>
+                            <span style="color: var(--danger);">-1 unit sold</span>
+                            <span>12 units</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                            <span>Dec 10, 2023</span>
+                            <span style="color: var(--success);">+20 units added</span>
+                            <span>13 units</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                            <span>Dec 5, 2023</span>
+                            <span style="color: var(--danger);">-2 units sold</span>
+                            <span>-7 units</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                            <span>Nov 28, 2023</span>
+                            <span style="color: var(--success);">+15 units added</span>
+                            <span>-5 units</span>
+                        </div>
+                    </div>
+                    <a href="#" style="display: block; text-align: center; margin-top: 15px; color: var(--primary); font-size: 0.85rem;">
+                        View Full History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+  
+{% endblock main-content %}
+
+{% block linkJs %}
+  <script src="{% static 'sales/main.js' %}"></script>
+{% endblock linkJs %}

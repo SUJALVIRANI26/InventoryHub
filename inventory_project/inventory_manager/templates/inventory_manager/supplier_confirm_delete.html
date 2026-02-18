@@ -1,0 +1,120 @@
+{% extends 'inventory_manager/base.html' %}
+{% load static %}
+
+{% block title %}Delete Supplier - DealDeck{% endblock %}
+
+{% block page_title %}Delete Supplier{% endblock %}
+{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
+
+{% block content %}
+<div class="delete-container" style="max-width: 600px; margin: 0 auto;">
+    <div class="card">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fa-solid fa-exclamation-triangle" style="font-size: 2.5rem; color: var(--danger);"></i>
+            </div>
+            <h2 style="margin-bottom: 10px; color: var(--danger);">Delete Supplier?</h2>
+            <p style="color: var(--secondary); font-size: 1rem;">
+                Are you sure you want to delete <strong>"{{ supplier.name }}"</strong>?
+            </p>
+        </div>
+
+        <!-- Supplier Summary -->
+        <div style="background: #f8f9fc; border-radius: 15px; padding: 20px; margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                <div style="width: 50px; height: 50px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 600;">
+                    {{ supplier.name|slice:":2"|upper }}
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 5px;">{{ supplier.name }}</h4>
+                    <p style="color: var(--secondary);">Code: {{ supplier.supplier_code }}</p>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--secondary);">Contact Person</div>
+                    <div style="font-weight: 600;">{{ supplier.contact_person|default:"—" }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--secondary);">Email</div>
+                    <div>{{ supplier.email|default:"—" }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--secondary);">Total Orders</div>
+                    <div style="font-weight: 600;">{{ product_count }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--secondary);">Total Spend</div>
+                    <div style="font-weight: 600;">${{ total_spend|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning Messages -->
+        {% if product_count > 0 or order_count > 0 %}
+        <div style="background: #fff3cd; border: 1px solid #ffeeba; border-radius: 10px; padding: 15px; margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <i class="fa-solid fa-circle-exclamation" style="color: #856404;"></i>
+                <strong style="color: #856404;">Cannot Delete - Related Records Exist</strong>
+            </div>
+            <ul style="color: #856404; margin-left: 25px;">
+                {% if product_count > 0 %}
+                <li>This supplier has <strong>{{ product_count }} product{{ product_count|pluralize }}</strong> associated</li>
+                {% endif %}
+                {% if order_count > 0 %}
+                <li>This supplier has <strong>{{ order_count }} purchase order{{ order_count|pluralize }}</strong> associated</li>
+                {% endif %}
+            </ul>
+            <p style="margin-top: 10px; color: #856404;">
+                <i class="fa-solid fa-lightbulb"></i> 
+                Instead of deleting, you can mark this supplier as <strong>Inactive</strong> to hide it from active lists.
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <a href="{% url 'inventory_manager:supplier_edit' supplier.pk %}?status=inactive" 
+               style="padding: 12px 25px; background: #ffc107; color: #212529; border-radius: 10px; text-decoration: none;">
+                <i class="fa-solid fa-ban"></i> Mark as Inactive
+            </a>
+            <a href="{% url 'inventory_manager:supplier_list' supplier.pk %}" 
+               style="padding: 12px 25px; background: var(--light); color: var(--dark); border-radius: 10px; text-decoration: none;">
+                Cancel
+            </a>
+        </div>
+
+        {% else %}
+
+        <!-- Delete Confirmation Form -->
+        <div style="background: #fee2e2; border-radius: 10px; padding: 15px; margin-bottom: 25px;">
+            <p style="color: #991b1b;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>Warning:</strong> This action cannot be undone. All data related to this supplier will be permanently deleted.
+            </p>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <a href="{% url 'inventory_manager:supplier_list'%}" 
+                   style="padding: 12px 30px; border: 1px solid #ddd; border-radius: 10px; color: var(--dark); text-decoration: none;">
+                    Cancel
+                </a>
+                <button type="submit" class="btn-delete" 
+                        style="padding: 12px 30px; background: var(--danger); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600;">
+                    <i class="fa-solid fa-trash"></i> Yes, Delete Supplier
+                </button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .btn-delete:hover {
+        background: #c82333 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+    }
+</style>
+{% endblock %}

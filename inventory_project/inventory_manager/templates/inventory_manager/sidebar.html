@@ -1,0 +1,35 @@
+{% load static %}
+<div class="sidebar">
+    <div class="logo">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>DealDeck</span>
+    </div>
+
+    <div class="menu-category">Menu</div>
+    <a href="{% url 'inventory_manager:dashboard' %}" class="menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="fa-solid fa-house"></i> Dashboard
+    </a>
+    <a href="{% url 'inventory_manager:product_list' %}" class="menu-item {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fa-solid fa-box-open"></i> Products
+        {% if product_alert_count %}
+        <span class="badge danger" style="margin-left: auto;">{{ product_alert_count }}</span>
+        {% endif %}
+    </a>
+    <a href="{% url 'inventory_manager:stock_list' %}" class="menu-item {% if 'stock' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fa-solid fa-boxes-stacked"></i> Stock
+        {% if stock_alert_count %}
+        <span class="badge warning" style="margin-left: auto;">{{ stock_alert_count }}</span>
+        {% endif %}
+    </a>
+    
+    <div class="menu-category">Financial</div>
+    <a href="{% url 'inventory_manager:purchase_order_list' %}" class="menu-item {% if 'purchase' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fa-solid fa-cart-shopping"></i> Purchase
+        {% if pending_order_count %}
+        <span class="badge warning" style="margin-left: auto;">{{ pending_order_count }}</span>
+        {% endif %}
+    </a>
+    <a href="{% url 'inventory_manager:supplier_list' %}" class="menu-item {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}">
+        <i class="fa-solid fa-users"></i> Suppliers
+    </a>
+</div>

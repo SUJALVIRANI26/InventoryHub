@@ -1,0 +1,295 @@
+{% extends 'inventory_manager/base.html' %}
+{% load static %}
+
+{% block title %}Stock Alerts - DealDeck{% endblock %}
+
+{% block page_title %}Stock Alerts{% endblock %}
+{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
+
+{% block header_actions %}
+<div class="search-bar">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" placeholder="Search alerts..." id="search-input">
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid" style="margin-bottom: 25px;">
+    <!-- Alert Summary Cards -->
+    <div class="card stat-card col-span-1">
+        <div class="stat-header">
+            <div class="icon-box"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <span class="badge danger">Critical</span>
+        </div>
+        <div>
+            <div class="stat-label">Critical Alerts</div>
+            <div class="stat-val">{{ critical_count|default:"0" }}</div>
+        </div>
+    </div>
+
+    <div class="card stat-card col-span-1">
+        <div class="stat-header">
+            <div class="icon-box"><i class="fa-solid fa-exclamation"></i></div>
+            <span class="badge warning">Warning</span>
+        </div>
+        <div>
+            <div class="stat-label">Warning Alerts</div>
+            <div class="stat-val">{{ warning_count|default:"0" }}</div>
+        </div>
+    </div>
+
+    <div class="card stat-card col-span-1">
+        <div class="stat-header">
+            <div class="icon-box"><i class="fa-solid fa-ban"></i></div>
+            <span class="badge danger">{{ out_of_stock_count|default:"0" }}</span>
+        </div>
+        <div>
+            <div class="stat-label">Out of Stock</div>
+            <div class="stat-val">{{ out_of_stock_count|default:"0" }}</div>
+        </div>
+    </div>
+
+    <div class="card stat-card col-span-1">
+        <div class="stat-header">
+            <div class="icon-box"><i class="fa-solid fa-clock"></i></div>
+            <span class="badge warning">{{ low_stock_count|default:"0" }}</span>
+        </div>
+        <div>
+            <div class="stat-label">Low Stock</div>
+            <div class="stat-val">{{ low_stock_count|default:"0" }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Critical Alerts -->
+    <div class="card col-span-2">
+        <div class="chart-header">
+            <h3>Critical Alerts (Action Required)</h3>
+            <span class="badge danger">{{ critical_count|default:"0" }} Items</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            {% for alert in critical_alerts %}
+            <div style="padding: 20px; background: #fee2e2; border-radius: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        {% with primary_image=alert.product.images.all|dictsortreversed:"is_primary"|first %}
+                            {% if primary_image %}
+                                <img src="{{ primary_image.image.url }}" style="width: 50px; height: 50px; border-radius: 10px; object-fit: cover;">
+                            {% else %}
+                                <div style="width: 50px; height: 50px; background: var(--light); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fa-solid fa-box" style="color: var(--danger);"></i>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                        <div>
+                            <div style="font-weight: 700; font-size: 1.1rem;">{{ alert.product.name }}</div>
+                            <div style="font-size: 0.85rem; color: #991b1b;">SKU: {{ alert.product.sku }} | Category: {{ alert.product.category.name }}</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger);">{{ alert.current_stock }}</div>
+                        <div style="font-size: 0.85rem; color: #991b1b;">Current Stock</div>
+                    </div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 10px; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; color: #991b1b; margin-bottom: 5px;">
+                                <i class="fa-solid fa-circle-exclamation"></i> {{ alert.message }}
+                            </div>
+                            <div style="font-size: 0.9rem; color: #991b1b;">
+                                Minimum stock level: {{ alert.threshold }} units • Last sold: {{ alert.product.last_sold_date|date:"M d, Y"|default:"—" }}
+                            </div>
+                        </div>
+                        <div>
+                            <a href="{% url 'inventory_manager:purchase_order_create' %}?product={{ alert.product.pk }}" style="padding: 10px 20px; background: var(--danger); color: white; border-radius: 10px; text-decoration: none; display: inline-block;">
+                                <i class="fa-solid fa-cart-plus"></i> Create Purchase Order
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: var(--secondary); text-align: center; padding: 40px;">
+                <i class="fa-solid fa-check-circle" style="font-size: 3rem; color: var(--success); margin-bottom: 15px;"></i><br>
+                No critical alerts at this time.
+            </p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Warning Alerts -->
+    <div class="card col-span-1">
+        <div class="chart-header">
+            <h3>Warning Alerts</h3>
+            <span class="badge warning">{{ warning_count|default:"0" }} Items</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+            {% for alert in warning_alerts %}
+            <div style="padding: 15px; background: #fff8e1; border-radius: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <div style="font-weight: 600;">{{ alert.product.name }}</div>
+                    <span class="badge warning">{{ alert.current_stock }}</span>
+                </div>
+                <div style="font-size: 0.85rem; color: #92400e;">{{ alert.message }}</div>
+            </div>
+            {% empty %}
+            <p style="color: var(--secondary); text-align: center;">No warning alerts</p>
+            {% endfor %}
+        </div>
+        
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+            <a href="{% url 'inventory_manager:stock_list' %}?stock_status=low" style="display: block; text-align: center; padding: 10px; background: var(--light); color: var(--dark); border-radius: 10px; text-decoration: none;">
+                <i class="fa-solid fa-list"></i> View All Low Stock
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert Settings -->
+    <div class="card col-span-3">
+        <div class="chart-header">
+            <h3>Alert Settings & Configuration</h3>
+            <button id="save-settings" style="padding: 8px 15px; background: var(--primary); color: white; border-radius: 8px; border: none; cursor: pointer;">
+                <i class="fa-solid fa-save"></i> Save Settings
+            </button>
+        </div>
+        
+        <form id="alert-settings-form">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+                <div>
+                    <h4 style="margin-bottom: 15px;">Notification Settings</h4>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" name="email_notifications" checked>
+                            <span>Email notifications for critical alerts</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" name="dashboard_notifications" checked>
+                            <span>Dashboard notifications for all alerts</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" name="sms_notifications">
+                            <span>SMS notifications for out-of-stock items</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" name="weekly_summary" checked>
+                            <span>Weekly alert summary report</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 style="margin-bottom: 15px;">Threshold Configuration</h4>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 0.9rem;">Critical Alert Threshold</label>
+                            <input type="number" name="critical_threshold" value="5" style="padding: 10px; border-radius: 8px; border: 1px solid #ddd; width: 100%;">
+                            <small style="color: var(--secondary);">Items below this quantity trigger critical alerts</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 0.9rem;">Warning Alert Threshold</label>
+                            <input type="number" name="warning_threshold" value="15" style="padding: 10px; border-radius: 8px; border: 1px solid #ddd; width: 100%;">
+                            <small style="color: var(--secondary);">Items below this quantity trigger warning alerts</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h4 style="margin-bottom: 15px;">Alert History (Last 7 Days)</h4>
+            <div class="table-container">
+                <table style="font-size: 0.85rem;">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Product</th>
+                            <th>Alert Type</th>
+                            <th>Triggered By</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in alert_history %}
+                        <tr>
+                            <td>{{ alert.created_at|date:"M d, Y H:i" }}</td>
+                            <td>{{ alert.product.name }}</td>
+                            <td><span class="badge 
+                                {% if alert.alert_type == 'critical' %}danger
+                                {% elif alert.alert_type == 'warning' %}warning
+                                {% else %}info{% endif %}">
+                                {{ alert.get_alert_type_display }}
+                            </span></td>
+                            <td>{{ alert.triggered_by|default:"System" }}</td>
+                            <td><span class="badge 
+                                {% if alert.status == 'resolved' %}success
+                                {% elif alert.status == 'pending' %}warning
+                                {% else %}secondary{% endif %}">
+                                {{ alert.get_status_display }}
+                            </span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px; color: var(--secondary);">
+                                No alert history found
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('save-settings')?.addEventListener('click', function() {
+    const formData = new FormData(document.getElementById('alert-settings-form'));
+    
+    fetch('{% url 'inventory_manager:save_alert_settings' %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Settings saved successfully!');
+        } else {
+            alert('Error saving settings: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving settings.');
+    });
+});
+
+function resolveAlert(alertId) {
+    if (!confirm('Mark this alert as resolved?')) return;
+    
+    fetch(`{% url 'inventory_manager:resolve_alert' 0 %}`.replace('0', alertId), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error resolving alert: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while resolving the alert.');
+    });
+}
+</script>
+{% endblock %}

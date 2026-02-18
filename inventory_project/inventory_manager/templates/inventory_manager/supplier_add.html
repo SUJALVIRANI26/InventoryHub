@@ -1,0 +1,210 @@
+{% extends 'inventory_manager/base.html' %}
+{% load static %}
+
+{% block title %}Add Supplier - DealDeck{% endblock %}
+
+{% block page_title %}Add New Supplier{% endblock %}
+{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'inventory_manager:supplier_list' %}" style="color: var(--secondary); font-size: 0.9rem; text-decoration: none;">
+    <i class="fa-solid fa-arrow-left"></i> Back to Suppliers
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card col-span-3">
+    {% if messages %}
+    <div style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div style="padding: 15px; border-radius: 10px; margin-bottom: 10px; 
+                    {% if message.tags == 'success' %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+                    {% elif message.tags == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                    {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h3>Supplier Information</h3>
+        <div style="color: var(--secondary); font-size: 0.9rem;">
+            Supplier ID: <strong style="color: var(--primary);">Will be auto-generated</strong>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">Company Name *</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <small style="color: #dc3545;">{{ form.name.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.supplier_code.id_for_label }}">Supplier Code</label>
+                {{ form.supplier_code }}
+                <small style="color: var(--secondary);">Auto-generated if empty</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.category.id_for_label }}">Category *</label>
+                {{ form.category }}
+                {% if form.category.errors %}
+                <small style="color: #dc3545;">{{ form.category.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.status.id_for_label }}">Status</label>
+                {{ form.status }}
+            </div>
+        </div>
+
+        <h4 style="margin: 30px 0 20px 0; color: var(--primary);">
+            <i class="fa-solid fa-user"></i> Contact Information
+        </h4>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="{{ form.contact_person.id_for_label }}">Contact Person *</label>
+                {{ form.contact_person }}
+                {% if form.contact_person.errors %}
+                <small style="color: #dc3545;">{{ form.contact_person.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.contact_title.id_for_label }}">Contact Title</label>
+                {{ form.contact_title }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Email Address *</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                <small style="color: #dc3545;">{{ form.email.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.phone.id_for_label }}">Phone Number *</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                <small style="color: #dc3545;">{{ form.phone.errors.0 }}</small>
+                {% endif %}
+            </div>
+        </div>
+
+        <h4 style="margin: 30px 0 20px 0; color: var(--primary);">
+            <i class="fa-solid fa-location-dot"></i> Address Information
+        </h4>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="{{ form.address.id_for_label }}">Street Address *</label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                <small style="color: #dc3545;">{{ form.address.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.city.id_for_label }}">City *</label>
+                {{ form.city }}
+                {% if form.city.errors %}
+                <small style="color: #dc3545;">{{ form.city.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.state.id_for_label }}">State/Province</label>
+                {{ form.state }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.zip_code.id_for_label }}">ZIP/Postal Code</label>
+                {{ form.zip_code }}
+            </div>
+            
+            <div class="form-group">
+    <label for="{{ form.country.id_for_label }}">Country *</label>
+    <select name="country" id="country" class="form-control" required>
+        <option value="">Select Country</option>
+        <option value="US" selected>United States</option>  <!-- ✅ DEFAULT SELECTED -->
+        <option value="CA">Canada</option>
+        <option value="UK">United Kingdom</option>
+        <option value="AU">Australia</option>
+        <option value="DE">Germany</option>
+        <option value="JP">Japan</option>
+        <option value="CN">China</option>
+        <option value="IN">India</option>
+        <option value="FR">France</option>
+        <option value="other">Other</option>
+    </select>
+</div>
+            <div class="form-group">
+                <label for="{{ form.website.id_for_label }}">Website</label>
+                {{ form.website }}
+            </div>
+        </div>
+
+        <h4 style="margin: 30px 0 20px 0; color: var(--primary);">
+            <i class="fa-solid fa-file-contract"></i> Business Terms
+        </h4>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="{{ form.payment_terms.id_for_label }}">Payment Terms *</label>
+                {{ form.payment_terms }}
+                {% if form.payment_terms.errors %}
+                <small style="color: #dc3545;">{{ form.payment_terms.errors.0 }}</small>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.credit_limit.id_for_label }}">Credit Limit</label>
+                {{ form.credit_limit }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.tax_id.id_for_label }}">Tax ID/VAT Number</label>
+                {{ form.tax_id }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.preferred_currency.id_for_label }}">Preferred Currency</label>
+                {{ form.preferred_currency }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.min_order_value.id_for_label }}">Minimum Order Value</label>
+                {{ form.min_order_value }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.lead_time_days.id_for_label }}">Lead Time (Days)</label>
+                {{ form.lead_time_days }}
+            </div>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+            <label for="{{ form.notes.id_for_label }}">Additional Notes</label>
+            {{ form.notes }}
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; grid-column: span 2;">
+            <a href="{% url 'inventory_manager:supplier_list' %}" style="padding: 12px 30px; border: 1px solid #ddd; border-radius: 10px; color: var(--dark); text-decoration: none;">
+                Cancel
+            </a>
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-plus"></i> Add Supplier
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

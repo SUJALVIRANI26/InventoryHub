@@ -24,13 +24,16 @@
             <a href="{% url 'inventory_manager:product_add' %}" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-plus"></i> Add Product
             </a>
-            <a href="{% url 'inventory_manager:product_import' %}" class="action-btn" style="background: var(--light); color: var(--dark); padding: 10px 15px; margin-left: 10px;">
-                <i class="fa-solid fa-file-import"></i> Import
+            
+            <!-- ✅ CHANGED: Direct download link -->
+            <a href="{% url 'inventory_manager:export_product_template' %}" class="action-btn" style="background: var(--light); color: var(--dark); padding: 10px 15px; margin-left: 10px;" download>
+                <i class="fa-solid fa-download"></i> Download Template
             </a>
         </div>
     </div>
 </div>
 
+<!-- Rest of your product list table remains the same -->
 <div class="card col-span-3">
     <div class="table-container">
         <table>
@@ -52,15 +55,6 @@
                     <td>{{ forloop.counter }}</td>
                     <td>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            {% with primary_image=product.images.all|dictsortreversed:"is_primary"|first %}
-                                {% if primary_image %}
-                                    <img src="{{ primary_image.image.url }}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
-                                {% else %}
-                                    <div style="width: 40px; height: 40px; background: var(--light); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fa-solid fa-box" style="color: var(--secondary);"></i>
-                                    </div>
-                                {% endif %}
-                            {% endwith %}
                             <div>
                                 <div style="font-weight: 600;">{{ product.name }}</div>
                                 <div style="font-size: 0.8rem; color: #888;">{{ product.category.name }}</div>
@@ -73,7 +67,7 @@
                     <td>
                         {{ product.quantity }}
                         <span style="color: {% if product.stock_status == 'in_stock' %}var(--success){% elif product.stock_status == 'low_stock' %}var(--warning){% else %}var(--danger){% endif %};">
-                            {{ product.get_stock_status_display.0 }}
+                            {{ product.get_stock_status_display }}
                         </span>
                     </td>
                     <td><span class="badge {% if product.status == 'active' %}success{% else %}danger{% endif %}">{{ product.get_status_display }}</span></td>
