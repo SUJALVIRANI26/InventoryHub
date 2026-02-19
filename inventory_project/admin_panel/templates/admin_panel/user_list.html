@@ -1,0 +1,41 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="card col-span-3">
+    <h3>User List</h3>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Contact</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for profile in profiles %}
+                <tr>
+                    <td>{{ profile.user.first_name }}</td>
+                    <td>{{ profile.user.email }}</td>
+                    <td>{{ profile.contact }}</td>
+                    <td>{{ profile.role }}</td>
+                    <td>
+                        <a href="{% url 'edit_user' profile.user.id %}" class="action-btn btn-edit">Edit</a>
+                        <a href="{% url 'delete_user' profile.user.id %}" class="action-btn btn-delete">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No users found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

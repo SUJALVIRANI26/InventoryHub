@@ -1,0 +1,17 @@
+{% extends 'admin_panel/base.html' %}
+{% load static %}
+{% block title %}Delete User{% endblock %}
+{% block page_title %}Delete User{% endblock %}
+{% block page_subtitle %}Confirm user deletion{% endblock %}
+
+{% block content %}
+<div class="card col-span-1">
+    <p>Are you sure you want to delete <strong>{{ user.username }}</strong>?</p>
+
+    <form method="post" style="margin-top:20px;">
+        {% csrf_token %}
+        <button type="submit" class="btn-primary">Yes, Delete</button>
+        <a href="{% url 'admin_user_list' %}" class="action-btn btn-edit">Cancel</a>
+    </form>
+</div>
+{% endblock %}

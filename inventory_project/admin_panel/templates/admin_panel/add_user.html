@@ -1,0 +1,51 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Add User{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h3>Add User</h3>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Contact</label>
+                <input type="text" name="contact" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Role</label>
+                <select name="role" class="form-control">
+                    <option value="ADMIN">Admin</option>
+                    <option value="MANAGER">Manager</option>
+                    <option value="STAFF">Staff</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" class="form-control" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Create User</button>
+    </form>
+</div>
+{% endblock %}
