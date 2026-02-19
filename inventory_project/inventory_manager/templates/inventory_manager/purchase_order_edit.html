@@ -1,357 +1,245 @@
 {% extends 'inventory_manager/base.html' %}
 {% load static %}
 
-{% block title %}Edit Purchase Order - DealDeck{% endblock %}
-
+{% block title %}Edit Purchase Order{% endblock %}
 {% block page_title %}Edit Purchase Order{% endblock %}
-{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
-
-{% block header_actions %}
-<a href="{% url 'inventory_manager:purchase_order_detail' purchase_order.pk %}" class="action-btn" style="background: #e0e7ff; color: var(--primary); padding: 10px 15px; margin-right: 10px; text-decoration: none;">
-    <i class="fa-solid fa-eye"></i> View
-</a>
-<a href="{% url 'inventory_manager:purchase_order_list' %}" style="color: var(--secondary); font-size: 0.9rem; text-decoration: none;">
-    <i class="fa-solid fa-arrow-left"></i> Back to Orders
-</a>
-{% endblock %}
 
 {% block content %}
 <div class="dashboard-grid">
-    <div class="card col-span-3">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <div>
-                <h3>Purchase Order #{{ purchase_order.order_number }}</h3>
-                <p style="color: var(--secondary); margin-top: 5px;">
-                    Created: {{ purchase_order.created_at|date:"M d, Y" }} • Last Updated: {{ purchase_order.updated_at|date:"M d, Y" }} • Status: <span class="badge {% if purchase_order.status == 'pending' %}warning{% elif purchase_order.status == 'delivered' %}success{% elif purchase_order.status == 'cancelled' %}danger{% endif %}">{{ purchase_order.get_status_display }}</span>
-                </p>
-            </div>
-            <div>
-                <button style="padding: 10px 15px; background: var(--light); color: var(--dark); border-radius: 10px; border: none; cursor: pointer; margin-right: 10px;">
-                    <i class="fa-solid fa-history"></i> History
-                </button>
-                <button style="padding: 10px 15px; background: var(--primary); color: white; border-radius: 10px; border: none; cursor: pointer;">
-                    <i class="fa-solid fa-print"></i> Print
-                </button>
-            </div>
-        </div>
+<div class="card col-span-3">
 
-        {% if messages %}
-        <div style="margin-bottom: 20px;">
-            {% for message in messages %}
-            <div style="padding: 15px; border-radius: 10px; margin-bottom: 10px; 
-                        {% if message.tags == 'success' %}background: #d4edda; color: #155724; border: 1px solid #c3e6cb;
-                        {% elif message.tags == 'error' %}background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
-                        {% endif %}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
+<h3 style="margin-bottom:25px;">
+    Edit Purchase Order #PO-{{ purchase_order.id }}
+</h3>
 
-        <form method="POST">
-            {% csrf_token %}
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="{{ form.supplier.id_for_label }}">Supplier *</label>
-                    {{ form.supplier }}
-                </div>
-                
-                <div class="form-group">
-                    <label for="{{ form.order_date.id_for_label }}">Order Date *</label>
-                    {{ form.order_date }}
-                </div>
-                
-                <div class="form-group">
-                    <label for="{{ form.expected_delivery.id_for_label }}">Expected Delivery *</label>
-                    {{ form.expected_delivery }}
-                </div>
-                
-                <div class="form-group">
-                    <label for="{{ form.shipping_method.id_for_label }}">Shipping Method</label>
-                    {{ form.shipping_method }}
-                </div>
-                
-                <div class="form-group">
-                    <label for="{{ form.payment_terms.id_for_label }}">Payment Terms</label>
-                    {{ form.payment_terms }}
-                </div>
-                
-                <div class="form-group">
-                    <label for="{{ form.status.id_for_label }}">Status</label>
-                    {{ form.status }}
-                </div>
-            </div>
+<form method="POST">
+{% csrf_token %}
 
-            <div class="form-group" style="grid-column: span 2;">
-                <label for="{{ form.notes.id_for_label }}">Order Notes</label>
-                {{ form.notes }}
-            </div>
+<!-- ================= ORDER INFO ================= -->
+<div class="form-grid">
 
-            <!-- Order Items Section -->
-            <div style="grid-column: span 2; margin-top: 30px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>Order Items</h3>
-                    <button type="button" id="add-item-btn" style="padding: 10px 20px; background: var(--primary); color: white; border-radius: 10px; border: none; cursor: pointer;">
-                        <i class="fa-solid fa-plus"></i> Add Product
-                    </button>
-                </div>
-
-                <div class="table-container">
-                    <table id="order-items-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 50px;">#</th>
-                                <th>Product</th>
-                                <th>SKU</th>
-                                <th>Quantity</th>
-                                <th>Unit Price</th>
-                                <th>Total</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="items-container">
-                            {{ formset.management_form }}
-                            {% for item_form in formset %}
-                            <tr class="item-row">
-                                <td class="item-number">{{ forloop.counter }}</td>
-                                <td>
-                                    {{ item_form.product }}
-                                    {% for hidden in item_form.hidden_fields %}
-                                        {{ hidden }}
-                                    {% endfor %}
-                                </td>
-                                <td class="sku-display">{{ item_form.instance.sku|default:"—" }}</td>
-                                <td>{{ item_form.quantity }}</td>
-                                <td>{{ item_form.unit_price }}</td>
-                                <td class="item-total">${{ item_form.instance.total_price|floatformat:2|default:"0.00" }}</td>
-                                <td>
-                                    <button type="button" class="remove-item-btn" style="color: var(--danger); background: none; border: none; cursor: pointer;">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="4" style="text-align: right; padding: 15px; font-weight: 600;">Subtotal:</td>
-                                <td colspan="2" style="padding: 15px; font-weight: 600;" id="subtotal">${{ purchase_order.subtotal|floatformat:2 }}</td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" style="text-align: right; padding: 15px;">Shipping:</td>
-                                <td colspan="2" style="padding: 15px;">
-                                    {{ form.shipping_cost }}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" style="text-align: right; padding: 15px;">
-                                    Tax (%):
-                                    <input type="number" name="tax_rate" id="tax_rate" value="{{ purchase_order.tax_rate|default:'10' }}" 
-                                        step="0.1" min="0" max="100" style="width: 60px; padding: 5px; margin-left: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                                </td>
-                                <td colspan="2" style="padding: 15px;" id="tax-amount">
-                                    ${{ purchase_order.tax_amount|floatformat:2 }}
-                                    <input type="hidden" name="tax_amount" id="tax_amount" value="{{ purchase_order.tax_amount }}">
-                                </td>
-                                {% comment %} <td colspan="4" style="text-align: right; padding: 15px;">Tax ({{ purchase_order.tax_rate|default:"10" }}%):</td>
-                                <td colspan="2" style="padding: 15px;" id="tax-amount">${{ purchase_order.tax_amount|floatformat:2 }}</td> {% endcomment %}
-                            </tr>
-                            <tr style="background: #f8f9fc;">
-                                <td colspan="4" style="text-align: right; padding: 15px; font-size: 1.1rem; font-weight: 700;">Total:</td>
-                                <td colspan="2" style="padding: 15px; font-size: 1.1rem; font-weight: 700; color: var(--primary);" id="grand-total">${{ purchase_order.total_amount|floatformat:2 }}</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Order History -->
-            <div style="grid-column: span 2; margin-top: 30px;">
-                <h4 style="margin-bottom: 15px;">Order History</h4>
-                <div style="background: #f8f9fc; border-radius: 15px; padding: 20px;">
-                    <div style="display: flex; flex-direction: column; gap: 15px;">
-                        {% for history in purchase_order.history.all|slice:":3" %}
-                        <div style="display: flex; gap: 15px;">
-                            <div style="width: 30px; height: 30px; background: {% if history.action == 'created' %}var(--primary){% elif history.action == 'updated' %}var(--warning){% else %}#e0e7ff{% endif %}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;">
-                                <i class="fa-solid fa-{% if history.action == 'created' %}plus{% elif history.action == 'updated' %}pen{% else %}clock{% endif %}"></i>
-                            </div>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600;">{{ history.get_action_display }}</div>
-                                <div style="font-size: 0.85rem; color: var(--secondary);">{{ history.created_at|date:"M d, Y h:i A" }} by {{ history.user.get_full_name|default:history.user.username|default:"System" }}</div>
-                                <div style="font-size: 0.85rem; margin-top: 5px;">{{ history.notes }}</div>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <p style="color: var(--secondary); text-align: center;">No history available</p>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; grid-column: span 2; padding-top: 20px; border-top: 1px solid #eee;">
-                <div>
-                    <a href="{% url 'inventory_manager:purchase_order_delete' object.pk %}" class="btn-delete" style="padding: 12px 25px; border: none; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-block; background: #fee2e2; color: var(--danger);">
-                        <i class="fa-solid fa-trash"></i> Delete Order
-                    </a>
-                </div>
-                <div style="display: flex; gap: 15px;">
-                    <a href="{% url 'inventory_manager:purchase_order_detail' object.pk %}" style="padding: 12px 30px; border: 1px solid #ddd; border-radius: 10px; color: var(--dark); text-decoration: none;">
-                        Cancel
-                    </a>
-                    <button type="submit" class="btn-primary">
-                        <i class="fa-solid fa-save"></i> Save Changes
-                    </button>
-                </div>
-            </div>
-        </form>
+    <div class="form-group">
+    <label>Supplier *</label>
+    {{ form.supplier }}
     </div>
 
-    <!-- Order Status -->
-    <div class="card col-span-1">
-        <h3 style="margin-bottom: 20px;">Order Status</h3>
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-            <div>
-                <div style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 5px;">Current Status</div>
-                <div style="font-size: 1.2rem; font-weight: 700; color: {% if purchase_order.status == 'pending' %}var(--warning){% elif purchase_order.status == 'delivered' %}var(--success){% elif purchase_order.status == 'cancelled' %}var(--danger){% else %}var(--primary){% endif %};">{{ purchase_order.get_status_display }}</div>
-            </div>
-            
-            <div>
-                <div style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 5px;">Order Date</div>
-                <div style="font-weight: 600;">{{ purchase_order.order_date|date:"M d, Y" }}</div>
-            </div>
-            
-            <div>
-                <div style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 5px;">Expected Delivery</div>
-                <div style="font-weight: 600;">{{ purchase_order.expected_delivery|date:"M d, Y" }}</div>
-            </div>
-            
-            <div>
-                <div style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 5px;">Days Remaining</div>
-                <div style="font-size: 1.2rem; font-weight: 700; color: var(--primary);">{{ days_remaining|default:"5" }} days</div>
-            </div>
-        </div>
-        
-        <div style="margin-top: 30px;">
-            <h4 style="margin-bottom: 15px;">Quick Status Update</h4>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                {% if purchase_order.status != 'approved' %}
-                <button onclick="updateStatus('approved')" style="padding: 10px; background: #d1fae5; color: #065f46; border-radius: 8px; border: none; cursor: pointer;">
-                    <i class="fa-solid fa-check"></i> Mark as Approved
-                </button>
-                {% endif %}
-                
-                {% if purchase_order.status != 'shipped' and purchase_order.status != 'delivered' %}
-                <button onclick="updateStatus('shipped')" style="padding: 10px; background: #e0e7ff; color: var(--primary); border-radius: 8px; border: none; cursor: pointer;">
-                    <i class="fa-solid fa-truck"></i> Mark as Shipped
-                </button>
-                {% endif %}
-                
-                {% if purchase_order.status != 'delivered' and purchase_order.status != 'cancelled' %}
-                <button onclick="updateStatus('delivered')" style="padding: 10px; background: #d1fae5; color: #065f46; border-radius: 8px; border: none; cursor: pointer;">
-                    <i class="fa-solid fa-box"></i> Mark as Delivered
-                </button>
-                {% endif %}
-            </div>
-        </div>
-        
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-            <a href="{% url 'inventory_manager:purchase_order_detail' object.pk %}" style="display: block; text-align: center; padding: 10px; background: var(--light); color: var(--dark); border-radius: 10px; text-decoration: none;">
-                <i class="fa-solid fa-file-invoice"></i> View Invoice
-            </a>
-        </div>
+    <div class="form-group">
+    <label>Order Date *</label>
+    {{ form.order_date }}
     </div>
+
+    <div class="form-group">
+    <label>Expected Delivery</label>
+    {{ form.expected_delivery }}
+    </div>
+
+    <div class="form-group">
+    <label>Status</label>
+    {{ form.status }}
+    </div>
+
+</div>
+<hr style="margin:30px 0;">
+
+<!-- ================= ORDER ITEMS ================= -->
+<h4 style="margin-bottom:15px;">Order Items</h4>
+
+{{ formset.management_form }}
+
+<div class="table-container">
+<table id="items-table">
+<thead>
+<tr>
+<th>#</th>
+<th>Product</th>
+<th>Qty</th>
+<th>Unit Price</th>
+<th>Total</th>
+<th></th>
+</tr>
+</thead>
+
+<tbody id="items-body">
+{% for item_form in formset %}
+<tr class="item-row">
+
+<td class="row-number">{{ forloop.counter }}</td>
+
+<td>
+{{ item_form.product }}
+{% for hidden in item_form.hidden_fields %}
+{{ hidden }}
+{% endfor %}
+</td>
+
+<td>{{ item_form.quantity }}</td>
+<td>{{ item_form.unit_price }}</td>
+
+<td class="row-total">
+{% if item_form.instance.pk %}
+    {{ item_form.instance.total_price|floatformat:2 }}
+{% else %}
+    0.00
+{% endif %}
+</td>
+
+
+<td>
+<button type="button" class="remove-btn">
+<i class="fa-solid fa-trash"></i>
+</button>
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+
+<tfoot>
+<tr style="background:#f8f9fc;">
+<td colspan="3"></td>
+<td style="font-weight:700;">Grand Total</td>
+<td id="grand_total"
+    style="font-weight:700;color:var(--primary);">
+0.00
+</td>
+<td></td>
+</tr>
+</tfoot>
+
+</table>
 </div>
 
-<script>
-function updateStatus(status) {
-    fetch(`{% url 'inventory_manager:update_order_status' object.pk %}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: status })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        }
-    });
+<button type="button" id="add-row"
+class="btn-primary"
+style="margin-top:15px;">
+<i class="fa-solid fa-plus"></i> Add Product
+</button>
+
+<!-- ================= ACTIONS ================= -->
+<div style="display:flex;justify-content:flex-end;gap:15px;margin-top:35px;">
+
+<a href="{% url 'inventory_manager:purchase_order_detail' purchase_order.pk %}"
+class="btn-cancel">
+Cancel
+</a>
+
+<button type="submit" class="btn-primary">
+<i class="fa-solid fa-save"></i> Save Changes
+</button>
+
+</div>
+
+</form>
+</div>
+</div>
+
+<!-- ================= STYLES ================= -->
+<style>
+.form-grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:20px;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const itemsContainer = document.getElementById('items-container');
-    const addItemBtn = document.getElementById('add-item-btn');
-    const subtotalEl = document.getElementById('subtotal');
-    const taxRate = {{ purchase_order.tax_rate|default:10 }};
-    const taxAmountEl = document.getElementById('tax-amount');
-    const grandTotalEl = document.getElementById('grand-total');
-    const shippingInput = document.querySelector('[name="shipping_cost"]');
+.form-group label{
+display:block;
+margin-bottom:6px;
+font-weight:500;
+}
 
-    function calculateTotals() {
-        let subtotal = 0;
-        document.querySelectorAll('.item-row').forEach((row, index) => {
-            const qty = parseFloat(row.querySelector('[name*="quantity"]').value) || 0;
-            const price = parseFloat(row.querySelector('[name*="unit_price"]').value) || 0;
-            const total = qty * price;
-            row.querySelector('.item-total').textContent = `$${total.toFixed(2)}`;
-            subtotal += total;
-        });
-        
-        const shipping = parseFloat(shippingInput?.value) || 0;
-        const tax = (subtotal + shipping) * (taxRate / 100);
-        const grandTotal = subtotal + shipping + tax;
-        
-        subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
-        taxAmountEl.textContent = `$${tax.toFixed(2)}`;
-        grandTotalEl.textContent = `$${grandTotal.toFixed(2)}`;
-    }
+input, select{
+width:100%;
+padding:10px;
+border:1px solid #ddd;
+border-radius:8px;
+}
 
-    addItemBtn?.addEventListener('click', function() {
-        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
-        const formNum = parseInt(totalForms.value);
-        
-        const newRow = document.querySelector('.item-row').cloneNode(true);
-        newRow.innerHTML = newRow.innerHTML.replace(/items-(\d+)-/g, `items-${formNum}-`);
-        newRow.innerHTML = newRow.innerHTML.replace(/id_items-(\d+)-/g, `id_items-${formNum}-`);
-        
-        newRow.querySelectorAll('input').forEach(input => {
-            input.value = '';
-        });
-        newRow.querySelector('.sku-display').textContent = '—';
-        
-        itemsContainer.appendChild(newRow);
-        totalForms.value = formNum + 1;
-        
-        attachRowEvents(newRow);
-    });
+.btn-primary{
+background:var(--primary);
+color:white;
+padding:10px 25px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
 
-    function attachRowEvents(row) {
-        row.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', calculateTotals);
-        });
-        
-        row.querySelector('.remove-item-btn')?.addEventListener('click', function() {
-            if (document.querySelectorAll('.item-row').length > 1) {
-                row.remove();
-                calculateTotals();
-            }
-        });
+.btn-cancel{
+padding:10px 25px;
+border:1px solid #ddd;
+border-radius:8px;
+text-decoration:none;
+color:var(--dark);
+}
 
-        const productSelect = row.querySelector('[name*="product"]');
-        if (productSelect) {
-            productSelect.addEventListener('change', function() {
-                const skuCell = row.querySelector('.sku-display');
-                const selectedOption = this.options[this.selectedIndex];
-                const sku = selectedOption.text.match(/\((.*?)\)/)?.[1] || '—';
-                skuCell.textContent = sku;
-            });
-        }
-    }
+.remove-btn{
+background:none;
+border:none;
+color:var(--danger);
+cursor:pointer;
+}
+</style>
 
-    document.querySelectorAll('.item-row').forEach(attachRowEvents);
-    shippingInput?.addEventListener('input', calculateTotals);
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+function calculateTotals(){
+let grand = 0;
+
+document.querySelectorAll(".item-row").forEach((row,index)=>{
+
+const qty = parseFloat(row.querySelector('[name*="quantity"]').value)||0;
+const price = parseFloat(row.querySelector('[name*="unit_price"]').value)||0;
+const total = qty * price;
+
+row.querySelector(".row-number").textContent = index+1;
+row.querySelector(".row-total").textContent = total.toFixed(2);
+
+grand += total;
+});
+
+document.getElementById("grand_total").textContent = grand.toFixed(2);
+}
+
+document.addEventListener("input", function(e){
+if(e.target.matches('[name*="quantity"], [name*="unit_price"]')){
+calculateTotals();
+}
+});
+
+document.getElementById("add-row").addEventListener("click", function(){
+
+const totalForms = document.getElementById("id_items-TOTAL_FORMS");
+const formIndex = parseInt(totalForms.value);
+
+const firstRow = document.querySelector(".item-row");
+const newRow = firstRow.cloneNode(true);
+
+newRow.innerHTML = newRow.innerHTML.replace(/items-(\d+)-/g,`items-${formIndex}-`);
+newRow.innerHTML = newRow.innerHTML.replace(/id_items-(\d+)-/g,`id_items-${formIndex}-`);
+
+newRow.querySelectorAll("input").forEach(input=>input.value="");
+newRow.querySelectorAll("select").forEach(select=>select.selectedIndex=0);
+
+document.getElementById("items-body").appendChild(newRow);
+
+totalForms.value = formIndex + 1;
+
+calculateTotals();
+});
+
+document.addEventListener("click",function(e){
+if(e.target.closest(".remove-btn")){
+const rows = document.querySelectorAll(".item-row");
+if(rows.length>1){
+e.target.closest("tr").remove();
+calculateTotals();
+}
+}
+});
+
+calculateTotals();
 });
 </script>
+
 {% endblock %}

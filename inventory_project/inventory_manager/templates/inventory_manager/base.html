@@ -3,53 +3,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>{% block title %}DealDeck{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}DealDeck - Dashboard{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <link rel="stylesheet" href="{% static 'main.css' %}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% include 'inventory_manager/sidebar.html' %}
-    
-    <div class="main-content">
-        <div class="header">
-            <div class="page-title">
-                <h2>{% block page_title %}Sales Report{% endblock %}</h2>
-                <span>{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}</span>
-            </div>
-            <div class="user-actions">
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Search...">
-                </div>
-                <div class="profile">
-                    <img src="https://ui-avatars.com/api/?name={% if user.is_authenticated %}{{ user.get_full_name|urlencode|default:user.username|urlencode }}{% else %}Ferra+Alexandra{% endif %}&background=random" alt="User">
-                    <div>
-                        <div style="font-weight: 600; font-size: 0.9rem;">
-                            {% if user.is_authenticated %}
-                                {{ user.get_full_name|default:user.username }}
-                            {% else %}
-                                Ferra Alexandra
-                            {% endif %}
-                        </div>
-                        <div style="font-size: 0.75rem; color: #888;">
-                            {% if user.is_authenticated %}
-                                {% if user.is_staff %}Admin Store{% else %}User{% endif %}
-                            {% else %}
-                                Guest
-                            {% endif %}
-                        </div>
+
+{% include "inventory_manager/sidebar.html" %}
+
+<div class="main-content">
+
+    <div class="header">
+        <div class="page-title">
+            <h2>{% block page_title %}Dashboard{% endblock %}</h2>
+            <span>{{ current_date|date:"l, F jS Y" }}</span>
+        </div>
+
+        <div class="user-actions">
+            {% block header_actions %}{% endblock %}
+            <div class="profile">
+                <img src="https://ui-avatars.com/api/?name={{ user.username|default:'User' }}">
+                <div>
+                    <div style="font-weight:600;font-size:0.9rem;">
+                        {{ user.get_full_name|default:user.username }}
+                    </div>
+                    <div style="font-size:0.75rem;color:#888;">
+                        {% if user.is_staff %}Admin{% else %}User{% endif %}
                     </div>
                 </div>
             </div>
         </div>
-
-        {% block content %}
-        {% endblock %}
     </div>
-    
-    {% block extra_js %}{% endblock %}
-    <script src="{% static 'main.js' %}"></script>
+
+    {% block content %}{% endblock %}
+
+</div>
+
+<script src="{% static 'main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+
 </body>
 </html>

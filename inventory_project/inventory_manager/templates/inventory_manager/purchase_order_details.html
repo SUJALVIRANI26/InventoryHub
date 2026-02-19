@@ -1,337 +1,156 @@
 {% extends 'inventory_manager/base.html' %}
 {% load static %}
 
-{% block title %}Purchase Order Details - DealDeck{% endblock %}
-
+{% block title %}Purchase Order Details{% endblock %}
 {% block page_title %}Purchase Order Details{% endblock %}
 {% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
 
 {% block header_actions %}
-<a href="{% url 'inventory_manager:purchase_order_edit' purchase_order.pk %}" class="action-btn btn-edit" style="padding: 10px 15px; margin-right: 10px; text-decoration: none;">
+<a href="{% url 'inventory_manager:purchase_order_edit' purchase_order.pk %}"
+   class="btn-primary"
+   style="padding:10px 20px; text-decoration:none;">
     <i class="fa-solid fa-pen"></i> Edit
 </a>
-<button onclick="window.print()" style="padding: 10px 15px; background: var(--primary); color: white; border-radius: 10px; border: none; cursor: pointer; margin-right: 10px;">
-    <i class="fa-solid fa-print"></i> Print
-</button>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-grid">
-    <!-- Order Header -->
+
+    <!-- ================= ORDER HEADER ================= -->
     <div class="card col-span-3">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
-            <div>
-                <h1 style="font-size: 1.5rem; margin-bottom: 5px;">Purchase Order #{{ purchase_order.order_number }}</h1>
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                    <span class="badge 
-                        {% if purchase_order.status == 'pending' %}warning
-                        {% elif purchase_order.status == 'delivered' %}success
-                        {% elif purchase_order.status == 'shipped' %}primary
-                        {% elif purchase_order.status == 'cancelled' %}danger
-                        {% endif %}">
-                        {{ purchase_order.get_status_display }}
-                    </span>
-                    <span style="color: var(--secondary);">Created: {{ purchase_order.created_at|date:"M d, Y" }}</span>
-                    <span style="color: var(--secondary);">Expected: {{ purchase_order.expected_delivery|date:"M d, Y" }}</span>
-                </div>
-            </div>
-            <div style="text-align: right;">
-                <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);">${{ purchase_order.total_amount|floatformat:2 }}</div>
-                <div style="color: var(--secondary); font-size: 0.9rem;">Total Amount</div>
-            </div>
-        </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-            <!-- Supplier Information -->
-            <div>
-                <h3 style="margin-bottom: 15px; color: var(--primary);">
-                    <i class="fa-solid fa-user"></i> Supplier Information
-                </h3>
-                <div style="background: #f8f9fc; border-radius: 15px; padding: 20px;">
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                        <div style="width: 50px; height: 50px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 600;">
-                            {{ purchase_order.supplier.name|slice:":2"|upper }}
-                        </div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 1.1rem;">{{ purchase_order.supplier.name }}</div>
-                            <div style="color: var(--secondary); font-size: 0.9rem;">Supplier ID: {{ purchase_order.supplier.supplier_code }}</div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div>
-                            <div style="font-size: 0.85rem; color: var(--secondary);">Contact Person</div>
-                            <div style="font-weight: 600;">{{ purchase_order.supplier.contact_person|default:"—" }}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.85rem; color: var(--secondary);">Email</div>
-                            <div>{{ purchase_order.supplier.email|default:"—" }}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.85rem; color: var(--secondary);">Phone</div>
-                            <div>{{ purchase_order.supplier.phone|default:"—" }}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.85rem; color: var(--secondary);">Payment Terms</div>
-                            <div>{{ purchase_order.supplier.get_payment_terms_display|default:"—" }}</div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 15px;">
-                        <div style="font-size: 0.85rem; color: var(--secondary);">Address</div>
-                        <div>{{ purchase_order.supplier.address|default:"—" }}, {{ purchase_order.supplier.city|default:"—" }}, {{ purchase_order.supplier.state|default:"—" }} {{ purchase_order.supplier.zip_code|default:"—" }}, {{ purchase_order.supplier.country|default:"—" }}</div>
-                    </div>
-                </div>
-            </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
 
-            <!-- Order Information -->
             <div>
-                <h3 style="margin-bottom: 15px; color: var(--primary);">
-                    <i class="fa-solid fa-file-invoice"></i> Order Information
-                </h3>
-                <div style="background: #f8f9fc; border-radius: 15px; padding: 20px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div>
-                            <div style="font-size: 0.85rem; color: var(--secondary);">Order Date</div>
-                            <div style="font-weight: 600;">{{ purchase_order.order_date|date:"F d, Y" }}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.85rem; color: var(--secondary);">Expected Delivery</div>
-                            <div style="font-weight: 600;">{{ purchase_order.expected_delivery|date:"F d, Y" }}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.85rem; color: var(--secondary);">Shipping Method</div>
-                            <div>{{ purchase_order.get_shipping_method_display|default:"—" }}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.85rem; color: var(--secondary);">Payment Method</div>
-                            <div>{{ purchase_order.get_payment_terms_display|default:"—" }}</div>
-                        </div>
-                        <div>
-                            {% if purchase_order.created_by %}
-                                {{ purchase_order.created_by.get_full_name|default:purchase_order.created_by.username }}
-                            {% else %}
-                                —
-                            {% endif %}
-                        </div>
-                        <div>
-                            <div style="font-size: 0.85rem; color: var(--secondary);">Last Updated</div>
-                            <div>{{ purchase_order.updated_at|date:"F d, Y" }}</div>
-                        </div>
-                    </div>
-                    
-                    {% if purchase_order.notes %}
-                    <div style="margin-top: 20px;">
-                        <div style="font-size: 0.85rem; color: var(--secondary);">Order Notes</div>
-                        <div style="background: white; padding: 10px; border-radius: 8px; margin-top: 5px;">
-                            {{ purchase_order.notes }}
-                        </div>
-                    </div>
+                <h2 style="margin-bottom:5px;">
+                    Purchase Order #{{ purchase_order.id }}
+                </h2>
+
+                <div style="color:var(--secondary);">
+                    Order Date: {{ purchase_order.order_date|date:"F d, Y" }}
+                </div>
+
+                <div style="color:var(--secondary);">
+                    Expected Delivery:
+                    {% if purchase_order.expected_delivery %}
+                        {{ purchase_order.expected_delivery|date:"F d, Y" }}
+                    {% else %}
+                        —
                     {% endif %}
                 </div>
             </div>
+
+            <div style="text-align:right;">
+                <div style="font-size:1.8rem; font-weight:700; color:var(--primary);">
+                    ${{ purchase_order.total_amount|floatformat:2 }}
+                </div>
+                <div style="color:var(--secondary); font-size:0.9rem;">
+                    Total Amount
+                </div>
+
+                <div style="margin-top:10px;">
+                    <span class="badge
+                        {% if purchase_order.status == 'pending' %}warning
+                        {% elif purchase_order.status == 'delivered' %}success
+                        {% elif purchase_order.status == 'cancelled' %}danger
+                        {% else %}primary
+                        {% endif %}">
+                        {{ purchase_order.get_status_display }}
+                    </span>
+                </div>
+            </div>
         </div>
+
+        <!-- ================= SUPPLIER INFO ================= -->
+        <div style="margin-top:20px;">
+            <h4 style="margin-bottom:10px;">Supplier Information</h4>
+
+            <div style="background:#f8f9fc; padding:20px; border-radius:10px;">
+                <div style="font-weight:600; font-size:1.1rem;">
+                    {{ purchase_order.supplier.name }}
+                </div>
+
+                <div style="color:var(--secondary); margin-top:5px;">
+                    {{ purchase_order.supplier.email|default:"—" }}
+                </div>
+
+                <div style="color:var(--secondary);">
+                    {{ purchase_order.supplier.phone|default:"—" }}
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Order Items -->
+    <!-- ================= ORDER ITEMS ================= -->
     <div class="card col-span-3">
-        <h3 style="margin-bottom: 20px;">Order Items</h3>
+
+        <h3 style="margin-bottom:20px;">Order Items</h3>
+
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 50px;">#</th>
+                        <th>#</th>
                         <th>Product</th>
-                        <th>SKU</th>
+                        <th>Category</th>
                         <th>Quantity</th>
                         <th>Unit Price</th>
                         <th>Total</th>
-                        <th>Status</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {% for item in purchase_order.items.all %}
                     <tr>
                         <td>{{ forloop.counter }}</td>
+
                         <td>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                {% with primary_image=item.product.images.all|dictsortreversed:"is_primary"|first %}
-                                    {% if primary_image %}
-                                        <img src="{{ primary_image.image.url }}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;">
-                                    {% else %}
-                                        <div style="width: 40px; height: 40px; background: var(--light); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fa-solid fa-box" style="color: var(--secondary);"></i>
-                                        </div>
-                                    {% endif %}
-                                {% endwith %}
-                                <div>
-                                    <div style="font-weight: 600;">{{ item.product_name }}</div>
-                                    <div style="font-size: 0.8rem; color: #888;">{{ item.product.brand|default:"" }} | Category: {{ item.product.category.name }}</div>
-                                </div>
+                            <div style="font-weight:600;">
+                                {{ item.product.name }}
                             </div>
                         </td>
-                        <td>{{ item.sku }}</td>
-                        <td>{{ item.quantity }} units</td>
-                        <td>${{ item.unit_price|floatformat:2 }}</td>
-                        <td>${{ item.total_price|floatformat:2 }}</td>
-                        <td><span class="badge 
-                            {% if item.status == 'received' %}success
-                            {% elif item.status == 'pending' %}warning
-                            {% elif item.status == 'partial' %}primary
-                            {% elif item.status == 'cancelled' %}danger
-                            {% endif %}">
-                            {{ item.get_status_display }}
-                        </span></td>
+
+                        <td>
+                            {{ item.product.category.name|default:"—" }}
+                        </td>
+
+                        <td>
+                            {{ item.quantity }}
+                        </td>
+
+                        <td>
+                            ${{ item.unit_price|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            ${{ item.total_price|floatformat:2 }}
+                        </td>
+
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px;">
-                            <p>No items in this purchase order</p>
+                        <td colspan="6" style="text-align:center; padding:40px;">
+                            No items in this order
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
+
                 <tfoot>
-                    <tr>
-                        <td colspan="4" style="text-align: right; padding: 15px; font-weight: 600;">Subtotal:</td>
-                        <td colspan="2" style="padding: 15px; font-weight: 600;">${{ purchase_order.subtotal|floatformat:2 }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="4" style="text-align: right; padding: 15px;">Shipping & Handling:</td>
-                        <td colspan="2" style="padding: 15px;">${{ purchase_order.shipping_cost|floatformat:2 }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="4" style="text-align: right; padding: 15px;">Tax ({{ purchase_order.tax_rate|floatformat:0 }}%):</td>
-                        <td colspan="2" style="padding: 15px;">${{ purchase_order.tax_amount|floatformat:2 }}</td>
-                    </tr>
-                    <tr style="background: #f0f7ff;">
-                        <td colspan="4" style="text-align: right; padding: 15px; font-size: 1.1rem; font-weight: 700;">Grand Total:</td>
-                        <td colspan="2" style="padding: 15px; font-size: 1.1rem; font-weight: 700; color: var(--primary);">${{ purchase_order.total_amount|floatformat:2 }}</td>
+                    <tr style="background:#f0f7ff;">
+                        <td colspan="5" style="text-align:right; font-weight:700;">
+                            Grand Total:
+                        </td>
+                        <td style="font-weight:700; color:var(--primary);">
+                            ${{ purchase_order.total_amount|floatformat:2 }}
+                        </td>
                     </tr>
                 </tfoot>
             </table>
         </div>
+
     </div>
 
-    <!-- Order Timeline -->
-    <div class="card col-span-2">
-        <h3 style="margin-bottom: 20px;">Order Timeline</h3>
-        <div style="position: relative; padding-left: 30px;">
-            <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--primary);"></div>
-            
-            {% for history in purchase_order.history.all|slice:":5" %}
-            <div style="position: relative; margin-bottom: 25px;">
-                <div style="position: absolute; left: -36px; top: 0; width: 12px; height: 12px; background: {% if forloop.first %}var(--primary){% else %}#e0e7ff{% endif %}; border-radius: 50%;"></div>
-                <div style="background: {% if forloop.first %}#f0f7ff{% else %}#f8f9fc{% endif %}; border-radius: 10px; padding: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                        <div style="font-weight: 600; color: {% if forloop.first %}var(--primary){% else %}var(--dark){% endif %};">{{ history.get_action_display }}</div>
-                        <div style="font-size: 0.85rem; color: var(--secondary);">{{ history.created_at|date:"M d, Y h:i A" }}</div>
-                    </div>
-                    <div style="font-size: 0.9rem; color: var(--dark);">
-                        {{ history.notes }}
-                        {% if history.field_name %}
-                        <br><small>Changed {{ history.field_name }} from "{{ history.old_value }}" to "{{ history.new_value }}"</small>
-                        {% endif %}
-                    </div>
-                    by 
-                        {% if history.user %}
-                            {{ history.user.get_full_name|default:history.user.username }}
-                        {% else %}
-                            System
-                        {% endif %}
-                </div>
-            </div>
-            {% empty %}
-            <p style="color: var(--secondary); text-align: center;">No timeline available</p>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="card col-span-1">
-        <h3 style="margin-bottom: 20px;">Quick Actions</h3>
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-            {% if purchase_order.status != 'approved' and purchase_order.status != 'cancelled' %}
-            <button onclick="updateStatus('approved')" style="padding: 12px; background: #d1fae5; color: #065f46; border-radius: 10px; border: none; cursor: pointer; text-align: left;">
-                <i class="fa-solid fa-check"></i> Mark as Approved
-            </button>
-            {% endif %}
-            
-            {% if purchase_order.status != 'shipped' and purchase_order.status != 'delivered' and purchase_order.status != 'cancelled' %}
-            <button onclick="updateStatus('shipped')" style="padding: 12px; background: #e0e7ff; color: var(--primary); border-radius: 10px; border: none; cursor: pointer; text-align: left;">
-                <i class="fa-solid fa-truck"></i> Update Shipping
-            </button>
-            {% endif %}
-            
-            {% if purchase_order.status != 'cancelled' and purchase_order.status != 'delivered' %}
-            <button onclick="updateStatus('cancelled')" style="padding: 12px; background: #fee2e2; color: var(--danger); border-radius: 10px; border: none; cursor: pointer; text-align: left;">
-                <i class="fa-solid fa-ban"></i> Cancel Order
-            </button>
-            {% endif %}
-            
-            <button style="padding: 12px; background: #e0e7ff; color: var(--primary); border-radius: 10px; border: none; cursor: pointer; text-align: left;">
-                <i class="fa-solid fa-file-invoice"></i> Generate Invoice
-            </button>
-            
-            <button style="padding: 12px; background: #e0e7ff; color: var(--primary); border-radius: 10px; border: none; cursor: pointer; text-align: left;">
-                <i class="fa-solid fa-envelope"></i> Email Supplier
-            </button>
-        </div>
-        
-        <div style="margin-top: 30px;">
-            <h4 style="margin-bottom: 15px;">Order Summary</h4>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--secondary);">Items</span>
-                    <span style="font-weight: 600;">{{ purchase_order.items.count }}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--secondary);">Total Units</span>
-                    <span style="font-weight: 600;">{{ purchase_order.items.aggregate.total_units|default:"0" }}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--secondary);">Days to Delivery</span>
-                    <span style="font-weight: 600; color: var(--primary);">{{ days_remaining|default:"5" }} days</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--secondary);">Order Age</span>
-                    <span style="font-weight: 600;">{{ order_age|default:"5" }} days</span>
-                </div>
-            </div>
-        </div>
-        
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-            <a href="{% url 'inventory_manager:supplier_detail' purchase_order.supplier.pk %}" style="display: block; text-align: center; padding: 10px; background: var(--light); color: var(--dark); border-radius: 10px; text-decoration: none;">
-                <i class="fa-solid fa-users"></i> View Supplier Details
-            </a>
-        </div>
-    </div>
 </div>
-
-<script>
-function updateStatus(status) {
-    if (!confirm(`Mark this order as ${status}?`)) return;
-    
-    fetch(`{% url 'inventory_manager:update_order_status' purchase_order.pk %}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: status })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Error updating status: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while updating status.');
-    });
-}
-</script>
 {% endblock %}

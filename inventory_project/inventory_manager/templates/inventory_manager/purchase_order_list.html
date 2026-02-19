@@ -1,80 +1,25 @@
 {% extends 'inventory_manager/base.html' %}
 {% load static %}
 
-{% block title %}Purchase Orders - DealDeck{% endblock %}
-
+{% block title %}Purchase Orders{% endblock %}
 {% block page_title %}Purchase Orders{% endblock %}
-{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
-
-{% block header_actions %}
-<div class="search-bar">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <input type="text" placeholder="Search purchase orders...">
-</div>
-{% endblock %}
 
 {% block content %}
-<div class="dashboard-grid" style="margin-bottom: 25px;">
-    <!-- Purchase Overview Cards -->
-    <div class="card stat-card col-span-1">
-        <div class="stat-header">
-            <div class="icon-box"><i class="fa-solid fa-file-invoice"></i></div>
-            <span class="badge success">+{{ total_orders_growth|default:"0.0" }}%</span>
-        </div>
-        <div>
-            <div class="stat-label">Total Orders</div>
-            <div class="stat-val">{{ total_orders|default:"0" }}</div>
-        </div>
-    </div>
 
-    <div class="card stat-card col-span-1">
-        <div class="stat-header">
-            <div class="icon-box"><i class="fa-solid fa-money-bill-wave"></i></div>
-            <span class="badge success">+{{ total_value_growth|default:"0.0" }}%</span>
-        </div>
+<div class="card" style="margin-bottom:25px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
-            <div class="stat-label">Total Value</div>
-            <div class="stat-val">${{ total_value|floatformat:1|default:"0.0" }}K</div>
+            <h3 style="margin-bottom:5px;">All Purchase Orders</h3>
+            <p style="color:var(--secondary); font-size:0.9rem;">
+                Total Orders: {{ purchase_orders|length }}
+            </p>
         </div>
-    </div>
 
-    <div class="card stat-card col-span-1">
-        <div class="stat-header">
-            <div class="icon-box"><i class="fa-solid fa-clock"></i></div>
-            <span class="badge warning">{{ pending_orders|default:"0" }}</span>
-        </div>
-        <div>
-            <div class="stat-label">Pending Orders</div>
-            <div class="stat-val">{{ pending_orders|default:"0" }}</div>
-        </div>
-    </div>
-
-    <div class="card stat-card col-span-1">
-        <div class="stat-header">
-            <div class="icon-box"><i class="fa-solid fa-truck"></i></div>
-            <span class="badge warning">{{ in_transit|default:"0" }}</span>
-        </div>
-        <div>
-            <div class="stat-label">In Transit</div>
-            <div class="stat-val">{{ in_transit|default:"0" }}</div>
-        </div>
-    </div>
-</div>
-
-<div class="card" style="margin-bottom: 25px;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <h3 style="margin-bottom: 5px;">All Purchase Orders</h3>
-            <p style="color: var(--secondary); font-size: 0.9rem;">Total: {{ total_orders|default:"0" }} orders | Pending: {{ pending_orders|default:"0" }} | Delivered: {{ delivered_orders|default:"0" }}</p>
-        </div>
-        <div>
-            <a href="{% url 'inventory_manager:purchase_order_create' %}" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
-                <i class="fa-solid fa-plus"></i> Create Purchase Order
-            </a>
-            <button style="padding: 10px 15px; background: var(--light); color: var(--dark); border-radius: 10px; border: none; margin-left: 10px; cursor: pointer;">
-                <i class="fa-solid fa-filter"></i> Filter
-            </button>
-        </div>
+        <a href="{% url 'inventory_manager:purchase_order_create' %}"
+           class="btn-primary"
+           style="display:inline-flex; align-items:center; gap:8px; text-decoration:none;">
+            <i class="fa-solid fa-plus"></i> Create Purchase Order
+        </a>
     </div>
 </div>
 
@@ -83,61 +28,81 @@
         <table>
             <thead>
                 <tr>
-                    <th>PO Number</th>
+                    <th>PO ID</th>
                     <th>Supplier</th>
                     <th>Order Date</th>
                     <th>Expected Delivery</th>
-                    <th>Items</th>
                     <th>Total Amount</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for po in purchase_orders %}
                 <tr>
-                    <td>
-                        <div style="font-weight: 600; color: var(--primary);">{{ po.order_number }}</div>
-                        <div style="font-size: 0.8rem; color: #888;">Created: {{ po.created_at|date:"M d, Y" }}</div>
+                    <td style="font-weight:600; color:var(--primary);">
+                        PO-{{ po.id }}
                     </td>
-                    <td>
-                        <div style="font-weight: 600;">{{ po.supplier.name }}</div>
-                        <div style="font-size: 0.8rem; color: #888;">Contact: {{ po.supplier.contact_person|default:"—" }}</div>
-                    </td>
+
+                    <td>{{ po.supplier.name }}</td>
+
                     <td>{{ po.order_date|date:"M d, Y" }}</td>
-                    <td>{{ po.expected_delivery|date:"M d, Y" }}</td>
+
                     <td>
-                        <div>{{ po.items.count }} items</div>
-                        <div style="font-size: 0.8rem; color: #888;">{{ po.items.first.product.name|truncatechars:20 }}</div>
+                        {% if po.expected_delivery %}
+                            {{ po.expected_delivery|date:"M d, Y" }}
+                        {% else %}
+                            —
+                        {% endif %}
                     </td>
+
                     <td>${{ po.total_amount|floatformat:2 }}</td>
-                    <td><span class="badge 
-                        {% if po.status == 'delivered' %}success
-                        {% elif po.status == 'pending' %}warning
-                        {% elif po.status == 'shipped' %}primary
-                        {% elif po.status == 'cancelled' %}danger
-                        {% else %}secondary{% endif %}">
-                        {{ po.get_status_display }}
-                    </span></td>
+
                     <td>
-                        <a href="{% url 'inventory_manager:purchase_order_detail' po.pk %}" class="action-btn" style="background: #e0e7ff; color: var(--primary); text-decoration: none;">
+                        <span class="badge
+                            {% if po.status == 'pending' %}warning
+                            {% elif po.status == 'delivered' %}success
+                            {% elif po.status == 'cancelled' %}danger
+                            {% else %}primary
+                            {% endif %}">
+                            {{ po.get_status_display }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <a href="{% url 'inventory_manager:purchase_order_detail' po.pk %}"
+                           class="action-btn"
+                           style="background:#e0e7ff; color:var(--primary); text-decoration:none;">
                             <i class="fa-solid fa-eye"></i>
                         </a>
-                        <a href="{% url 'inventory_manager:purchase_order_edit' po.pk %}" class="action-btn btn-edit" style="text-decoration: none;">
+
+                        <a href="{% url 'inventory_manager:purchase_order_edit' po.pk %}"
+                           class="action-btn btn-edit"
+                           style="text-decoration:none;">
                             <i class="fa-solid fa-pen"></i>
                         </a>
-                        <a href="{% url 'inventory_manager:purchase_order_delete' po.pk %}" class="action-btn btn-delete" style="text-decoration: none;">
+
+                        <a href="{% url 'inventory_manager:purchase_order_delete' po.pk %}"
+                           class="action-btn btn-delete"
+                           style="text-decoration:none;">
                             <i class="fa-solid fa-trash"></i>
                         </a>
                     </td>
                 </tr>
+
                 {% empty %}
                 <tr>
-                    <td colspan="8" style="text-align: center; padding: 40px;">
-                        <i class="fa-solid fa-file-invoice" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
-                        <h4 style="margin-bottom: 10px;">No Purchase Orders Found</h4>
-                        <p style="color: var(--secondary);">Create your first purchase order to get started.</p>
-                        <a href="{% url 'inventory_manager:purchase_order_create' %}" class="btn-primary" style="margin-top: 20px; display: inline-block; text-decoration: none;">
+                    <td colspan="7" style="text-align:center; padding:40px;">
+                        <i class="fa-solid fa-file-invoice"
+                           style="font-size:3rem; color:var(--secondary); margin-bottom:15px;"></i>
+                        <h4>No Purchase Orders Found</h4>
+                        <p style="color:var(--secondary);">
+                            Create your first purchase order to get started.
+                        </p>
+                        <a href="{% url 'inventory_manager:purchase_order_create' %}"
+                           class="btn-primary"
+                           style="margin-top:15px; display:inline-block; text-decoration:none;">
                             <i class="fa-solid fa-plus"></i> Create Purchase Order
                         </a>
                     </td>
@@ -146,107 +111,6 @@
             </tbody>
         </table>
     </div>
-    
-    {% if is_paginated %}
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-        <div style="color: var(--secondary); font-size: 0.85rem;">
-            Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }} purchase orders
-        </div>
-        <div style="display: flex; gap: 10px;">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">Previous</a>
-            {% endif %}
-            
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                    <span style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: var(--primary); color: white;">{{ num }}</span>
-                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <a href="?page={{ num }}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">{{ num }}</a>
-                {% endif %}
-            {% endfor %}
-            
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">Next</a>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
 </div>
 
-<div class="dashboard-grid" style="margin-top: 25px;">
-    <!-- Recent Activity -->
-    <div class="card col-span-2">
-        <div class="chart-header">
-            <h3>Recent Purchase Activity</h3>
-            <a href="#" style="color: var(--primary); font-size: 0.9rem; text-decoration: none;">View All</a>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
-            {% for activity in recent_activities %}
-            <div style="padding: 15px; background: #f8f9fc; border-radius: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <div style="font-weight: 600;">{{ activity.title }}</div>
-                    <span style="font-size: 0.85rem; color: var(--secondary);">{{ activity.time_ago }}</span>
-                </div>
-                <div style="font-size: 0.85rem; color: var(--secondary);">
-                    {{ activity.description }}
-                </div>
-            </div>
-            {% empty %}
-            <p style="color: var(--secondary); text-align: center;">No recent activity</p>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Purchase Statistics -->
-    <div class="card col-span-1">
-        <h3 style="margin-bottom: 20px;">Purchase Statistics</h3>
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-            <div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span style="font-size: 0.9rem;">This Month</span>
-                    <span style="font-weight: 600; color: var(--primary);">${{ this_month_spend|floatformat:0|default:"0" }}</span>
-                </div>
-                <div style="width: 100%; height: 6px; background: #eee; border-radius: 3px;">
-                    <div style="width: {{ this_month_percentage|default:"0" }}%; height: 100%; background: var(--primary); border-radius: 3px;"></div>
-                </div>
-            </div>
-            
-            <div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span style="font-size: 0.9rem;">Last Month</span>
-                    <span style="font-weight: 600; color: var(--primary);">${{ last_month_spend|floatformat:0|default:"0" }}</span>
-                </div>
-                <div style="width: 100%; height: 6px; background: #eee; border-radius: 3px;">
-                    <div style="width: {{ last_month_percentage|default:"0" }}%; height: 100%; background: var(--primary); border-radius: 3px;"></div>
-                </div>
-            </div>
-            
-            <div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span style="font-size: 0.9rem;">This Quarter</span>
-                    <span style="font-weight: 600; color: var(--primary);">${{ this_quarter_spend|floatformat:0|default:"0" }}</span>
-                </div>
-                <div style="width: 100%; height: 6px; background: #eee; border-radius: 3px;">
-                    <div style="width: {{ this_quarter_percentage|default:"0" }}%; height: 100%; background: var(--primary); border-radius: 3px;"></div>
-                </div>
-            </div>
-            
-            <div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span style="font-size: 0.9rem;">Total YTD</span>
-                    <span style="font-weight: 600; color: var(--primary);">${{ ytd_spend|floatformat:0|default:"0" }}</span>
-                </div>
-                <div style="width: 100%; height: 6px; background: #eee; border-radius: 3px;">
-                    <div style="width: {{ ytd_percentage|default:"0" }}%; height: 100%; background: var(--primary); border-radius: 3px;"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-            <a href="#" style="display: block; text-align: center; padding: 10px; background: var(--light); color: var(--dark); border-radius: 10px; text-decoration: none;">
-                <i class="fa-solid fa-chart-pie"></i> View Full Report
-            </a>
-        </div>
-    </div>
-</div>
 {% endblock %}
