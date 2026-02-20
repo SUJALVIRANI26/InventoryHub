@@ -2,154 +2,541 @@
 {% load static %}
 
 {% block title %}
-sales-order_form
+  {% if form.instance.pk %}Edit{% else %}Create{% endif %} Sales Order
 {% endblock title %}
 
 {% block link %}
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'sales/main.css' %}">
+  {{ block.super }}
+  <style>
+    /* Form styling */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #5a5c69;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #e3e6f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      background-color: white;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: #4e73df;
+      box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
+    }
+    
+    select.form-control {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 15px;
+      padding-right: 35px;
+    }
+    
+    textarea.form-control {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    input[type="date"].form-control {
+      min-height: 42px;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    
+    .full-width {
+      grid-column: span 2;
+    }
+    
+    .order-item-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 10px;
+      background: white;
+      border-radius: 8px;
+    }
+    
+    .item-total {
+      font-weight: 600;
+      color: #4e73df;
+      text-align: right;
+      padding: 0 10px;
+    }
+    
+    .remove-item {
+      color: #e74a3b;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 5px 10px;
+      border-radius: 4px;
+    }
+    
+    .remove-item:hover {
+      color: #c92127;
+      background-color: #fee2e2;
+    }
+    
+    .remove-item:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .remove-item:disabled:hover {
+      background-color: transparent;
+      color: #e74a3b;
+    }
+    
+    #add-item {
+      background: var(--light);
+      color: var(--primary);
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: 1px dashed var(--primary);
+      width: 100%;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+    }
+    
+    #add-item:hover {
+      background: #e8ecf4;
+    }
+    
+    .error {
+      color: #e74a3b;
+      font-size: 0.8rem;
+      margin-top: 3px;
+      display: block;
+    }
+    
+    .alert-danger {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #fecaca;
+    }
+    
+    .btn-secondary {
+      padding: 12px 30px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      color: var(--dark);
+      text-decoration: none;
+      display: inline-block;
+      background: white;
+    }
+    
+    .btn-secondary:hover {
+      background: #f8f9fc;
+    }
+    
+    .btn-primary {
+      padding: 12px 30px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    
+    .btn-primary:hover {
+      background: #2e59d9;
+    }
+  </style>
 {% endblock link %}
 
 {% block main-content %}
-   <div class="main-content">
-        <div class="header">
-            <div class="page-title">
-                <h2>Create Sales Order</h2>
-                <span>Process new customer order</span>
-            </div>
-            <div class="user-actions">
-                <div class="profile">
-                    <img src="https://ui-avatars.com/api/?name=John+S&background=random" alt="User">
-                    <div>
-                        <div style="font-weight: 600; font-size: 0.9rem;">John Sales</div>
-                        <div style="font-size: 0.75rem; color: #888;">Sales Executive</div>
-                    </div>
-                </div>
-            </div>
+<div class="main-content">
+    <div class="header">
+        <div class="page-title">
+            <h2>{% if form.instance.pk %}Edit{% else %}Create{% endif %} Sales Order</h2>
+            <span>Process new customer order</span>
         </div>
-
-        <div class="dashboard-grid">
-            <div class="card col-span-3">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                    <h3>New Sales Order</h3>
-                    <a href="{% url 'sales_order' %}" style="color: var(--secondary); font-size: 0.9rem;">
-                        <i class="fa-solid fa-arrow-left"></i> Back to Orders
-                    </a>
+        <div class="user-actions">
+            <div class="profile">
+                <img src="https://ui-avatars.com/api/?name=John+S&background=random" alt="User">
+                <div>
+                    <div style="font-weight: 600; font-size: 0.9rem;">John Sales</div>
+                    <div style="font-size: 0.75rem; color: #888;">Sales Executive</div>
                 </div>
-                
-                <form>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="customerSelect">Customer *</label>
-                            <select id="customerSelect" class="form-control" required>
-                                <option value="">Select Customer</option>
-                                <option value="1">James Wilson</option>
-                                <option value="2">Tech Solutions Inc.</option>
-                                <option value="3">Sarah Johnson</option>
-                                <option value="4">Global Retail</option>
-                                <option value="5">Mike Brown</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="orderDate">Order Date *</label>
-                            <input type="date" id="orderDate" class="form-control" value="2023-12-15" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="paymentMethod">Payment Method</label>
-                            <select id="paymentMethod" class="form-control">
-                                <option value="credit_card">Credit Card</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                                <option value="cash">Cash</option>
-                                <option value="paypal">PayPal</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="shippingMethod">Shipping Method</label>
-                            <select id="shippingMethod" class="form-control">
-                                <option value="standard">Standard Shipping</option>
-                                <option value="express">Express Shipping</option>
-                                <option value="pickup">Store Pickup</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <h4 style="margin: 30px 0 15px 0; color: var(--dark);">Order Items</h4>
-                    <div style="background: #f8f9fc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 15px; font-weight: 600; color: var(--secondary);">
-                            <div>Product</div>
-                            <div>Price</div>
-                            <div>Available Stock</div>
-                            <div>Quantity</div>
-                            <div>Action</div>
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 15px; padding: 10px; background: white; border-radius: 8px;">
-                            <select class="form-control" style="margin: 0;">
-                                <option value="">Select Product</option>
-                                <option value="1">Gaming Laptop Pro (12 in stock)</option>
-                                <option value="2">Wireless Mouse (50 in stock)</option>
-                                <option value="3">Laptop Bag (24 in stock)</option>
-                                <option value="4" style="color: var(--danger);">Office Chair (0 in stock)</option>
-                            </select>
-                            <input type="number" class="form-control" placeholder="0.00" step="0.01" value="1200.00">
-                            <div style="padding: 10px; background: #e7f5ff; border-radius: 5px; text-align: center;">12</div>
-                            <input type="number" class="form-control" value="1" min="1" max="12">
-                            <button type="button" style="color: var(--danger); background: none; border: none; cursor: pointer;">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                        
-                        <button type="button" style="background: var(--light); color: var(--primary); padding: 10px 20px; border-radius: 8px; border: 1px dashed var(--primary); width: 100%; cursor: pointer;">
-                            <i class="fa-solid fa-plus"></i> Add Another Item
-                        </button>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
-                        <div>
-                            <h4 style="margin-bottom: 15px; color: var(--dark);">Order Notes</h4>
-                            <textarea class="form-control" rows="4" placeholder="Add any special instructions or notes for this order..."></textarea>
-                        </div>
-                        
-                        <div>
-                            <h4 style="margin-bottom: 15px; color: var(--dark);">Order Summary</h4>
-                            <div style="background: #f8f9fc; padding: 20px; border-radius: 10px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <span>Subtotal:</span>
-                                    <span>$1,200.00</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <span>Tax (8%):</span>
-                                    <span>$96.00</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <span>Shipping:</span>
-                                    <span>$24.80</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 700; font-size: 1.1rem; padding-top: 10px; border-top: 2px solid #ddd;">
-                                    <span>Total:</span>
-                                    <span>$1,320.80</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;">
-                        <a href="{% url 'sales_order' %}" style="padding: 12px 30px; border: 1px solid #ddd; border-radius: 10px; color: var(--dark);">
-                            Cancel
-                        </a>
-                        <button type="submit" class="btn-primary">
-                            <i class="fa-solid fa-check"></i> Create Order & Update Stock
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
+
+    <div class="dashboard-grid">
+        <div class="card col-span-3">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h3>{% if form.instance.pk %}Edit{% else %}New{% endif %} Sales Order</h3>
+                <a href="{% url 'sales_order' %}" style="color: var(--secondary); font-size: 0.9rem;">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Orders
+                </a>
+            </div>
+            
+            <form method="post" id="orderForm">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.customer.id_for_label }}">Customer *</label>
+                        {{ form.customer }}
+                        {% if form.customer.errors %}
+                        <small class="error">{{ form.customer.errors }}</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.order_date.id_for_label }}">Order Date *</label>
+                        {{ form.order_date }}
+                        {% if form.order_date.errors %}
+                        <small class="error">{{ form.order_date.errors }}</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.payment_method.id_for_label }}">Payment Method</label>
+                        {{ form.payment_method }}
+                        {% if form.payment_method.errors %}
+                        <small class="error">{{ form.payment_method.errors }}</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.shipping_method.id_for_label }}">Shipping Method</label>
+                        {{ form.shipping_method }}
+                        {% if form.shipping_method.errors %}
+                        <small class="error">{{ form.shipping_method.errors }}</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.shipping_cost.id_for_label }}">Shipping Cost ($)</label>
+                        {{ form.shipping_cost }}
+                        {% if form.shipping_cost.errors %}
+                        <small class="error">{{ form.shipping_cost.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="{{ form.notes.id_for_label }}">Order Notes</label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                    <small class="error">{{ form.notes.errors }}</small>
+                    {% endif %}
+                </div>
+                
+                <h4 style="margin: 30px 0 15px 0; color: var(--dark);">Order Items</h4>
+                
+                {{ formset.management_form }}
+                
+                <div id="order-items-container">
+                    <div style="background: #f8f9fc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 15px; font-weight: 600; color: var(--secondary);">
+                            <div>Product</div>
+                            <div>Price ($)</div>
+                            <div>Quantity</div>
+                            <div>Total</div>
+                            <div>Action</div>
+                        </div>
+                        
+                        {% for item_form in formset %}
+                        <div class="order-item-row">
+                            {{ item_form.id }}
+                            <div>
+                                {{ item_form.product }}
+                                {% if item_form.product.errors %}
+                                <small class="error">{{ item_form.product.errors }}</small>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {{ item_form.unit_price }}
+                                {% if item_form.unit_price.errors %}
+                                <small class="error">{{ item_form.unit_price.errors }}</small>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {{ item_form.quantity }}
+                                {% if item_form.quantity.errors %}
+                                <small class="error">{{ item_form.quantity.errors }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="item-total">$0.00</div>
+                            <div>
+                                <button type="button" class="remove-item" {% if forloop.first and formset.forms|length == 1 %}disabled{% endif %}>
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <button type="button" id="add-item">
+                    <i class="fa-solid fa-plus"></i> Add Another Item
+                </button>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
+                    <div>
+                        <!-- Empty for spacing -->
+                    </div>
+                    
+                    <div>
+                        <h4 style="margin-bottom: 15px; color: var(--dark);">Order Summary</h4>
+                        <div style="background: #f8f9fc; padding: 20px; border-radius: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Subtotal:</span>
+                                <span id="summary-subtotal">$0.00</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Tax (8%):</span>
+                                <span id="summary-tax">$0.00</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Shipping:</span>
+                                <span id="summary-shipping">$0.00</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 700; font-size: 1.1rem; padding-top: 10px; border-top: 2px solid #ddd;">
+                                <span>Total:</span>
+                                <span id="summary-total">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;">
+                    <a href="{% url 'sales_order' %}" class="btn-secondary">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-check"></i> {% if form.instance.pk %}Update{% else %}Create{% endif %} Order
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Empty item template for JavaScript -->
+<div id="empty-item-template" style="display: none;">
+    <div class="order-item-row">
+        {{ formset.empty_form.product }}
+        {{ formset.empty_form.unit_price }}
+        {{ formset.empty_form.quantity }}
+        <div class="item-total">$0.00</div>
+        <div>
+            <button type="button" class="remove-item">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock main-content %}
 
 {% block linkJs %}
-  <script src="{% static 'sales/main.js' %}"></script>
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add form-control class to all input, select, and textarea elements
+        const formControls = document.querySelectorAll('input, select, textarea');
+        formControls.forEach(function(element) {
+            if (!element.classList.contains('form-control') && 
+                element.type !== 'hidden' && 
+                !element.classList.contains('remove-item')) {
+                element.classList.add('form-control');
+            }
+        });
+        
+        // Set default values for number inputs
+        document.querySelectorAll('input[type="number"]').forEach(function(input) {
+            if (!input.value) {
+                if (input.name.includes('unit_price')) {
+                    input.value = '0.00';
+                } else if (input.name.includes('quantity')) {
+                    input.value = '1';
+                } else if (input.name.includes('shipping_cost')) {
+                    input.value = '0.00';
+                }
+            }
+        });
+        
+        // Set default date to today if empty
+        const dateInput = document.querySelector('input[type="date"]');
+        if (dateInput && !dateInput.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            dateInput.value = yyyy + '-' + mm + '-' + dd;
+        }
+        
+        const container = document.getElementById('order-items-container');
+        const addButton = document.getElementById('add-item');
+        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+        const emptyTemplate = document.getElementById('empty-item-template').innerHTML;
+        
+        // Function to update remove buttons state
+        function updateRemoveButtons() {
+            const rows = document.querySelectorAll('.order-item-row');
+            const removeButtons = document.querySelectorAll('.remove-item');
+            
+            removeButtons.forEach((button, index) => {
+                if (rows.length === 1) {
+                    button.disabled = true;
+                } else {
+                    button.disabled = false;
+                    
+                    // Remove existing event listener and add new one
+                    button.removeEventListener('click', removeHandler);
+                    button.addEventListener('click', removeHandler);
+                }
+            });
+        }
+        
+        // Remove item handler
+        function removeHandler(e) {
+            e.preventDefault();
+            const row = e.target.closest('.order-item-row');
+            const rows = document.querySelectorAll('.order-item-row');
+            
+            if (rows.length > 1) {
+                row.remove();
+                const forms = document.querySelectorAll('.order-item-row');
+                totalForms.value = forms.length;
+                updateRemoveButtons();
+                calculateTotals();
+            }
+        }
+        
+        // Add new item row
+        addButton.addEventListener('click', function() {
+            const formCount = parseInt(totalForms.value);
+            let newRowHtml = emptyTemplate.replace(/__prefix__/g, formCount);
+            
+            // Create a temporary div to parse the HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = newRowHtml;
+            const newRow = tempDiv.firstElementChild;
+            
+            // Add form-control class to new row elements
+            newRow.querySelectorAll('input, select').forEach(el => {
+                el.classList.add('form-control');
+            });
+            
+            // Set default values
+            const priceInput = newRow.querySelector('[name$="unit_price"]');
+            const qtyInput = newRow.querySelector('[name$="quantity"]');
+            if (priceInput) priceInput.value = '0.00';
+            if (qtyInput) qtyInput.value = '1';
+            
+            // Add to container
+            const lastRow = container.querySelector('.order-item-row:last-child');
+            if (lastRow) {
+                lastRow.after(newRow);
+            } else {
+                container.querySelector('div[style*="background: #f8f9fc"]').appendChild(newRow);
+            }
+            
+            totalForms.value = formCount + 1;
+            updateRemoveButtons();
+            attachItemEvents(newRow);
+            calculateTotals();
+        });
+        
+        // Calculate totals for a specific row
+        function calculateRowTotal(row) {
+            const priceInput = row.querySelector('[name$="unit_price"]');
+            const qtyInput = row.querySelector('[name$="quantity"]');
+            
+            const price = parseFloat(priceInput.value) || 0;
+            const qty = parseInt(qtyInput.value) || 0;
+            const total = price * qty;
+            
+            const totalDiv = row.querySelector('.item-total');
+            if (totalDiv) {
+                totalDiv.textContent = '$' + total.toFixed(2);
+            }
+            
+            return total;
+        }
+        
+        // Calculate all totals
+        function calculateTotals() {
+            let subtotal = 0;
+            
+            document.querySelectorAll('.order-item-row').forEach(row => {
+                subtotal += calculateRowTotal(row);
+            });
+            
+            const shippingInput = document.querySelector('[name="shipping_cost"]');
+            const shipping = parseFloat(shippingInput.value) || 0;
+            const tax = subtotal * 0.08; // 8% tax rate
+            
+            document.getElementById('summary-subtotal').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('summary-tax').textContent = '$' + tax.toFixed(2);
+            document.getElementById('summary-shipping').textContent = '$' + shipping.toFixed(2);
+            document.getElementById('summary-total').textContent = '$' + (subtotal + tax + shipping).toFixed(2);
+        }
+        
+        // Attach events to a specific row
+        function attachItemEvents(row) {
+            const priceInput = row.querySelector('[name$="unit_price"]');
+            const qtyInput = row.querySelector('[name$="quantity"]');
+            
+            if (priceInput) {
+                priceInput.addEventListener('input', calculateTotals);
+            }
+            if (qtyInput) {
+                qtyInput.addEventListener('input', calculateTotals);
+            }
+        }
+        
+        // Attach events to all existing rows
+        document.querySelectorAll('.order-item-row').forEach(row => {
+            attachItemEvents(row);
+        });
+        
+        // Attach shipping cost event
+        const shippingInput = document.querySelector('[name="shipping_cost"]');
+        if (shippingInput) {
+            shippingInput.addEventListener('input', calculateTotals);
+        }
+        
+        // Initial setup
+        updateRemoveButtons();
+        calculateTotals();
+    });
+</script>
 {% endblock linkJs %}
