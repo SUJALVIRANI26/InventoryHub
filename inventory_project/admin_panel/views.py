@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .models import UserProfile
-
+from django.contrib.auth import logout
 
 @login_required
 def user_list(request):
@@ -38,7 +38,7 @@ def add_user(request):
 
             return redirect('user_list')
 
-    return render(request, 'admin_panel/user_add.html')
+    return render(request, 'admin_panel/add_user.html')
 
 
 @login_required
@@ -57,7 +57,7 @@ def edit_user(request, user_id):
 
         return redirect('user_list')
 
-    return render(request, 'admin_panel/user_edit.html', {
+    return render(request, 'admin_panel/edit_user.html', {
         'user_obj': user,
         'profile': profile
     })
@@ -68,3 +68,4 @@ def delete_user(request, user_id):
     user = get_object_or_404(User, id=user_id)
     user.delete()
     return redirect('user_list')
+
