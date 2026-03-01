@@ -1,316 +1,192 @@
 {% extends "sales/base.html" %}
-
 {% load static %}
 
 {% block title %}
-  customer
+  Customers
 {% endblock title %}
 
 {% block link %}
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'sales/main.css' %}">
-    <style>
-        /* Enhanced Action Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        
-        .action-btn {
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s;
-            border: 1px solid transparent;
-        }
-        
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
-        .btn-edit {
-            background: #e0e7ff;
-            color: #4e73df;
-            border-color: #d1d9ff;
-        }
-        
-        .btn-view-orders {
-            background: #e0f2fe;
-            color: #0369a1;
-            border-color: #bae6fd;
-        }
-        
-        .btn-pagination {
-            padding: 8px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: white;
-            color: var(--dark);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .btn-pagination:hover {
-            background: #f8f9fc;
-        }
-        
-        .btn-pagination.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-        
-        /* Customer avatar improvements */
-        .customer-avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #f3f4f6;
-        }
-        
-        /* Table improvements */
-        table tbody tr:hover {
-            background-color: #f8f9fc;
-        }
-        
-        .stat-card {
-            padding: 15px;
-            border-radius: 12px;
-            background: #f8f9fc;
-            margin-bottom: 10px;
-        }
-        
-        .stat-card-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--dark);
-            margin: 5px 0;
-        }
-        
-        .stat-card-label {
-            font-size: 0.85rem;
-            color: var(--secondary);
-        }
-    </style>
+  {{ block.super }}
+  <style>
+    /* Customer avatar improvements */
+    .customer-avatar {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--light);
+    }
+  </style>
 {% endblock link %}
 
 {% block main-content %}
-  <div class="main-content">
-        <div class="header">
-            <div class="page-title">
-                <h2>Customers</h2>
-                <span>Manage customer information</span>
-            </div>
-            <div class="user-actions">
-                <div class="search-bar">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Search customers...">
-                </div>
-                <!-- <button class="btn-primary" style="padding: 10px 20px; font-size: 0.9rem;">
-                    <i class="fa-solid fa-plus"></i> Add Customer
-                </button> -->
-                <a href="{%url 'customer_form' %}" class="btn-primary" style="padding: 10px 20px; font-size: 0.9rem;">
-                    <i class="fa-solid fa-plus"></i> Add Customer
-                </a>
-                <div class="profile">
-                    <img src="https://ui-avatars.com/api/?name=John+S&background=random" alt="User">
-                    <div>
-                        <div style="font-weight: 600; font-size: 0.9rem;">John Sales</div>
-                        <div style="font-size: 0.75rem; color: #888;">Sales Executive</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="dashboard-grid">
-            <div class="card col-span-3">
-                <div class="chart-header">
-                    <h3>Customer Directory</h3>
-                    <select style="border:none; color:#888; background: #f8f9fc; padding: 8px 15px; border-radius: 8px;">
-                        <option>All Customers</option>
-                        <option>Active</option>
-                        <option>Inactive</option>
-                    </select>
-                </div>
-                
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Customer ID</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Total Orders</th>
-                                <th>Total Spent</th>
-                                <th>Last Order</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>CUST-001</strong></td>
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <img src="https://ui-avatars.com/api/?name=James+Wilson&background=4e73df&color=fff&size=35" class="customer-avatar">
-                                        <span>James Wilson</span>
-                                    </div>
-                                </td>
-                                <td>james@example.com</td>
-                                <td>(555) 123-4567</td>
-                                <td><strong>8 orders</strong></td>
-                                <td><strong>$12,450.00</strong></td>
-                                <td>Dec 15, 2023</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="#" class="action-btn btn-edit">
-                                            <i class="fa-solid fa-edit"></i> Edit
-                                        </a>
-                                        <a href="#" class="action-btn btn-view-orders">
-                                            <i class="fa-solid fa-eye"></i> View Orders
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>CUST-002</strong></td>
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <img src="https://ui-avatars.com/api/?name=Sarah+Johnson&background=1cc88a&color=fff&size=35" class="customer-avatar">
-                                        <span>Sarah Johnson</span>
-                                    </div>
-                                </td>
-                                <td>sarah@example.com</td>
-                                <td>(555) 987-6543</td>
-                                <td><strong>5 orders</strong></td>
-                                <td><strong>$8,230.00</strong></td>
-                                <td>Dec 13, 2023</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="#" class="action-btn btn-edit">
-                                            <i class="fa-solid fa-edit"></i> Edit
-                                        </a>
-                                        <a href="#" class="action-btn btn-view-orders">
-                                            <i class="fa-solid fa-eye"></i> View Orders
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>CUST-003</strong></td>
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <img src="https://ui-avatars.com/api/?name=Mike+Brown&background=e74a3b&color=fff&size=35" class="customer-avatar">
-                                        <span>Mike Brown</span>
-                                    </div>
-                                </td>
-                                <td>mike@example.com</td>
-                                <td>(555) 456-7890</td>
-                                <td><strong>3 orders</strong></td>
-                                <td><strong>$3,120.00</strong></td>
-                                <td>Dec 10, 2023</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="#" class="action-btn btn-edit">
-                                            <i class="fa-solid fa-edit"></i> Edit
-                                        </a>
-                                        <a href="#" class="action-btn btn-view-orders">
-                                            <i class="fa-solid fa-eye"></i> View Orders
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>CUST-004</strong></td>
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <img src="https://ui-avatars.com/api/?name=Tech+Solutions&background=5a5c69&color=fff&size=35" class="customer-avatar">
-                                        <span>Tech Solutions Inc.</span>
-                                    </div>
-                                </td>
-                                <td>sales@techsolutions.com</td>
-                                <td>(555) 111-2222</td>
-                                <td><strong>12 orders</strong></td>
-                                <td><strong>$45,670.00</strong></td>
-                                <td>Dec 14, 2023</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="#" class="action-btn btn-edit">
-                                            <i class="fa-solid fa-edit"></i> Edit
-                                        </a>
-                                        <a href="#" class="action-btn btn-view-orders">
-                                            <i class="fa-solid fa-eye"></i> View Orders
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>CUST-005</strong></td>
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <img src="https://ui-avatars.com/api/?name=Global+Retail&background=f6c23e&color=000&size=35" class="customer-avatar">
-                                        <span>Global Retail</span>
-                                    </div>
-                                </td>
-                                <td>orders@globalretail.com</td>
-                                <td>(555) 333-4444</td>
-                                <td><strong>15 orders</strong></td>
-                                <td><strong>$67,890.00</strong></td>
-                                <td>Dec 12, 2023</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="#" class="action-btn btn-edit">
-                                            <i class="fa-solid fa-edit"></i> Edit
-                                        </a>
-                                        <a href="#" class="action-btn btn-view-orders">
-                                            <i class="fa-solid fa-eye"></i> View Orders
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="card col-span-1">
-                <div class="chart-header">
-                    <h3>Customer Stats</h3>
-                </div>
-                <div style="margin-top: 15px;">
-                    <div class="stat-card">
-                        <div class="stat-card-label">Total Customers</div>
-                        <div class="stat-card-value">248</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-card-label">New This Month</div>
-                        <div class="stat-card-value">24</div>
-                        <span class="badge success" style="margin-top: 5px;">+12%</span>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-card-label">Active Customers</div>
-                        <div class="stat-card-value">198</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-card-label">Avg. Order Value</div>
-                        <div class="stat-card-value">$1,245</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="main-content">
+  <div class="header">
+    <div class="page-title">
+      <h2>Customers</h2>
+      <span>Manage customer information</span>
     </div>
+    <div class="user-actions">
+      <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Search customers..." id="customerSearch">
+      </div>
+      <a href="{% url 'customer_form' %}" class="btn-primary" style="padding: 10px 20px; font-size: 0.9rem;">
+        <i class="fa-solid fa-plus"></i> Add Customer
+      </a>
+      <div class="profile">
+        <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=random" alt="User">
+        <div>
+          <div style="font-weight: 600; font-size: 0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
+          <div style="font-size: 0.75rem; color: #888;">{% if request.user.is_staff %}Admin{% else %}Sales Executive{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="card col-span-3">
+      <div class="chart-header">
+        <h3>Customer Directory</h3>
+        <select id="statusFilter" style="border:none; color:#888; background: #f8f9fc; padding: 8px 15px; border-radius: 8px;" onchange="filterByStatus()">
+          <option value="">All Customers</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      
+      <div class="table-container">
+        <table id="customerTable">
+          <thead>
+            <tr>
+              <th>Customer ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Total Orders</th>
+              <th>Total Spent</th>
+              <th>Last Order</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for customer in customers %}
+            <tr data-status="{{ customer.status }}">
+              <td><strong>CUST-{{ customer.id|stringformat:"03d" }}</strong></td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="https://ui-avatars.com/api/?name={{ customer.name|urlencode }}&background=4e73df&color=fff&size=35" class="customer-avatar">
+                  <span>{{ customer.name }}</span>
+                </div>
+              </td>
+              <td>{{ customer.email }}</td>
+              <td>{{ customer.phone|default:"N/A" }}</td>
+              <td><strong>{{ customer.total_orders }} order{{ customer.total_orders|pluralize }}</strong></td>
+              <td><strong>${{ customer.total_spent|floatformat:2 }}</strong></td>
+              <td>{{ customer.last_order_date|date:"M d, Y"|default:"No orders" }}</td>
+              <td>
+                <div class="action-buttons">
+                  <a href="{% url 'customer_edit' customer.pk %}" class="action-btn btn-edit">
+                    <i class="fa-solid fa-edit"></i> Edit
+                  </a>
+                  <a href="{% url 'sales_order' %}?customer={{ customer.pk }}" class="action-btn btn-view-orders">
+                    <i class="fa-solid fa-eye"></i> View Orders
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 30px;">
+                No customers found. <a href="{% url 'customer_form' %}">Add your first customer</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      {% if customers.has_other_pages %}
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+        <div style="color: var(--secondary); font-size: 0.85rem;">
+          Showing {{ customers.start_index }} to {{ customers.end_index }} of {{ customers.paginator.count }} customers
+        </div>
+        <div style="display: flex; gap: 10px;">
+          {% if customers.has_previous %}
+          <a href="?page={{ customers.previous_page_number }}" class="btn-pagination">
+            <i class="fa-solid fa-chevron-left"></i> Previous
+          </a>
+          {% endif %}
+          
+          {% if customers.has_next %}
+          <a href="?page={{ customers.next_page_number }}" class="btn-pagination">
+            Next <i class="fa-solid fa-chevron-right"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    
+    <div class="card col-span-1">
+      <div class="chart-header">
+        <h3>Customer Stats</h3>
+      </div>
+      <div style="margin-top: 15px;">
+        <div class="stat-card-alt">
+          <div class="stat-card-label">Total Customers</div>
+          <div class="stat-card-value">{{ total_customers|default:customers|length }}</div>
+        </div>
+        
+        <div class="stat-card-alt">
+          <div class="stat-card-label">New This Month</div>
+          <div class="stat-card-value">{{ new_customers_this_month|default:"0" }}</div>
+          {% if customer_growth_rate %}
+          <span class="badge success" style="margin-top: 5px;">+{{ customer_growth_rate }}%</span>
+          {% endif %}
+        </div>
+        
+        <div class="stat-card-alt">
+          <div class="stat-card-label">Active Customers</div>
+          <div class="stat-card-value">{{ active_customers|default:"0" }}</div>
+        </div>
+        
+        <div class="stat-card-alt">
+          <div class="stat-card-label">Avg. Order Value</div>
+          <div class="stat-card-value">${{ avg_order_value|floatformat:2|default:"0.00" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function filterByStatus() {
+    const status = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('#customerTable tbody tr');
+    
+    rows.forEach(row => {
+      if (!status || row.dataset.status === status) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+  
+  document.getElementById('customerSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#customerTable tbody tr');
+    
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+  });
+</script>
 {% endblock main-content %}
-{% block linkjs %}
-    <script src="{% static 'sales/main.js' %} "></script>
-{% endblock linkjs %}
+
+{% block linkJs %}
+  {{ block.super }}
+{% endblock linkJs %}

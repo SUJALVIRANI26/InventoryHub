@@ -1,127 +1,121 @@
 {% extends 'inventory_manager/base.html' %}
-{% load static %}
-
 {% block title %}Products - DealDeck{% endblock %}
-
 {% block page_title %}Products{% endblock %}
-{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
 
 {% block header_actions %}
-<div class="search-bar">
-    <i class="fa-solid fa-magnifying-glass"></i>
-    <input type="text" placeholder="Search products...">
-</div>
+<a href="{% url 'inventory_manager:product_add' %}" class="btn-primary">
+    <i class="fa-solid fa-plus"></i> Add Product
+</a>
 {% endblock %}
 
 {% block content %}
-<div class="card" style="margin-bottom: 25px;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+
+<div class="card">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <div>
-            <h3 style="margin-bottom: 5px;">All Products</h3>
-            <p style="color: var(--secondary); font-size: 0.9rem;">Total: {{ total_products }} products</p>
-        </div>
-        <div>
-            <a href="{% url 'inventory_manager:product_add' %}" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-plus"></i> Add Product
-            </a>
-            
-            <!-- ✅ CHANGED: Direct download link -->
-            <a href="{% url 'inventory_manager:export_product_template' %}" class="action-btn" style="background: var(--light); color: var(--dark); padding: 10px 15px; margin-left: 10px;" download>
-                <i class="fa-solid fa-download"></i> Download Template
-            </a>
+            <h3>All Products</h3>
+            <p style="color:var(--secondary);font-size:0.9rem;">
+                Total: {{ products|length }} products
+            </p>
         </div>
     </div>
-</div>
 
-<!-- Rest of your product list table remains the same -->
-<div class="card col-span-3">
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 50px;">#</th>
-                    <th>Product Name</th>
+                    <th>#</th>
+                    <th>Product</th>
                     <th>Category</th>
                     <th>SKU</th>
                     <th>Price</th>
                     <th>Stock</th>
+                    <th>Min Stock</th>
+                    <th>Supplier</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
+
             <tbody>
                 {% for product in products %}
                 <tr>
+
                     <td>{{ forloop.counter }}</td>
+
                     <td>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div>
-                                <div style="font-weight: 600;">{{ product.name }}</div>
-                                <div style="font-size: 0.8rem; color: #888;">{{ product.category.name }}</div>
-                            </div>
+                        <div style="font-weight:600;">
+                            {{ product.name }}
                         </div>
                     </td>
-                    <td>{{ product.category.name }}</td>
+
+                    <td>{{ product.category.name|default:"—" }}</td>
+
                     <td>{{ product.sku }}</td>
-                    <td>${{ product.price }}</td>
+
+                    <td>${{ product.price|floatformat:2 }}</td>
+
                     <td>
-                        {{ product.quantity }}
-                        <span style="color: {% if product.stock_status == 'in_stock' %}var(--success){% elif product.stock_status == 'low_stock' %}var(--warning){% else %}var(--danger){% endif %};">
-                            {{ product.get_stock_status_display }}
-                        </span>
+                        {% if product.quantity <= product.minimum_stock %}
+                            <span class="badge danger">
+                                {{ product.quantity }}
+                            </span>
+                        {% else %}
+                            <span class="badge success">
+                                {{ product.quantity }}
+                            </span>
+                        {% endif %}
                     </td>
-                    <td><span class="badge {% if product.status == 'active' %}success{% else %}danger{% endif %}">{{ product.get_status_display }}</span></td>
+
+                    <td>{{ product.minimum_stock }}</td>
+
+                    <td>{{ product.supplier.name|default:"—" }}</td>
+
                     <td>
-                        <a href="{% url 'inventory_manager:product_detail' product.pk %}" class="action-btn" style="background: #e0e7ff; color: var(--primary);">
+                        {% if product.quantity <= product.minimum_stock %}
+                            <span class="badge warning">Low Stock</span>
+                        {% else %}
+                            <span class="badge success">Available</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <a href="{% url 'inventory_manager:product_detail' product.pk %}"
+                           class="action-btn"
+                           style="background:#e0e7ff;color:var(--primary);">
                             <i class="fa-solid fa-eye"></i>
                         </a>
-                        <a href="{% url 'inventory_manager:product_edit' product.pk %}" class="action-btn btn-edit">
+
+                        <a href="{% url 'inventory_manager:product_edit' product.pk %}"
+                           class="action-btn btn-edit">
                             <i class="fa-solid fa-pen"></i>
                         </a>
-                        <a href="{% url 'inventory_manager:product_delete' product.pk %}" class="action-btn btn-delete">
+
+                        <a href="{% url 'inventory_manager:product_delete' product.pk %}"
+                           class="action-btn btn-delete">
                             <i class="fa-solid fa-trash"></i>
                         </a>
                     </td>
+
                 </tr>
+
                 {% empty %}
                 <tr>
-                    <td colspan="8" style="text-align: center; padding: 40px;">
-                        <i class="fa-solid fa-box-open" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
-                        <h4 style="margin-bottom: 10px;">No Products Found</h4>
-                        <p style="color: var(--secondary);">Get started by adding your first product.</p>
-                        <a href="{% url 'inventory_manager:product_add' %}" class="btn-primary" style="margin-top: 20px; display: inline-block;">
-                            <i class="fa-solid fa-plus"></i> Add Product
-                        </a>
+                    <td colspan="10" style="text-align:center;padding:40px;">
+                        <i class="fa-solid fa-box-open"
+                           style="font-size:2.5rem;color:var(--secondary);margin-bottom:10px;"></i>
+                        <h4>No Products Found</h4>
+                        <p style="color:var(--secondary);">
+                            Add your first product to get started.
+                        </p>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    
-    {% if is_paginated %}
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-        <div style="color: var(--secondary); font-size: 0.85rem;">
-            Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }} products
-        </div>
-        <div style="display: flex; gap: 10px;">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">Previous</a>
-            {% endif %}
-            
-            {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                    <span style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: var(--primary); color: white;">{{ num }}</span>
-                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                    <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">{{ num }}</a>
-                {% endif %}
-            {% endfor %}
-            
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">Next</a>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
+
 </div>
+
 {% endblock %}

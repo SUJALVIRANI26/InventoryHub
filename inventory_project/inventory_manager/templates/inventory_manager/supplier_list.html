@@ -2,270 +2,177 @@
 {% load static %}
 
 {% block title %}Suppliers - DealDeck{% endblock %}
-
 {% block page_title %}Suppliers{% endblock %}
-{% block current_date %}{{ current_date|date:"l, F jS Y" }}{% endblock %}
 
 {% block header_actions %}
 <div class="search-bar">
     <i class="fa-solid fa-magnifying-glass"></i>
-    <input type="text" placeholder="Search suppliers..." id="search-input">
+    <input type="text"
+           placeholder="Search suppliers..."
+           id="search-input"
+           value="{{ request.GET.search|default:'' }}">
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-grid" style="margin-bottom: 25px;">
-    <!-- Supplier Overview Cards -->
+
+<!-- ================= OVERVIEW ================= -->
+<div class="dashboard-grid" style="margin-bottom:25px;">
+
     <div class="card stat-card col-span-1">
-        <div class="stat-header">
-            <div class="icon-box"><i class="fa-solid fa-users"></i></div>
-            <span class="badge success">+{{ supplier_growth|default:"0" }}%</span>
-        </div>
-        <div>
-            <div class="stat-label">Total Suppliers</div>
-            <div class="stat-val">{{ total_suppliers|default:"0" }}</div>
-        </div>
+        <div class="stat-label">Total Suppliers</div>
+        <div class="stat-val">{{ total_suppliers }}</div>
     </div>
 
     <div class="card stat-card col-span-1">
-        <div class="stat-header">
-            <div class="icon-box"><i class="fa-solid fa-star"></i></div>
-            <span class="badge success">{{ avg_rating|default:"0.0" }}</span>
-        </div>
-        <div>
-            <div class="stat-label">Avg. Rating</div>
-            <div class="stat-val">{{ avg_rating|default:"0.0" }}/5.0</div>
-        </div>
+        <div class="stat-label">Active Suppliers</div>
+        <div class="stat-val">{{ active_suppliers }}</div>
     </div>
 
     <div class="card stat-card col-span-1">
-        <div class="stat-header">
-            <div class="icon-box"><i class="fa-solid fa-cart-shopping"></i></div>
-            <span class="badge success">+{{ active_orders_growth|default:"0.0" }}%</span>
-        </div>
-        <div>
-            <div class="stat-label">Active Orders</div>
-            <div class="stat-val">{{ active_orders|default:"0" }}</div>
-        </div>
+        <div class="stat-label">Inactive Suppliers</div>
+        <div class="stat-val">{{ inactive_suppliers }}</div>
     </div>
 
     <div class="card stat-card col-span-1">
-        <div class="stat-header">
-            <div class="icon-box"><i class="fa-solid fa-money-bill-wave"></i></div>
-            <span class="badge warning">${{ total_spend|floatformat:1|default:"0.0" }}K</span>
-        </div>
-        <div>
-            <div class="stat-label">Total Spend</div>
-            <div class="stat-val">${{ total_spend|floatformat:1|default:"0.0" }}K</div>
-        </div>
+        <div class="stat-label">Total Spend</div>
+        <div class="stat-val">${{ total_spend|floatformat:1 }}K</div>
+    </div>
+
+</div>
+
+<!-- ================= HEADER ================= -->
+<div class="card" style="margin-bottom:25px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>All Suppliers</h3>
+
+        <a href="{% url 'inventory_manager:supplier_add' %}"
+           class="btn-primary"
+           style="text-decoration:none;">
+            <i class="fa-solid fa-plus"></i> Add Supplier
+        </a>
     </div>
 </div>
 
-<div class="card" style="margin-bottom: 25px;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <h3 style="margin-bottom: 5px;">All Suppliers</h3>
-            <p style="color: var(--secondary); font-size: 0.9rem;">
-                Total: {{ total_suppliers|default:"0" }} suppliers | 
-                Active: {{ active_suppliers|default:"0" }} | 
-                Inactive: {{ inactive_suppliers|default:"0" }}
-            </p>
-        </div>
-        <div>
-            <a href="{% url 'inventory_manager:supplier_add' %}" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
-                <i class="fa-solid fa-plus"></i> Add Supplier
-            </a>
-            <button id="filter-btn" style="padding: 10px 15px; background: var(--light); color: var(--dark); border-radius: 10px; border: none; margin-left: 10px; cursor: pointer;">
-                <i class="fa-solid fa-filter"></i> Filter
-            </button>
-        </div>
-    </div>
+<!-- ================= TABLE ================= -->
+<div class="card">
+
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Supplier</th>
+<th>Contact</th>
+<th>Category</th>
+<th>Total Orders</th>
+<th>Total Spend</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+
+<tbody>
+{% for supplier in suppliers %}
+<tr>
+
+<td>{{ forloop.counter }}</td>
+
+<td>
+<div style="display:flex;align-items:center;gap:10px;">
+<div style="width:40px;height:40px;background:var(--primary);
+color:white;border-radius:50%;display:flex;
+align-items:center;justify-content:center;font-weight:600;">
+{{ supplier.name|slice:":2"|upper }}
+</div>
+<div>
+<div style="font-weight:600;">{{ supplier.name }}</div>
+<div style="font-size:0.8rem;color:#888;">
+ID: {{ supplier.supplier_code|default:"—" }}
+</div>
+</div>
+</div>
+</td>
+
+<td>
+<div style="font-weight:600;">
+{{ supplier.contact_person|default:"—" }}
+</div>
+<div style="font-size:0.8rem;color:#888;">
+{{ supplier.email|default:"—" }}
+</div>
+</td>
+
+<td>{{ supplier.category.name|default:"—" }}</td>
+
+<td>
+{{ supplier.total_orders }} orders
+{% if supplier.last_order_date %}
+<div style="font-size:0.8rem;color:#888;">
+Last: {{ supplier.last_order_date|date:"M d, Y" }}
+</div>
+{% endif %}
+</td>
+
+<td>${{ supplier.total_spend|floatformat:0 }}</td>
+
+<td>
+<span class="badge
+{% if supplier.status == 'active' %}success
+{% elif supplier.status == 'limited' %}warning
+{% else %}danger{% endif %}">
+{{ supplier.get_status_display }}
+</span>
+</td>
+
+<td>
+<a href="{% url 'inventory_manager:supplier_detail' supplier.pk %}"
+class="action-btn"
+style="background:#e0e7ff;color:var(--primary);text-decoration:none;">
+<i class="fa-solid fa-eye"></i>
+</a>
+
+<a href="{% url 'inventory_manager:supplier_edit' supplier.pk %}"
+class="action-btn btn-edit"
+style="text-decoration:none;">
+<i class="fa-solid fa-pen"></i>
+</a>
+
+<a href="{% url 'inventory_manager:supplier_delete' supplier.pk %}"
+class="action-btn btn-delete"
+onclick="return confirmDelete('{{ supplier.name }}');"
+style="background:#fee2e2;color:var(--danger);text-decoration:none;">
+<i class="fa-solid fa-trash"></i>
+</a>
+</td>
+
+</tr>
+
+{% empty %}
+<tr>
+<td colspan="8" style="text-align:center;padding:40px;">
+No suppliers found.
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
 </div>
 
-<div class="dashboard-grid">
-    <!-- Suppliers List -->
-    <div class="card col-span-3">
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 50px;">#</th>
-                        <th>Supplier</th>
-                        <th>Contact</th>
-                        <th>Category</th>
-                        <th>Total Orders</th>
-                        <th>Total Spend</th>
-                        <th>Rating</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for supplier in suppliers %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div style="width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
-                                    {{ supplier.name|slice:":2"|upper }}
-                                </div>
-                                <div>
-                                    <div style="font-weight: 600;">{{ supplier.name }}</div>
-                                    <div style="font-size: 0.8rem; color: #888;">ID: {{ supplier.supplier_code }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div style="font-weight: 600;">{{ supplier.contact_person|default:"—" }}</div>
-                            <div style="font-size: 0.8rem; color: #888;">{{ supplier.email|default:"—" }}</div>
-                        </td>
-                        <td>{{ supplier.category.name|default:"—" }}</td>
-                        <td>
-                            <div>{{ supplier.total_orders }} orders</div>
-                            <div style="font-size: 0.8rem; color: #888;">Last: {{ supplier.last_order_date|date:"M d, Y"|default:"—" }}</div>
-                        </td>
-                        <td>${{ supplier.total_spend|floatformat:0|default:"0" }}</td>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <i class="fa-solid fa-star" style="color: var(--warning);"></i>
-                                <span style="font-weight: 600;">{{ supplier.average_rating|default:"0.0" }}</span>
-                                <span style="font-size: 0.8rem; color: #888;">({{ supplier.review_count|default:"0" }})</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge 
-                                {% if supplier.status == 'active' %}success
-                                {% elif supplier.status == 'limited' %}warning
-                                {% elif supplier.status == 'inactive' %}danger
-                                {% else %}secondary{% endif %}">
-                                {{ supplier.get_status_display }}
-                            </span>
-                        </td>
-                        <td>
-                            <a href="{% url 'inventory_manager:supplier_detail' supplier.pk %}" class="action-btn" style="background: #e0e7ff; color: var(--primary); text-decoration: none;">
-                                <i class="fa-solid fa-eye"></i>
-                            </a>
-                            <a href="{% url 'inventory_manager:supplier_edit' supplier.pk %}" class="action-btn btn-edit" style="text-decoration: none;">
-                                <i class="fa-solid fa-pen"></i>
-                            </a>
-                            {% comment %} <a href="#" class="action-btn" style="background: #fee2e2; color: var(--danger); text-decoration: none;" onclick="confirmDelete({{ supplier.pk }})">
-                                <i class="fa-solid fa-trash"></i>
-                            </a> {% endcomment %}
-                            <!-- Replace the delete button and script with this: -->
-                            <a href="{% url 'inventory_manager:supplier_delete' supplier.pk %}" class="action-btn btn-delete" onclick="return confirmDelete('{{ supplier.name }}');"style="background: #fee2e2; color: var(--danger); text-decoration: none;">
-                                <i class="fa-solid fa-trash"></i>
-                            </a>
-
-
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="9" style="text-align: center; padding: 40px;">
-                            <i class="fa-solid fa-truck-field" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
-                            <h4 style="margin-bottom: 10px;">No Suppliers Found</h4>
-                            <p style="color: var(--secondary);">Add your first supplier to get started.</p>
-                            <a href="{% url 'inventory_manager:supplier_add' %}" class="btn-primary" style="margin-top: 20px; display: inline-block; text-decoration: none;">
-                                <i class="fa-solid fa-plus"></i> Add Supplier
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        {% if is_paginated %}
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-            <div style="color: var(--secondary); font-size: 0.85rem;">
-                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }} suppliers
-            </div>
-            <div style="display: flex; gap: 10px;">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">Previous</a>
-                {% endif %}
-                
-                {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                        <span style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: var(--primary); color: white;">{{ num }}</span>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">{{ num }}</a>
-                    {% endif %}
-                {% endfor %}
-                
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; background: white; text-decoration: none;">Next</a>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Supplier Categories -->
-    <div class="card col-span-1">
-        <h3 style="margin-bottom: 20px;">Supplier Categories</h3>
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-            {% for category in categories %}
-            <div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span style="font-weight: 600; color: 
-                        {% if category.name == 'Electronics' %}var(--primary)
-                        {% elif category.name == 'Audio Equipment' %}var(--success)
-                        {% elif category.name == 'Furniture' %}var(--danger)
-                        {% elif category.name == 'Wearables' %}var(--warning)
-                        {% else %}var(--dark){% endif %};">
-                        {{ category.name }}
-                    </span>
-                    <span>{{ category.count }}</span>
-                </div>
-                <div style="width: 100%; height: 6px; background: #eee; border-radius: 3px;">
-                    <div style="width: {% widthratio category.count total_suppliers|default:48 100 %}%; height: 100%; background: 
-                        {% if category.name == 'Electronics' %}var(--primary)
-                        {% elif category.name == 'Audio Equipment' %}var(--success)
-                        {% elif category.name == 'Furniture' %}var(--danger)
-                        {% elif category.name == 'Wearables' %}var(--warning)
-                        {% else %}var(--dark){% endif %}; border-radius: 3px;"></div>
-                </div>
-            </div>
-            {% empty %}
-            <p style="color: var(--secondary); text-align: center;">No categories found</p>
-            {% endfor %}
-        </div>
-        
-        <div style="margin-top: 30px;">
-            <h4 style="margin-bottom: 15px;">Top Suppliers by Spend</h4>
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                {% for supplier in top_suppliers %}
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-weight: 600; font-size: 0.9rem;">{{ supplier.name|truncatechars:20 }}</div>
-                    <div style="color: var(--primary); font-weight: 600;">${{ supplier.total_spend|floatformat:0 }}</div>
-                </div>
-                {% empty %}
-                <p style="color: var(--secondary);">No data available</p>
-                {% endfor %}
-            </div>
-        </div>
-        
-        {% comment %} <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-            <a href="#" style="display: block; text-align: center; padding: 10px; background: var(--light); color: var(--dark); border-radius: 10px; text-decoration: none;">
-                <i class="fa-solid fa-chart-bar"></i> View Analytics
-            </a>
-        </div> {% endcomment %}
-    </div>
 </div>
 
 <script>
 document.getElementById('search-input')?.addEventListener('keyup', function(e) {
-    if (e.key === 'Enter') {
-        const urlParams = new URLSearchParams(window.location.search);
-        urlParams.set('search', this.value);
-        window.location.search = urlParams.toString();
-    }
+if (e.key === 'Enter') {
+const urlParams = new URLSearchParams(window.location.search);
+urlParams.set('search', this.value);
+window.location.search = urlParams.toString();
+}
 });
 
-function confirmDelete(supplierName) {
-    return confirm(`Are you sure you want to delete "${supplierName}"? This action cannot be undone.`);
+function confirmDelete(name){
+return confirm(`Are you sure you want to delete "${name}"?`);
 }
-
 </script>
+
 {% endblock %}

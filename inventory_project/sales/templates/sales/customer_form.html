@@ -2,19 +2,44 @@
 
 {% load static %}
 {% block title %}
-  Customer Form
+  {% if form.instance.pk %}Edit Customer{% else %}Customer Form{% endif %}
 {% endblock title %}
+
 {% block link %}
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'sales/main.css' %}">
+    <style>
+        /* Additional form styling to ensure consistency */
+        .error {
+            color: #e74a3b;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: block;
+        }
+        
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #fecaca;
+        }
+        
+        /* Ensure date input looks good */
+        input[type="date"].form-control {
+            padding: 9px 12px;
+            height: auto;
+        }
+    </style>
 {% endblock link %}
 
 {% block main-content %}
   <div class="main-content">
     <div class="header">
         <div class="page-title">
-            <h2>Add New Customer</h2>
-            <span>Add a new customer to the system</span>
+            <h2>{% if form.instance.pk %}Edit Customer{% else %}Add New Customer{% endif %}</h2>
+            <span>{% if form.instance.pk %}Update customer information{% else %}Add a new customer to the system{% endif %}</span>
         </div>
 
         <div class="user-actions">
@@ -32,115 +57,176 @@
         </div>
     </div>
 
-
     <div class="dashboard-grid">
         <div class="card col-span-3">
-
             <h3>Customer Information</h3>
 
-            <form method="POST" action="#">
+            <form method="POST" action="">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
 
                 <div class="form-grid">
-
                     <div class="form-group">
                         <label>Full Name *</label>
-                        <input type="text" id="customerName" name="name" class="form-control" required>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <small class="error">{{ form.name.errors }}</small>
+                        {% endif %}
                     </div>
 
                     <div class="form-group">
                         <label>Email Address *</label>
-                        <input type="email" id="customerEmail" name="email" class="form-control" required>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <small class="error">{{ form.email.errors }}</small>
+                        {% endif %}
                     </div>
 
                     <div class="form-group">
                         <label>Phone Number</label>
-                        <input type="tel" name="phone" class="form-control">
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                        <small class="error">{{ form.phone.errors }}</small>
+                        {% endif %}
                     </div>
 
                     <div class="form-group">
                         <label>Company</label>
-                        <input type="text" name="company" class="form-control">
+                        {{ form.company }}
+                        {% if form.company.errors %}
+                        <small class="error">{{ form.company.errors }}</small>
+                        {% endif %}
                     </div>
-
                 </div>
 
                 <h4 style="margin-top:20px;">Address Information</h4>
 
                 <div class="form-grid">
-                    <input type="text" name="address_line1" placeholder="Address Line 1" class="form-control">
-                    <input type="text" name="address_line2" placeholder="Address Line 2" class="form-control">
-                    <input type="text" name="city" placeholder="City" class="form-control">
-                    <input type="text" name="state" placeholder="State" class="form-control">
-                    <input type="text" name="zip_code" placeholder="ZIP" class="form-control">
-
-                    <select name="country" class="form-control">
-                        <option value="">Select Country</option>
-                        <option>United States</option>
-                        <option>Canada</option>
-                        <option>United Kingdom</option>
-                        <option>Australia</option>
-                        <option>Germany</option>
-                    </select>
+                    <div class="form-group">
+                        {{ form.address_line1 }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.address_line2 }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.city }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.state }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.zip_code }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.country }}
+                    </div>
                 </div>
 
                 <h4 style="margin-top:20px;">Additional Information</h4>
 
                 <div class="form-grid">
-                    <input type="date" name="customer_since" class="form-control">
+                    <div class="form-group">
+                        <label>Customer Since</label>
+                        {{ form.customer_since }}
+                    </div>
 
-                    <select name="status" class="form-control">
-                        <option>Active</option>
-                        <option>Inactive</option>
-                        <option>Pending</option>
-                    </select>
+                    <div class="form-group">
+                        <label>Status</label>
+                        {{ form.status }}
+                    </div>
 
-                    <select name="customer_type" class="form-control">
-                        <option>Individual</option>
-                        <option>Business</option>
-                        <option>Wholesale</option>
-                    </select>
+                    <div class="form-group">
+                        <label>Customer Type</label>
+                        {{ form.customer_type }}
+                    </div>
 
-                    <input type="text" name="tax_id" placeholder="Tax ID" class="form-control">
-
-                    <select name="payment_terms" class="form-control">
-                        <option>Net 15</option>
-                        <option>Net 30</option>
-                        <option>Net 60</option>
-                        <option>Cash on Delivery</option>
-                    </select>
-
-                    <input type="number" name="credit_limit" value="0.00" step="0.01" class="form-control">
+                    <div class="form-group">
+                        <label>Tax ID</label>
+                        {{ form.tax_id }}
+                    </div>
                 </div>
 
-                <textarea name="notes" rows="3" placeholder="Notes..." class="form-control"></textarea>
+                <div class="form-group">
+                    <label>Notes</label>
+                    {{ form.notes }}
+                </div>
 
-                <div style="margin-top:30px;">
+                <div style="margin-top:30px; display: flex; gap: 10px;">
                     <a href="{% url 'customers' %}" class="btn-secondary">Cancel</a>
                     <button type="submit" class="btn-primary">
-                        <i class="fa-solid fa-save"></i> Create Customer
+                        <i class="fa-solid fa-save"></i> {% if form.instance.pk %}Update Customer{% else %}Create Customer{% endif %}
                     </button>
                 </div>
-
             </form>
         </div>
     </div>
 </div>
 {% endblock main-content %}
+
 {% block linkJs %}
+  <script src="{% static 'sales/main.js' %}"></script>
   <script>
-document.querySelector('form').addEventListener('submit', function(e){
-    const name = document.getElementById('customerName').value.trim();
-    const email = document.getElementById('customerEmail').value.trim();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add form-control class to all form fields
+        const formFields = document.querySelectorAll('input, select, textarea');
+        formFields.forEach(field => {
+            if (!field.classList.contains('form-control')) {
+                field.classList.add('form-control');
+            }
+        });
+        
+        // Add placeholders for better UX
+        const placeholders = {
+            'name': 'Enter full name',
+            'email': 'Enter email address',
+            'phone': 'Enter phone number',
+            'company': 'Enter company name (optional)',
+            'address_line1': 'Address Line 1',
+            'address_line2': 'Address Line 2 (optional)',
+            'city': 'City',
+            'state': 'State',
+            'zip_code': 'ZIP / Postal Code',
+            'country': 'Country',
+            'tax_id': 'Tax ID / VAT Number (optional)',
+            'notes': 'Additional notes about the customer...'
+        };
+        
+        for (const [fieldName, placeholder] of Object.entries(placeholders)) {
+            const field = document.querySelector(`[name="${fieldName}"]`);
+            if (field && !field.placeholder && field.type !== 'date' && field.tagName !== 'SELECT') {
+                field.placeholder = placeholder;
+            }
+        }
+    });
+    
+    document.querySelector('form').addEventListener('submit', function(e){
+        const name = document.querySelector('[name="name"]').value.trim();
+        const email = document.querySelector('[name="email"]').value.trim();
 
-    if(!name){
-        alert("Customer name required");
-        e.preventDefault();
-    }
+        if(!name){
+            alert("Customer name required");
+            e.preventDefault();
+            return false;
+        }
 
-    if(!email){
-        alert("Email required");
-        e.preventDefault();
-    }
-});
-</script>
+        if(!email){
+            alert("Email required");
+            e.preventDefault();
+            return false;
+        }
+        
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert("Please enter a valid email address");
+            e.preventDefault();
+            return false;
+        }
+    });
+  </script>
 {% endblock linkJs %}

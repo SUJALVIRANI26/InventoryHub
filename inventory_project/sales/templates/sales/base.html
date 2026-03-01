@@ -1,4 +1,4 @@
-{%load static %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -11,43 +11,47 @@
     {% endblock title %}
     </title>
     {% block link %}
-      default
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <link rel="stylesheet" href="{% static 'sales/main.css' %}">
     {% endblock link %}
 </head>
 <body>
     {% block sidebar %}
       <div class="sidebar">
-    <div class="logo">
-        <i class="fa-solid fa-layer-group"></i>
-        <span>InventoryHub</span>
-    </div>
+        <div class="logo">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>InventoryHub</span>
+        </div>
 
-    <div class="menu-category">Menu</div>
-    <a href=" {% url 'dashboard' %}" class="menu-item"><i class="fa-solid fa-house"></i> Dashboard</a>
-    <a href=" {% url 'products' %}" class="menu-item"><i class="fa-solid fa-box-open"></i> Products</a>
-    
-    <div class="menu-category">Sales</div>
-    <a href="{% url 'sales_order' %}" class="menu-item"><i class="fa-solid fa-cart-plus"></i> Sales Orders</a>
-    <a href="{% url 'customers' %}" class="menu-item"><i class="fa-solid fa-users"></i> Customers</a>
-    <a href="{% url 'invoices' %} " class="menu-item"><i class="fa-solid fa-receipt"></i> Invoices</a>
-    
-    <div class="menu-category">Tools</div>
-    <a href="{% url 'settings' %} " class="menu-item"><i class="fa-solid fa-gear"></i> Settings</a>
-    
-    <div class="upgrade-card">
-        <h4>Upgrade to Pro</h4>
-        <p>Get advanced features</p>
-        <a href="#" class="upgrade-btn">Upgrade Now</a>
-    </div>
-</div>
-
+        <div class="menu-category">Menu</div>
+        <a href="{% url 'dashboard' %}" class="menu-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <!-- <a href="{% url 'products' %}" class="menu-item"><i class="fa-solid fa-box-open"></i> Products</a> -->
+        
+        <div class="menu-category">Sales</div>
+        <a href="{% url 'sales_order' %}" class="menu-item"><i class="fa-solid fa-cart-plus"></i> Sales Orders</a>
+        <a href="{% url 'customers' %}" class="menu-item"><i class="fa-solid fa-users"></i> Customers</a>
+        <a href="{% url 'invoices' %}" class="menu-item"><i class="fa-solid fa-receipt"></i> Invoices</a>
+        
+        <div class="menu-category">Tools</div>
+        <a href="{% url 'settings' %}" class="menu-item"><i class="fa-solid fa-gear"></i> Settings</a>
+        <div class="menu-category">Login</div>
+        <a href="{% url 'logout' %}" class = "menu-item"><i class="menu-category"></i>Logout</a>
+        <div class="upgrade-card">
+            <h4>Upgrade to Pro</h4>
+            <p>Get advanced features</p>
+            <a href="#" class="upgrade-btn">Upgrade Now</a>
+        </div>
+      </div>
     {% endblock sidebar %}
     
-    {% block main-content %}
-      default
-    {% endblock main-content %}
+    <div class="content-wrapper">
+        {% block main-content %}
+          default
+        {% endblock main-content %}
+    </div>
+    
     {% block linkJs %}
-      
+      <script src="{% static 'sales/main.js' %}"></script>
     {% endblock linkJs %}
 </body>
 </html>
