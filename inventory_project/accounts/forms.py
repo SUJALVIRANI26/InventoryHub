@@ -3,7 +3,7 @@ ROLE_CHOICES = [
     ("MANAGER", "Inventory Manager"),
     ("STAFF", "Staff"),
     ("ADMIN", "Admin"),
-    # ("owner", "Owner"),]
+    ("OWNER", "Owner"),
    ]
 
 class LoginForm(forms.Form):

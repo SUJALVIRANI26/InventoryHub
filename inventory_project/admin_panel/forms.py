@@ -1,12 +1,12 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import AdminUserProfile
+from .models import UserProfile
 
 class AdminUserForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
     confirm_password = forms.CharField(widget=forms.PasswordInput)
     contact = forms.CharField()
-    role = forms.ChoiceField(choices=AdminUserProfile.ROLE_CHOICES)
+    role = forms.ChoiceField(choices=UserProfile.ROLE_CHOICES)
 
     class Meta:
         model = User
@@ -17,3 +17,4 @@ class AdminUserForm(forms.ModelForm):
         if cleaned_data.get('password') != cleaned_data.get('confirm_password'):
             raise forms.ValidationError("Passwords do not match")
         return cleaned_data
+

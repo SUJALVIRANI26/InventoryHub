@@ -29,6 +29,7 @@
                 <label>Role</label>
                 <select name="role" class="form-control">
                     <option value="ADMIN" {% if profile.role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                    <option value="OWNER" {% if profile.role == 'OWNER' %}selected{% endif %}>Owner</option>
                     <option value="MANAGER" {% if profile.role == 'MANAGER' %}selected{% endif %}>Manager</option>
                     <option value="STAFF" {% if profile.role == 'STAFF' %}selected{% endif %}>Staff</option>
                 </select>
@@ -39,3 +40,9 @@
     </form>
 </div>
 {% endblock %}
+
+
+
+
+
+

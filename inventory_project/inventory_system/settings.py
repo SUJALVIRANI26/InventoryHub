@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'sales',
     'accounts',
-    'inventory_manager'
+    'inventory_manager',
+    'owner',
 ]
 
 MIDDLEWARE = [

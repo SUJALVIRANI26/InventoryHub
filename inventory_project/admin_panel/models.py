@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 class UserProfile(models.Model):
     ROLE_CHOICES = [
         ('ADMIN', 'Admin'),
+        ('OWNER', 'Owner'),
         ('MANAGER', 'Manager'),
         ('STAFF', 'Staff'),
     ]
@@ -15,3 +16,4 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.role}"
+

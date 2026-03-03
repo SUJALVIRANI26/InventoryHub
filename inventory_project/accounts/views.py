@@ -31,6 +31,8 @@ def login(request):
                         return redirect('admin-panel/users/')
                     elif role == 'MANAGER':
                         return redirect('inventory_manager/')
+                    elif role == 'OWNER':
+                        return redirect('owner/')
                     else:
                         return redirect('sales/')
                 else:
