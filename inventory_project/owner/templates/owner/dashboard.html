@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard</title>
+    <link rel="stylesheet" href="{% static 'owner/main.css' %}">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">InventoryHub Owner</div>
+
+        <div class="menu-category">Owner</div>
+        <a class="menu-item active" href="{% url 'owner:dashboard' %}">Dashboard</a>
+
+        <div class="menu-category">Reports</div>
+        <a class="menu-item" href="{% url 'owner:daily_report' %}">Daily Report</a>
+        <a class="menu-item" href="{% url 'owner:weekly_report' %}">Weekly Report</a>
+        <a class="menu-item" href="{% url 'owner:monthly_report' %}">Monthly Report</a>
+        <a class="menu-item" href="{% url 'owner:yearly_report' %}">Yearly Report</a>
+        <a class="menu-item" href="{% url 'owner:profit_loss_report' %}">Profit &amp; Loss Report</a>
+        <a class="menu-item" href="{% url 'owner:stock_report' %}">Stock Report</a>
+        <a class="menu-item" href="{% url 'owner:sales_report' %}">Sales Report</a>
+        <a class="menu-item" href="{% url 'owner:purchase_report' %}">Purchase Report</a>
+        <a class="menu-item" href="{% url 'owner:top_products_report' %}">Top Products Report</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <div class="page-title">
+                <h1>{{ page_title }}</h1>
+                <p>{{ page_subtitle }}</p>
+            </div>
+        </header>
+
+        <section class="grid">
+            <div class="card kpi">
+                <div class="label">Revenue (Today)</div>
+                <div class="value">$12,480</div>
+            </div>
+            <div class="card kpi">
+                <div class="label">Profit (Today)</div>
+                <div class="value">$3,910</div>
+            </div>
+            <div class="card kpi">
+                <div class="label">Orders</div>
+                <div class="value">142</div>
+            </div>
+            <div class="card kpi">
+                <div class="label">Low Stock Items</div>
+                <div class="value">9</div>
+            </div>
+
+            <div class="card span-2">
+                <h3>All Owner Reports</h3>
+                <div class="report-links" style="margin-top: 12px;">
+                    <a href="{% url 'owner:daily_report' %}">Daily Report</a>
+                    <a href="{% url 'owner:weekly_report' %}">Weekly Report</a>
+                    <a href="{% url 'owner:monthly_report' %}">Monthly Report</a>
+                    <a href="{% url 'owner:yearly_report' %}">Yearly Report</a>
+                    <a href="{% url 'owner:profit_loss_report' %}">Profit &amp; Loss Report</a>
+                    <a href="{% url 'owner:stock_report' %}">Stock Report</a>
+                    <a href="{% url 'owner:sales_report' %}">Sales Report</a>
+                    <a href="{% url 'owner:purchase_report' %}">Purchase Report</a>
+                    <a href="{% url 'owner:top_products_report' %}">Top Products Report</a>
+                </div>
+            </div>
+
+            <div class="card span-2">
+                <h3>Today Snapshot</h3>
+                <table class="table" style="margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Gross Margin</td><td>31.2%</td><td><span class="badge success">Healthy</span></td></tr>
+                        <tr><td>Order Fulfillment</td><td>94.8%</td><td><span class="badge success">On Track</span></td></tr>
+                        <tr><td>Return Rate</td><td>1.7%</td><td><span class="badge warning">Monitor</span></td></tr>
+                        <tr><td>Pending Purchase Orders</td><td>6</td><td><span class="badge danger">Needs Action</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="{% static 'owner/main.js' %}"></script>
+</body>
+</html>
