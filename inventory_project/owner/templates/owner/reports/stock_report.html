@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page_title }}</title>
     <link rel="stylesheet" href="{% static 'owner/main.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <aside class="sidebar">
@@ -34,56 +35,76 @@
             </div>
         </header>
 
-        <div class="card">
-            <div class="filter-bar">
-                <input type="date">
-                <input type="date">
-                <select>
-                    <option>All Branches</option>
-                    <option>North Branch</option>
-                    <option>South Branch</option>
-                </select>
+        <div class="filter-bar">
+            <input type="date">
+            <input type="date">
+            <select>
+                <option>All Branches</option>
+                <option>North Branch</option>
+                <option>South Branch</option>
+            </select>
+        </div>
+
+        <section class="grid">
+            <div class="card kpi span-1">
+                <p class="label">Revenue</p>
+                <p class="value">$42,600</p>
+                <p class="delta">+8.2% vs previous period</p>
+            </div>
+            <div class="card kpi span-1">
+                <p class="label">Expenses</p>
+                <p class="value">$28,340</p>
+                <p class="delta">+2.1% vs previous period</p>
+            </div>
+            <div class="card kpi span-1">
+                <p class="label">Net Profit</p>
+                <p class="value">$14,260</p>
+                <p class="delta">+11.3% vs previous period</p>
+            </div>
+            <div class="card kpi span-1">
+                <p class="label">Orders</p>
+                <p class="value">386</p>
+                <p class="delta">+5.4% vs previous period</p>
             </div>
 
-            <section class="grid">
-                <div class="card kpi">
-                    <div class="label">Revenue</div>
-                    <div class="value">$42,600</div>
+            <div class="card span-3">
+                <h3>Performance Trend</h3>
+                <div class="chart-wrap">
+                    <canvas id="ownerTrendChart"></canvas>
                 </div>
-                <div class="card kpi">
-                    <div class="label">Expense</div>
-                    <div class="value">$28,340</div>
-                </div>
-                <div class="card kpi">
-                    <div class="label">Net</div>
-                    <div class="value">$14,260</div>
-                </div>
-                <div class="card kpi">
-                    <div class="label">Orders</div>
-                    <div class="value">386</div>
-                </div>
+            </div>
 
-                <div class="card span-4">
-                    <h3>Report Data</h3>
-                    <table class="table" style="margin-top: 10px;">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Category</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>2026-03-01</td><td>Sales</td><td>$8,920</td><td><span class="badge success">Completed</span></td></tr>
-                            <tr><td>2026-03-01</td><td>Purchase</td><td>$4,210</td><td><span class="badge warning">Pending</span></td></tr>
-                            <tr><td>2026-03-02</td><td>Sales</td><td>$9,780</td><td><span class="badge success">Completed</span></td></tr>
-                            <tr><td>2026-03-02</td><td>Inventory</td><td>$1,420</td><td><span class="badge danger">Alert</span></td></tr>
-                        </tbody>
-                    </table>
+            <div class="card span-1">
+                <h3>Business Mix</h3>
+                <div class="chart-wrap" style="height: 220px;">
+                    <canvas id="ownerMixChart"></canvas>
                 </div>
-            </section>
-        </div>
+                <div class="quick-stats" style="margin-top: 10px;">
+                    <div class="quick-stat"><p>Top Product</p><strong>Wireless Headset Pro</strong></div>
+                    <div class="quick-stat"><p>Best Branch</p><strong>North Branch</strong></div>
+                </div>
+            </div>
+
+            <div class="card span-4">
+                <h3>Detailed Transactions</h3>
+                <table class="table" style="margin-top: 8px;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>2026-03-01</td><td>Sales</td><td>$8,920</td><td><span class="badge success">Completed</span></td></tr>
+                        <tr><td>2026-03-01</td><td>Purchase</td><td>$4,210</td><td><span class="badge warning">Pending</span></td></tr>
+                        <tr><td>2026-03-02</td><td>Sales</td><td>$9,780</td><td><span class="badge success">Completed</span></td></tr>
+                        <tr><td>2026-03-02</td><td>Inventory</td><td>$1,420</td><td><span class="badge danger">Alert</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </main>
 
     <script src="{% static 'owner/main.js' %}"></script>
