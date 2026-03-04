@@ -23,9 +23,9 @@ class LoginForm(forms.Form):
        
     )
 
-    remember_me = forms.BooleanField(
-        required=False
-    )
+    # remember_me = forms.BooleanField(
+    #     required=False
+    # )
 
 
         

@@ -27,11 +27,11 @@ def login(request):
                     auth_login(request, user)
                     
                     # Redirect to admin_panel app -> user_list name
-                    if role == 'ADMIN':
+                    if role == "ADMIN":
                         return redirect('admin-panel/users/')
-                    elif role == 'MANAGER':
+                    elif role == "MANAGER":
                         return redirect('inventory_manager/')
-                    elif role == 'OWNER':
+                    elif role == "OWNER":
                         return redirect('owner/')
                     else:
                         return redirect('sales/')
