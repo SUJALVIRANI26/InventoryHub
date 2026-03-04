@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import F
+from django.db import transaction
 from .models import *
 from .forms import *
-
 
 # ================= DASHBOARD =================
 def dashboard(request):
@@ -178,19 +178,41 @@ def purchase_order_create(request):
     return render(request, 'inventory_manager/purchase_order_create.html',
                   {'form': form, 'formset': formset})
 
-
+@transaction.atomic
 def purchase_order_edit(request, pk):
-    po = get_object_or_404(PurchaseOrder, pk=pk)
-    form = PurchaseOrderForm(request.POST or None, instance=po)
-    formset = PurchaseOrderItemFormSet(request.POST or None, instance=po)
+    purchase_order = get_object_or_404(PurchaseOrder, pk=pk)
 
-    if form.is_valid() and formset.is_valid():
-        form.save()
-        formset.save()
-        return redirect('inventory_manager:purchase_order_detail', pk=pk)
+    old_status = purchase_order.status
 
-    return render(request, 'inventory_manager/purchase_order_edit.html',
-                  {'form': form, 'formset': formset, 'purchase_order': po})
+    if request.method == "POST":
+        form = PurchaseOrderForm(request.POST, instance=purchase_order)
+        formset = PurchaseOrderItemFormSet(request.POST, instance=purchase_order)
+
+        if form.is_valid() and formset.is_valid():
+
+            purchase_order = form.save()
+
+            items = formset.save()
+
+            # ✅ STOCK UPDATE LOGIC HERE
+            if old_status != "delivered" and purchase_order.status == "delivered":
+
+                for item in purchase_order.items.all():
+                    product = item.product
+                    product.quantity += item.quantity
+                    product.save()
+
+            return redirect("inventory_manager:purchase_order_detail", pk=purchase_order.pk)
+
+    else:
+        form = PurchaseOrderForm(instance=purchase_order)
+        formset = PurchaseOrderItemFormSet(instance=purchase_order)
+
+    return render(request, "inventory_manager/purchase_order_edit.html", {
+        "form": form,
+        "formset": formset,
+        "purchase_order": purchase_order,
+    })
 
 
 def purchase_order_detail(request, pk):
