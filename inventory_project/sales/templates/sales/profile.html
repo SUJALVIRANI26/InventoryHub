@@ -1,0 +1,155 @@
+{% extends "sales/base.html" %}
+{% load static %}
+
+{% block title %}
+  My Profile
+{% endblock title %}
+
+{% block link %}
+  {{ block.super }}
+  <style>
+    .profile-card {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: var(--radius);
+      color: white;
+    }
+    
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid white;
+      object-fit: cover;
+    }
+    
+    .profile-header h2 {
+      color: white;
+      margin-bottom: 5px;
+    }
+    
+    .profile-header p {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.9rem;
+    }
+    
+    .info-row {
+      display: flex;
+      padding: 15px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    
+    .info-label {
+      width: 100px;
+      color: var(--secondary);
+      font-weight: 500;
+    }
+    
+    .info-value {
+      flex: 1;
+      color: var(--dark);
+      font-weight: 400;
+    }
+    
+    .role-badge {
+      background: #e0e7ff;
+      color: var(--primary);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    
+    .readonly-notice {
+      text-align: center;
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fc;
+      border-radius: var(--radius);
+      color: var(--secondary);
+      font-size: 0.85rem;
+    }
+  </style>
+{% endblock link %}
+
+{% block main-content %}
+<div class="main-content">
+  <div class="header">
+    <div class="page-title">
+      <h2>My Profile</h2>
+      <span>View your personal information</span>
+    </div>
+    <div class="user-actions">
+      <div class="profile">
+        <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=4e73df&color=fff&size=40" alt="User">
+        <div>
+          <div style="font-weight: 600; font-size: 0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
+          <div style="font-size: 0.75rem; color: #888;">{{ request.user.email }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="card col-span-3 profile-card">
+      <div class="profile-header">
+        <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=ffffff&color=4e73df&size=80" class="profile-avatar">
+        <div>
+          <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
+          <!-- <p>Member since {{ request.user.date_joined|date:"F Y" }}</p> -->
+        </div>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Full Name</span>
+        <span class="info-value">{{ request.user.get_full_name|default:"Not provided" }}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Email</span>
+        <span class="info-value">{{ request.user.email }}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Contact</span>
+        <span class="info-value">{{profile.contact|default:"Not provided" }}</span>
+      </div>
+      
+      <div class="info-row">
+        <span class="info-label">Role</span>
+        <span class="info-value">
+          <span class="role-badge">
+            {% if request.user.role == "ADMIN" %}Admin
+            {% elif request.user.role == "MANAGER" %}inventory_manager
+            {% else %}Sales Executive
+            {% endif %}
+          </span>
+        </span>
+      </div>
+      
+      <div class="readonly-notice">
+        <i class="fa-solid fa-lock" style="margin-right: 5px;"></i>
+        This information is read-only
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock main-content %}
+
+{% block linkJs %}
+  {{ block.super }}
+{% endblock linkJs %}

@@ -14,7 +14,7 @@ class CustomerForm(ModelForm):
 class SalesOrderForm(forms.ModelForm):
     class Meta:
         model = SalesOrder
-        fields = ['customer', 'order_date', 'payment_method', 'shipping_method', 'notes', 'shipping_cost']
+        fields = ['customer', 'order_date', 'payment_method', 'shipping_method', 'notes', 'shipping_cost','status','tax_rate']
 
 # This allows adding multiple products to one order
 OrderItemFormSet = inlineformset_factory(

@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 from django.db import models
 from inventory_manager.models import Product
+from django.db.models import Sum
 
 STATUS_CHOICES = [
     ('active', 'Active'),
@@ -63,37 +64,36 @@ class Customer(models.Model):
     class Meta:
         ordering = ['-customer_since']
     
+    def update_stats(self):
+        """Update customer statistics based on their orders"""
+        from .models import SalesOrder  # Import here to avoid circular import
+        
+        # Get all completed orders for this customer
+        completed_orders = SalesOrder.objects.filter(
+            customer=self,
+            status='completed'
+        )
+        
+        # Update total orders count (all orders, not just completed)
+        self.total_orders = SalesOrder.objects.filter(customer=self).count()
+        
+        # Update total spent (only from completed orders)
+        self.total_spent = completed_orders.aggregate(
+            total= Sum('total_amount')
+        )['total'] or Decimal('0.00')
+        
+        # Update last order date
+        last_order = SalesOrder.objects.filter(
+            customer=self
+        ).order_by('-order_date').first()
+        
+        if last_order:
+            self.last_order_date = last_order.order_date
+        
+        self.save()
+
     def __str__(self):
         return self.name
-
-class Invoice(models.Model):
-    STATUS_CHOICES = [
-        ('paid', 'Paid'),
-        ('unpaid', 'Unpaid'),
-        ('overdue', 'Overdue'),
-        ('cancelled', 'Cancelled'),
-    ]
-    
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    invoice_number = models.CharField(max_length=20, unique=True)
-    invoice_date = models.DateField(default=date.today)
-    due_date = models.DateField(blank=True, null=True)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unpaid')
-    
-    def __str__(self):
-        return f"Invoice {self.invoice_number}"
-
-class InvoiceItem(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    
-    def save(self, *args, **kwargs):
-        self.total_price = self.quantity * self.unit_price
-        super().save(*args, **kwargs)
 
 class SalesOrder(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
@@ -105,7 +105,7 @@ class SalesOrder(models.Model):
     
     # Financials
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=8.00)  # Default 8%
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=8.00) 
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
@@ -113,7 +113,6 @@ class SalesOrder(models.Model):
         return f"Order #{self.id} - {self.customer.name}"
     
     def calculate_totals(self):
-        """Calculate order totals from order items"""
         # Get all order items
         items = self.items.all()
         
@@ -129,7 +128,6 @@ class SalesOrder(models.Model):
             # Calculate total with tax and shipping
             total = self.subtotal
             
-            # Add tax if applicable
             if self.tax_rate:
                 tax_rate = self.tax_rate if isinstance(self.tax_rate, Decimal) else Decimal(str(self.tax_rate))
                 total += self.subtotal * (tax_rate / Decimal('100'))
@@ -145,7 +143,7 @@ class SalesOrder(models.Model):
             self.total_amount = self.shipping_cost or Decimal('0')
     
     def save(self, *args, **kwargs):
-        if not self.pk:  # New order
+        if not self.pk:  # save 
             super().save(*args, **kwargs)
         else:
             self.calculate_totals()
@@ -176,3 +174,4 @@ class SalesOrderItem(models.Model):
     
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
+    

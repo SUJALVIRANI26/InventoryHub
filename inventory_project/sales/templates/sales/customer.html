@@ -34,6 +34,7 @@
       <a href="{% url 'customer_form' %}" class="btn-primary" style="padding: 10px 20px; font-size: 0.9rem;">
         <i class="fa-solid fa-plus"></i> Add Customer
       </a>
+      <a href="{% url 'profile' %}">
       <div class="profile">
         <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=random" alt="User">
         <div>
@@ -41,6 +42,7 @@
           <div style="font-size: 0.75rem; color: #888;">{% if request.user.is_staff %}Admin{% else %}Sales Executive{% endif %}</div>
         </div>
       </div>
+      </a>
     </div>
   </div>
 
@@ -81,9 +83,27 @@
               </td>
               <td>{{ customer.email }}</td>
               <td>{{ customer.phone|default:"N/A" }}</td>
-              <td><strong>{{ customer.total_orders }} order{{ customer.total_orders|pluralize }}</strong></td>
-              <td><strong>${{ customer.total_spent|floatformat:2 }}</strong></td>
-              <td>{{ customer.last_order_date|date:"M d, Y"|default:"No orders" }}</td>
+              <td>
+    <strong>{{ customer.order_count }}</strong> 
+    {% if customer.order_count == 1 %}order{% else %}orders{% endif %}
+</td>
+<td>
+    <strong>${{ customer.total_spent_calc|default:0|floatformat:2 }}</strong>
+</td>
+<td>
+    {% if customer.last_order_date_calc %}
+        {{ customer.last_order_date_calc|date:"M d, Y" }}
+    {% else %}
+        <span style="color: #888;">No orders</span>
+    {% endif %}
+</td>
+              <td>
+                {% if customer.last_order_date %}
+                  {{ customer.last_order_date|date:"M d, Y" }}
+                {% else %}
+                  <span style="color: #888;">No orders</span>
+                {% endif %}
+              </td>
               <td>
                 <div class="action-buttons">
                   <a href="{% url 'customer_edit' customer.pk %}" class="action-btn btn-edit">
@@ -136,30 +156,91 @@
       <div style="margin-top: 15px;">
         <div class="stat-card-alt">
           <div class="stat-card-label">Total Customers</div>
-          <div class="stat-card-value">{{ total_customers|default:customers|length }}</div>
-        </div>
-        
-        <div class="stat-card-alt">
-          <div class="stat-card-label">New This Month</div>
-          <div class="stat-card-value">{{ new_customers_this_month|default:"0" }}</div>
-          {% if customer_growth_rate %}
-          <span class="badge success" style="margin-top: 5px;">+{{ customer_growth_rate }}%</span>
-          {% endif %}
+          <div class="stat-card-value">{{ total_customers }}</div>
         </div>
         
         <div class="stat-card-alt">
           <div class="stat-card-label">Active Customers</div>
-          <div class="stat-card-value">{{ active_customers|default:"0" }}</div>
+          <div class="stat-card-value">{{ active_customers }}</div>
         </div>
         
         <div class="stat-card-alt">
-          <div class="stat-card-label">Avg. Order Value</div>
-          <div class="stat-card-value">${{ avg_order_value|floatformat:2|default:"0.00" }}</div>
+          <div class="stat-card-label">Total Orders</div>
+          <div class="stat-card-value">{{ total_orders }}</div>
+        </div>
+        
+        <div class="stat-card-alt">
+          <div class="stat-card-label">Total Revenue</div>
+          <div class="stat-card-value">${{ total_revenue|floatformat:2 }}</div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<style>
+  .action-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  
+  .action-btn {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  
+  .btn-edit {
+    background: #e0e7ff;
+    color: #4e73df;
+  }
+  
+  .btn-view-orders {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  
+  .btn-pagination {
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    color: var(--dark);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  
+  .btn-pagination.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  
+  .stat-card-alt {
+    background: #f8f9fc;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .stat-card-label {
+    font-size: 0.8rem;
+    color: var(--secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .stat-card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark);
+  }
+</style>
 
 <script>
   function filterByStatus() {

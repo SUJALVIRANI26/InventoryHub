@@ -1,368 +1,471 @@
+<!-- sales/templates/sales/dashboard.html -->
 {% extends "sales/base.html" %}
 {% load static %}
 
 {% block title %}
-  Dashboard
+  Sales Dashboard
 {% endblock title %}
 
 {% block link %}
   {{ block.super }}
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Custom grid layout to eliminate white space */
+    .dashboard-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+    
+    .charts-row {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 20px;
+      width: 100%;
+    }
+    
+    .data-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      width: 100%;
+    }
+    
+    .activities-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      width: 100%;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      height: fit-content;
+      width: 100%;
+    }
+    
+    /* Ensure cards take full height of their container */
+    .full-height {
+      height: 100%;
+    }
+    
+    /* Fix for table container */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 12px 8px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    
+    /* Quick stats grid */
+    .quick-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .stat-mini-card {
+      background: #f8f9fc;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+    }
+    
+    .stat-mini-card .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 5px 0;
+    }
+    
+    .stat-mini-card .label {
+      font-size: 0.75rem;
+      color: var(--secondary);
+    }
+    
+    /* Alert items */
+    .alert-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: #fff3f3;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .alert-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    /* Activity items */
+    .activities-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background: #f8f9fc;
+      border-radius: 8px;
+    }
+    
+    /* Chart containers */
+    .chart-container {
+      width: 100%;
+      height: 250px;
+      position: relative;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .charts-row,
+      .data-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 {% endblock link %}
 
 {% block main-content %}
 <div class="main-content">
-    <div class="header">
-        <div class="page-title">
-            <h2>Dashboard</h2>
-            <span>Welcome back, {{ request.user.get_full_name|default:request.user.username }}. Here's what's happening today.</span>
-        </div>
-        <div class="user-actions">
-            <div class="search-bar">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" placeholder="Search...">
+  <!-- Header -->
+  <div class="header" style="margin-bottom: 20px;">
+    <div class="page-title">
+      <h2>Dashboard</h2>
+      <span>Welcome back, {{ request.user.get_full_name|default:request.user.username }}</span>
+    </div>
+    <div class="user-actions">
+      <!-- <div class="search-bar">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" placeholder="Search...">
+      </div> -->
+      <a href="{% url 'profile' %}" style="text-decoration: none; color: inherit;">
+        <div class="profile">
+          <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=4e73df&color=fff&size=40" alt="User">
+          <div>
+            <div style="font-weight: 600;">{{ request.user.get_full_name|default:request.user.username|truncatechars:15 }}</div>
+            <div style="font-size: 0.75rem; color: var(--secondary);">
+              {% if request.user.userprofile.role == 'ADMIN' %}Admin
+              {% elif request.user.userprofile.role == 'MANAGER' %}Manager
+              {% elif request.user.userprofile.role == 'OWNER' %}Owner
+              {% else %}Staff{% endif %}
             </div>
-            <div class="profile">
-                <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=random" alt="User">
-                <div>
-                    <div style="font-weight: 600; font-size: 0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
-                    <div style="font-size: 0.75rem; color: #888;">{% if request.user.is_staff %}Admin{% else %}Sales Executive{% endif %}</div>
-                </div>
-            </div>
+          </div>
         </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Period Selector -->
+  <div style="margin-bottom: 20px; text-align: right;">
+    <select id="salesPeriod" class="form-control" style="width: auto; display: inline-block;" onchange="updateSalesChart()">
+      <option value="7" {% if selected_period == '7' %}selected{% endif %}>Last 7 Days</option>
+      <option value="30" {% if selected_period == '30' %}selected{% endif %}>Last 30 Days</option>
+      <option value="90" {% if selected_period == '90' %}selected{% endif %}>Last Quarter</option>
+    </select>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div class="dashboard-container">
+    
+    <!-- Stats Row - Always 4 cards -->
+    <div class="stats-row">
+      <div class="card stat-card">
+        <div class="stat-header">
+          <div class="icon-box"><i class="fa-solid fa-shopping-cart"></i></div>
+          {% if revenue_growth %}
+          <span class="badge {% if revenue_growth >= 0 %}success{% else %}danger{% endif %}">
+            {% if revenue_growth >= 0 %}+{% endif %}{{ revenue_growth }}%
+          </span>
+          {% endif %}
+        </div>
+        <div class="stat-val">${{ total_revenue|floatformat:0|default:"0" }}</div>
+        <div class="stat-label">Total Revenue</div>
+      </div>
+      
+      <div class="card stat-card">
+        <div class="stat-header">
+          <div class="icon-box" style="background: rgba(28, 200, 138, 0.1); color: var(--success);">
+            <i class="fa-solid fa-cart-plus"></i>
+          </div>
+          {% if orders_growth %}
+          <span class="badge {% if orders_growth >= 0 %}success{% else %}danger{% endif %}">
+            {% if orders_growth >= 0 %}+{% endif %}{{ orders_growth }}%
+          </span>
+          {% endif %}
+        </div>
+        <div class="stat-val">{{ orders_today|default:"0" }}</div>
+        <div class="stat-label">Orders Today</div>
+      </div>
+      
+      <div class="card stat-card blue">
+        <div class="stat-header">
+          <div class="icon-box" style="background: rgba(255,255,255,0.2); color: white;">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          {% if customer_growth %}
+          <span class="badge" style="background: rgba(255,255,255,0.3); color: white;">+{{ customer_growth }}%</span>
+          {% endif %}
+        </div>
+        <div class="stat-val">{{ total_customers|default:"0" }}</div>
+        <div class="stat-label">Total Customers</div>
+      </div>
+      
+      <div class="card stat-card">
+        <div class="stat-header">
+          <div class="icon-box" style="background: rgba(246, 194, 62, 0.1); color: var(--warning);">
+            <i class="fa-solid fa-box"></i>
+          </div>
+          {% if low_stock_items %}
+          <span class="badge {% if low_stock_items > 0 %}warning{% else %}success{% endif %}">
+            {{ low_stock_items }} low
+          </span>
+          {% endif %}
+        </div>
+        <div class="stat-val">{{ products_in_stock|default:"0" }}</div>
+        <div class="stat-label">Products in Stock</div>
+      </div>
     </div>
 
-    <div class="dashboard-grid">
-        <!-- Stat Cards Row 1 -->
-        <div class="card stat-card">
-            <div class="stat-header">
-                <div class="icon-box">
-                    <i class="fa-solid fa-shopping-cart"></i>
-                </div>
-                {% if revenue_growth %}
-                <span class="badge success">+{{ revenue_growth }}%</span>
-                {% endif %}
-            </div>
-            <div class="stat-val">${{ total_revenue|floatformat:2|default:"24,580" }}</div>
-            <div class="stat-label">Total Revenue</div>
+    <!-- Charts Row - Always 2 cards (3fr and 1fr) -->
+    <div class="charts-row">
+      <div class="card">
+        <div class="chart-header">
+          <h3>Sales Overview</h3>
         </div>
-        
-        <div class="card stat-card">
-            <div class="stat-header">
-                <div class="icon-box">
-                    <i class="fa-solid fa-cart-plus"></i>
-                </div>
-                {% if orders_growth %}
-                <span class="badge success">+{{ orders_growth }}%</span>
-                {% endif %}
-            </div>
-            <div class="stat-val">{{ orders_today|default:"156" }}</div>
-            <div class="stat-label">Orders Today</div>
+        <div class="chart-container">
+          <canvas id="salesChart"></canvas>
         </div>
-        
-        <div class="card stat-card blue">
-            <div class="stat-header">
-                <div class="icon-box">
-                    <i class="fa-solid fa-users"></i>
-                </div>
-                {% if customer_growth %}
-                <span class="badge" style="background: rgba(255,255,255,0.3); color: white;">+{{ customer_growth }}%</span>
-                {% endif %}
-            </div>
-            <div class="stat-val">{{ total_customers|default:"248" }}</div>
-            <div class="stat-label">Total Customers</div>
+      </div>
+      
+      <div class="card">
+        <div class="chart-header">
+          <h3>Top Products</h3>
         </div>
-        
-        <div class="card stat-card">
-            <div class="stat-header">
-                <div class="icon-box">
-                    <i class="fa-solid fa-box"></i>
-                </div>
-                {% if stock_change %}
-                <span class="badge {% if stock_change < 0 %}danger{% else %}success{% endif %}">{{ stock_change }}%</span>
-                {% endif %}
-            </div>
-            <div class="stat-val">{{ products_in_stock|default:"1,245" }}</div>
-            <div class="stat-label">Products in Stock</div>
+        <div class="chart-container">
+          <canvas id="productChart"></canvas>
         </div>
-        
-        <!-- Charts Row 2 -->
-        <div class="card col-span-3">
-            <div class="chart-header">
-                <h3>Sales Overview</h3>
-                <select id="salesPeriod" style="border:none; color:#888; background: #f8f9fc; padding: 8px 15px; border-radius: 8px;" onchange="updateSalesChart()">
-                    <option value="7" {% if selected_period == '7' %}selected{% endif %}>Last 7 Days</option>
-                    <option value="30" {% if selected_period == '30' %}selected{% endif %}>Last 30 Days</option>
-                    <option value="90" {% if selected_period == '90' %}selected{% endif %}>Last Quarter</option>
-                </select>
-            </div>
-            <div style="height: 300px;">
-                <canvas id="salesChart"></canvas>
-            </div>
-        </div>
-        
-        <div class="card col-span-1">
-            <div class="chart-header">
-                <h3>Top Products</h3>
-            </div>
-            <div style="height: 300px;">
-                <canvas id="productChart"></canvas>
-            </div>
-        </div>
-        
-        <!-- Recent Orders & Quick Stats Row 3 -->
-        <div class="card col-span-3">
-            <div class="chart-header">
-                <h3>Recent Orders</h3>
-                <a href="{% url 'sales_order' %}" style="color: var(--primary); font-size: 0.85rem;">View All</a>
-            </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Order #</th>
-                            <th>Customer</th>
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for order in recent_orders %}
-                        <tr>
-                            <td>{{ order.order_number }}</td>
-                            <td>{{ order.customer.name }}</td>
-                            <td>{{ order.order_date|date:"M d, Y" }}{% if order.order_date|date:"Ymd" == today %} at {{ order.order_date|time:"g:i A" }}{% endif %}</td>
-                            <td>${{ order.total_amount|floatformat:2 }}</td>
-                            <td>
-                                <span class="badge 
-                                    {% if order.status == 'completed' %}success
-                                    {% elif order.status == 'cancelled' %}danger
-                                    {% elif order.status == 'processing' %}warning
-                                    {% elif order.status == 'shipped' %}success
-                                    {% else %}warning{% endif %}">
-                                    {{ order.get_status_display|default:order.status|title }}
-                                </span>
-                            </td>
-                            <td>
-                                <a href="{% url 'sales_order_detail' order.pk %}" class="action-btn btn-edit">
-                                    {% if order.status == 'processing' %}Process{% elif order.status == 'shipped' %}Track{% else %}View{% endif %}
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td>SO-2023-156</td>
-                            <td>James Wilson</td>
-                            <td>Today, 10:30 AM</td>
-                            <td>$1,245.00</td>
-                            <td><span class="badge success">Completed</span></td>
-                            <td><a href="#" class="action-btn btn-edit">View</a></td>
-                        </tr>
-                        <tr>
-                            <td>SO-2023-155</td>
-                            <td>Tech Solutions Inc.</td>
-                            <td>Today, 09:15 AM</td>
-                            <td>$3,450.00</td>
-                            <td><span class="badge success">Completed</span></td>
-                            <td><a href="#" class="action-btn btn-edit">View</a></td>
-                        </tr>
-                        <tr>
-                            <td>SO-2023-154</td>
-                            <td>Sarah Johnson</td>
-                            <td>Today, 08:45 AM</td>
-                            <td>$789.00</td>
-                            <td><span class="badge" style="background:#fef3c7; color:#92400e;">Processing</span></td>
-                            <td><a href="#" class="action-btn btn-edit">Process</a></td>
-                        </tr>
-                        <tr>
-                            <td>SO-2023-153</td>
-                            <td>Global Retail</td>
-                            <td>Yesterday</td>
-                            <td>$5,678.00</td>
-                            <td><span class="badge success">Shipped</span></td>
-                            <td><a href="#" class="action-btn btn-edit">Track</a></td>
-                        </tr>
-                        <tr>
-                            <td>SO-2023-152</td>
-                            <td>Mike Brown</td>
-                            <td>Yesterday</td>
-                            <td>$450.00</td>
-                            <td><span class="badge danger">Cancelled</span></td>
-                            <td><a href="#" class="action-btn btn-edit">View</a></td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <div class="card col-span-1">
-            <div class="chart-header">
-                <h3>Quick Stats</h3>
-            </div>
-            <div class="quick-stats">
-                <div class="stat-box">
-                    <div class="icon-box" style="background: #e0e7ff; color: #4e73df;">
-                        <i class="fa-solid fa-clock"></i>
-                    </div>
-                    <div class="value">{{ pending_orders|default:"8" }}</div>
-                    <div class="label">Pending Orders</div>
-                </div>
-                <div class="stat-box">
-                    <div class="icon-box" style="background: #d1fae5; color: #065f46;">
-                        <i class="fa-solid fa-check-circle"></i>
-                    </div>
-                    <div class="value">{{ completed_today|default:"24" }}</div>
-                    <div class="label">Completed Today</div>
-                </div>
-                <div class="stat-box">
-                    <div class="icon-box" style="background: #fef3c7; color: #92400e;">
-                        <i class="fa-solid fa-exclamation-circle"></i>
-                    </div>
-                    <div class="value">{{ low_stock_items|default:"3" }}</div>
-                    <div class="label">Low Stock Items</div>
-                </div>
-                <div class="stat-box">
-                    <div class="icon-box" style="background: #fee2e2; color: #991b1b;">
-                        <i class="fa-solid fa-times-circle"></i>
-                    </div>
-                    <div class="value">{{ overdue_invoices|default:"2" }}</div>
-                    <div class="label">Overdue Invoices</div>
-                </div>
-            </div>
-            
-            <div style="margin-top: 25px;">
-                <h4 style="margin-bottom: 15px;">Recent Activities</h4>
-                <div style="display: flex; flex-direction: column; gap: 15px;">
-                    {% for activity in recent_activities %}
-                    <div style="display: flex; align-items: flex-start; gap: 10px;">
-                        <div style="width: 8px; height: 8px; background: 
-                            {% if activity.type == 'order' %}var(--success)
-                            {% elif activity.type == 'stock' %}var(--primary)
-                            {% else %}var(--warning){% endif %}; border-radius: 50%; margin-top: 5px;"></div>
-                        <div>
-                            <div style="font-size: 0.85rem;">{{ activity.description }}</div>
-                            <div style="font-size: 0.75rem; color: var(--secondary);">{{ activity.time_ago }}</div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div style="display: flex; align-items: flex-start; gap: 10px;">
-                        <div style="width: 8px; height: 8px; background: var(--success); border-radius: 50%; margin-top: 5px;"></div>
-                        <div>
-                            <div style="font-size: 0.85rem;">New order from James Wilson</div>
-                            <div style="font-size: 0.75rem; color: var(--secondary);">10 minutes ago</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: flex-start; gap: 10px;">
-                        <div style="width: 8px; height: 8px; background: var(--primary); border-radius: 50%; margin-top: 5px;"></div>
-                        <div>
-                            <div style="font-size: 0.85rem;">Product stock updated</div>
-                            <div style="font-size: 0.75rem; color: var(--secondary);">45 minutes ago</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: flex-start; gap: 10px;">
-                        <div style="width: 8px; height: 8px; background: var(--warning); border-radius: 50%; margin-top: 5px;"></div>
-                        <div>
-                            <div style="font-size: 0.85rem;">Payment reminder sent</div>
-                            <div style="font-size: 0.75rem; color: var(--secondary);">2 hours ago</div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
+
+    <!-- Data Row - Always 2 cards (2fr and 1fr) -->
+    <div class="data-row">
+      <!-- Recent Orders Card -->
+      <div class="card">
+        <div class="chart-header">
+          <h3>Recent Orders</h3>
+          <a href="{% url 'sales_order' %}" style="color: var(--primary); font-size: 0.85rem;">View All</a>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in recent_orders %}
+              <tr>
+                <td>#{{ order.id }}</td>
+                <td>{{ order.customer.name|truncatechars:12 }}</td>
+                <td>
+                  {% if order.order_date == today %}Today
+                  {% elif order.order_date == yesterday %}Yesterday
+                  {% else %}{{ order.order_date|date:"M d" }}{% endif %}
+                </td>
+                <td>${{ order.total_amount|floatformat:0 }}</td>
+                <td>
+                  <span class="badge 
+                    {% if order.status == 'completed' %}success
+                    {% elif order.status == 'cancelled' %}danger
+                    {% else %}warning{% endif %}">
+                    {{ order.status|title }}
+                  </span>
+                </td>
+                <td>
+                  <a href="{% url 'sales_order_detail' order.pk %}" class="action-btn btn-view-orders">View</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 30px; color: var(--secondary);">
+                  No recent orders
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quick Stats & Alerts Card -->
+      <div class="card">
+        <h3 style="margin-bottom: 15px;">Quick Stats</h3>
+        
+        <div class="quick-stats-grid">
+          <div class="stat-mini-card">
+            <div class="value">{{ pending_orders|default:"0" }}</div>
+            <div class="label">Pending Orders</div>
+          </div>
+          <div class="stat-mini-card">
+            <div class="value">{{ completed_today|default:"0" }}</div>
+            <div class="label">Completed Today</div>
+          </div>
+          <div class="stat-mini-card">
+            <div class="value">{{ low_stock_items|default:"0" }}</div>
+            <div class="label">Low Stock</div>
+          </div>
+          <div class="stat-mini-card">
+            <div class="value">{{ out_of_stock|default:"0" }}</div>
+            <div class="label">Out of Stock</div>
+          </div>
+        </div>
+
+        <h3 style="margin: 20px 0 10px;">Inventory Alerts</h3>
+        {% for product in low_stock_list|slice:":4" %}
+        <div class="alert-item">
+          <div class="icon-box" style="width: 30px; height: 30px; background: var(--danger-light); color: var(--danger);">
+            <i class="fa-solid fa-exclamation"></i>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-weight: 500;">{{ product.name|truncatechars:15 }}</div>
+            <div style="font-size: 0.7rem; color: var(--secondary);">
+              {{ product.quantity }} left (Min: {{ product.minimum_stock }})
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div style="text-align: center; padding: 20px; color: var(--secondary);">
+          No inventory alerts
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Activities Row - Full width -->
+    <div class="activities-row">
+      <div class="card">
+        <h3 style="margin-bottom: 15px;">Recent Activities</h3>
+        <div class="activities-list">
+          {% for activity in recent_activities|slice:":5" %}
+          <div class="activity-item">
+            <div class="icon-box" style="width: 32px; height: 32px; background: {{ activity.color }}15; color: {{ activity.color }};">
+              <i class="{{ activity.icon }}"></i>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-weight: 500;">{{ activity.description }}</div>
+              <div style="font-size: 0.7rem; color: var(--secondary);">{{ activity.time_ago }}</div>
+            </div>
+          </div>
+          {% empty %}
+          <div style="text-align: center; padding: 20px; color: var(--secondary);">
+            No recent activities
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-    // Sales Chart Data from context
-    const salesLabels = {{ sales_chart_labels|safe|default:"['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" }};
-    const salesData = {{ sales_chart_data|safe|default:"[3200, 4200, 5100, 5800, 4900, 6200, 7300]" }};
+  // Chart initialization
+  document.addEventListener('DOMContentLoaded', function() {
+    const salesLabels = JSON.parse('{{ sales_chart_labels|safe|default:"[]" }}');
+    const salesData = JSON.parse('{{ sales_chart_data|safe|default:"[]" }}');
+    const productLabels = JSON.parse('{{ product_chart_labels|safe|default:"[]" }}');
+    const productData = JSON.parse('{{ product_chart_data|safe|default:"[]" }}');
     
-    // Product Chart Data from context
-    const productLabels = {{ product_chart_labels|safe|default:"['Electronics', 'Games', 'Furniture', 'Accessories']" }};
-    const productData = {{ product_chart_data|safe|default:"[45, 25, 15, 15]" }};
-    const productColors = ['#4e73df', '#1cc88a', '#f6c23e', '#e74a3b'];
-    
-    let salesChart, productChart;
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        initSalesChart();
-        initProductChart();
-    });
-    
-    function initSalesChart() {
-        const salesCtx = document.getElementById('salesChart').getContext('2d');
-        salesChart = new Chart(salesCtx, {
-            type: 'line',
-            data: {
-                labels: salesLabels,
-                datasets: [{
-                    label: 'Revenue',
-                    data: salesData,
-                    borderColor: '#4e73df',
-                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: { 
-                        beginAtZero: true,
-                        grid: { borderDash: [5, 5] }
-                    },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
+    // Sales Chart
+    const salesCtx = document.getElementById('salesChart');
+    if (salesCtx) {
+      new Chart(salesCtx, {
+        type: 'line',
+        data: {
+          labels: salesLabels.length ? salesLabels : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{
+            data: salesData.length ? salesData : [0,0,0,0,0,0,0],
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78,115,223,0.05)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
     }
     
-    function initProductChart() {
-        const productCtx = document.getElementById('productChart').getContext('2d');
-        productChart = new Chart(productCtx, {
-            type: 'doughnut',
-            data: {
-                labels: productLabels,
-                datasets: [{
-                    data: productData,
-                    backgroundColor: productColors,
-                    borderWidth: 0,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            usePointStyle: true,
-                        }
-                    }
-                }
-            }
-        });
+    // Product Chart
+    const productCtx = document.getElementById('productChart');
+    if (productCtx) {
+      new Chart(productCtx, {
+        type: 'doughnut',
+        data: {
+          labels: productLabels.length ? productLabels : ['No Data'],
+          datasets: [{
+            data: productData.length ? productData : [1],
+            backgroundColor: ['#4e73df', '#1cc88a', '#f6c23e', '#e74a3b'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '60%',
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
     }
-    
-    function updateSalesChart() {
-        const period = document.getElementById('salesPeriod').value;
-        window.location.href = `?period=${period}`;
-    }
+  });
+  
+  function updateSalesChart() {
+    window.location.href = `?period=${document.getElementById('salesPeriod').value}`;
+  }
 </script>
 {% endblock main-content %}
-
-{% block linkJs %}
-  {{ block.super }}
-{% endblock linkJs %}

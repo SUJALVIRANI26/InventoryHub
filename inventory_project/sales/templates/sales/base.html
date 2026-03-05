@@ -25,23 +25,19 @@
 
         <div class="menu-category">Menu</div>
         <a href="{% url 'dashboard' %}" class="menu-item"><i class="fa-solid fa-house"></i> Dashboard</a>
-        <!-- <a href="{% url 'products' %}" class="menu-item"><i class="fa-solid fa-box-open"></i> Products</a> -->
         
         <div class="menu-category">Sales</div>
         <a href="{% url 'sales_order' %}" class="menu-item"><i class="fa-solid fa-cart-plus"></i> Sales Orders</a>
         <a href="{% url 'customers' %}" class="menu-item"><i class="fa-solid fa-users"></i> Customers</a>
-        <a href="{% url 'invoices' %}" class="menu-item"><i class="fa-solid fa-receipt"></i> Invoices</a>
         
-        <div class="menu-category">Tools</div>
-        <a href="{% url 'settings' %}" class="menu-item"><i class="fa-solid fa-gear"></i> Settings</a>
+        
         <div class="menu-category">Login</div>
         <a href="{% url 'logout' %}" class = "menu-item"><i class="menu-category"></i>Logout</a>
-        <div class="upgrade-card">
-            <h4>Upgrade to Pro</h4>
-            <p>Get advanced features</p>
-            <a href="#" class="upgrade-btn">Upgrade Now</a>
-        </div>
+       
       </div>
+
+
+      
     {% endblock sidebar %}
     
     <div class="content-wrapper">

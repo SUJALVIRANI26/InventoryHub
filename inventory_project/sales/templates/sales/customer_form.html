@@ -31,6 +31,20 @@
             padding: 9px 12px;
             height: auto;
         }
+        
+        .form-section {
+            background: #f8f9fc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .form-section h4 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
     </style>
 {% endblock link %}
 
@@ -43,23 +57,38 @@
         </div>
 
         <div class="user-actions">
-            <a href="{% url 'customers'%}" class="btn-secondary">
+            <a href="{% url 'customers' %}" class="btn-secondary">
                 <i class="fa-solid fa-arrow-left"></i> Back to Customers
             </a>
 
+            <a href="{% url 'profile' %}" style="text-decoration: none;">
             <div class="profile">
-                <img src="https://ui-avatars.com/api/?name=John+S&background=random">
+                <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=random" alt="User">
                 <div>
-                    <div style="font-weight:600;font-size:0.9rem;">John Sales</div>
-                    <div style="font-size:0.75rem;color:#888;">Sales Executive</div>
+                    <div style="font-weight:600;font-size:0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
+                    <div style="font-size:0.75rem;color:#888;">{% if request.user.is_staff %}Admin{% else %}Sales Executive{% endif %}</div>
                 </div>
             </div>
+            </a>
         </div>
     </div>
 
     <div class="dashboard-grid">
         <div class="card col-span-3">
-            <h3>Customer Information</h3>
+            <h3>{% if form.instance.pk %}Edit Customer{% else %}New Customer{% endif %}</h3>
+            
+            {% if form.instance.pk %}
+            <div style="background: #e0e7ff; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>Customer ID:</strong> CUST-{{ form.instance.id|stringformat:"03d" }}
+                </div>
+                <div>
+                    <span class="badge {% if form.instance.status == 'active' %}success{% else %}danger{% endif %}">
+                        {{ form.instance.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            {% endif %}
 
             <form method="POST" action="">
                 {% csrf_token %}
@@ -70,93 +99,113 @@
                 </div>
                 {% endif %}
 
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Full Name *</label>
-                        {{ form.name }}
-                        {% if form.name.errors %}
-                        <small class="error">{{ form.name.errors }}</small>
-                        {% endif %}
+                <div class="form-section">
+                    <h4><i class="fa-solid fa-user" style="margin-right: 10px;"></i> Basic Information</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Full Name *</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <small class="error">{{ form.name.errors }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email Address *</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <small class="error">{{ form.email.errors }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                            <small class="error">{{ form.phone.errors }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label>Company</label>
+                            {{ form.company }}
+                            {% if form.company.errors %}
+                            <small class="error">{{ form.company.errors }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4><i class="fa-solid fa-location-dot" style="margin-right: 10px;"></i> Address Information</h4>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            {{ form.address_line1 }}
+                        </div>
+                        <div class="form-group full-width">
+                            {{ form.address_line2 }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.city }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.state }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.zip_code }}
+                        </div>
+                        <div class="form-group">
+                            {{ form.country }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4><i class="fa-solid fa-gear" style="margin-right: 10px;"></i> Additional Information</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Customer Since</label>
+                            {{ form.customer_since }}
+                            {% if form.customer_since.errors %}
+                            <small class="error">{{ form.customer_since.errors }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label>Status</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <small class="error">{{ form.status.errors }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label>Customer Type</label>
+                            {{ form.customer_type }}
+                            {% if form.customer_type.errors %}
+                            <small class="error">{{ form.customer_type.errors }}</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tax ID / VAT</label>
+                            {{ form.tax_id }}
+                            {% if form.tax_id.errors %}
+                            <small class="error">{{ form.tax_id.errors }}</small>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Email Address *</label>
-                        {{ form.email }}
-                        {% if form.email.errors %}
-                        <small class="error">{{ form.email.errors }}</small>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label>Phone Number</label>
-                        {{ form.phone }}
-                        {% if form.phone.errors %}
-                        <small class="error">{{ form.phone.errors }}</small>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-group">
-                        <label>Company</label>
-                        {{ form.company }}
-                        {% if form.company.errors %}
-                        <small class="error">{{ form.company.errors }}</small>
+                        <label>Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                        <small class="error">{{ form.notes.errors }}</small>
                         {% endif %}
                     </div>
                 </div>
 
-                <h4 style="margin-top:20px;">Address Information</h4>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        {{ form.address_line1 }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.address_line2 }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.city }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.state }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.zip_code }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.country }}
-                    </div>
-                </div>
-
-                <h4 style="margin-top:20px;">Additional Information</h4>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Customer Since</label>
-                        {{ form.customer_since }}
-                    </div>
-
-                    <div class="form-group">
-                        <label>Status</label>
-                        {{ form.status }}
-                    </div>
-
-                    <div class="form-group">
-                        <label>Customer Type</label>
-                        {{ form.customer_type }}
-                    </div>
-
-                    <div class="form-group">
-                        <label>Tax ID</label>
-                        {{ form.tax_id }}
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Notes</label>
-                    {{ form.notes }}
-                </div>
-
-                <div style="margin-top:30px; display: flex; gap: 10px;">
+                <div style="margin-top:30px; display: flex; gap: 10px; justify-content: flex-end;">
                     <a href="{% url 'customers' %}" class="btn-secondary">Cancel</a>
                     <button type="submit" class="btn-primary">
                         <i class="fa-solid fa-save"></i> {% if form.instance.pk %}Update Customer{% else %}Create Customer{% endif %}
@@ -189,7 +238,7 @@
             'address_line1': 'Address Line 1',
             'address_line2': 'Address Line 2 (optional)',
             'city': 'City',
-            'state': 'State',
+            'state': 'State / Province',
             'zip_code': 'ZIP / Postal Code',
             'country': 'Country',
             'tax_id': 'Tax ID / VAT Number (optional)',
@@ -202,20 +251,45 @@
                 field.placeholder = placeholder;
             }
         }
+        
+        // Set max attribute for date field
+        const dateField = document.querySelector('[name="customer_since"]');
+        if (dateField) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            dateField.max = yyyy + '-' + mm + '-' + dd;
+            
+            if (!dateField.value) {
+                dateField.value = yyyy + '-' + mm + '-' + dd;
+            }
+        }
+        
+        // Format phone number input
+        const phoneField = document.querySelector('[name="phone"]');
+        if (phoneField) {
+            phoneField.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 10) value = value.slice(0, 10);
+                e.target.value = value;
+            });
+        }
     });
     
+    // Form validation
     document.querySelector('form').addEventListener('submit', function(e){
         const name = document.querySelector('[name="name"]').value.trim();
         const email = document.querySelector('[name="email"]').value.trim();
 
         if(!name){
-            alert("Customer name required");
+            alert("Customer name is required");
             e.preventDefault();
             return false;
         }
 
         if(!email){
-            alert("Email required");
+            alert("Email address is required");
             e.preventDefault();
             return false;
         }
@@ -227,6 +301,8 @@
             e.preventDefault();
             return false;
         }
+        
+        return true;
     });
   </script>
 {% endblock linkJs %}
