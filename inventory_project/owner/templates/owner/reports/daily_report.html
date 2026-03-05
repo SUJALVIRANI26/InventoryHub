@@ -25,6 +25,9 @@
         <a class="menu-item" href="{% url 'owner:sales_report' %}">Sales Report</a>
         <a class="menu-item" href="{% url 'owner:purchase_report' %}">Purchase Report</a>
         <a class="menu-item" href="{% url 'owner:top_products_report' %}">Top Products Report</a>
+
+        <div class="menu-category">Session</div>
+        <a class="menu-item" href="{% url 'logout' %}">Logout</a>
     </aside>
 
     <main class="main-content">
@@ -36,35 +39,33 @@
         </header>
 
         <div class="filter-bar">
-            <input type="date">
-            <input type="date">
-            <select>
+            <input type="date" value="{{ start_date|date:'Y-m-d' }}" disabled>
+            <input type="date" value="{{ end_date|date:'Y-m-d' }}" disabled>
+            <select disabled>
                 <option>All Branches</option>
-                <option>North Branch</option>
-                <option>South Branch</option>
             </select>
         </div>
 
         <section class="grid">
             <div class="card kpi span-1">
                 <p class="label">Revenue</p>
-                <p class="value">$42,600</p>
-                <p class="delta">+8.2% vs previous period</p>
+                <p class="value">${{ sales_total|floatformat:2 }}</p>
+                <p class="delta">{{ sales_delta }}% vs previous period</p>
             </div>
             <div class="card kpi span-1">
                 <p class="label">Expenses</p>
-                <p class="value">$28,340</p>
-                <p class="delta">+2.1% vs previous period</p>
+                <p class="value">${{ purchase_total|floatformat:2 }}</p>
+                <p class="delta">{{ purchase_delta }}% vs previous period</p>
             </div>
             <div class="card kpi span-1">
                 <p class="label">Net Profit</p>
-                <p class="value">$14,260</p>
-                <p class="delta">+11.3% vs previous period</p>
+                <p class="value">${{ net_profit|floatformat:2 }}</p>
+                <p class="delta">{{ net_profit_delta }}% vs previous period</p>
             </div>
             <div class="card kpi span-1">
                 <p class="label">Orders</p>
-                <p class="value">386</p>
-                <p class="delta">+5.4% vs previous period</p>
+                <p class="value">{{ orders_count }}</p>
+                <p class="delta">Low stock items: {{ low_stock_count }}</p>
             </div>
 
             <div class="card span-3">
@@ -80,13 +81,13 @@
                     <canvas id="ownerMixChart"></canvas>
                 </div>
                 <div class="quick-stats" style="margin-top: 10px;">
-                    <div class="quick-stat"><p>Top Product</p><strong>Wireless Headset Pro</strong></div>
-                    <div class="quick-stat"><p>Best Branch</p><strong>North Branch</strong></div>
+                    <div class="quick-stat"><p>Top Product</p><strong>{{ top_product_name }}</strong></div>
+                    <div class="quick-stat"><p>Total Stock Value</p><strong>${{ stock_value|floatformat:2 }}</strong></div>
                 </div>
             </div>
 
             <div class="card span-4">
-                <h3>Detailed Transactions</h3>
+                <h3>Recent Transactions</h3>
                 <table class="table" style="margin-top: 8px;">
                     <thead>
                         <tr>
@@ -97,15 +98,28 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>2026-03-01</td><td>Sales</td><td>$8,920</td><td><span class="badge success">Completed</span></td></tr>
-                        <tr><td>2026-03-01</td><td>Purchase</td><td>$4,210</td><td><span class="badge warning">Pending</span></td></tr>
-                        <tr><td>2026-03-02</td><td>Sales</td><td>$9,780</td><td><span class="badge success">Completed</span></td></tr>
-                        <tr><td>2026-03-02</td><td>Inventory</td><td>$1,420</td><td><span class="badge danger">Alert</span></td></tr>
+                        {% for tx in transactions %}
+                        <tr>
+                            <td>{{ tx.date|date:"Y-m-d" }}</td>
+                            <td>{{ tx.category }}</td>
+                            <td>${{ tx.amount|floatformat:2 }}</td>
+                            <td><span class="badge {{ tx.status_class }}">{{ tx.status_label }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4">No data available for this period.</td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
         </section>
     </main>
+
+    {{ trend_labels|json_script:"trend-labels" }}
+    {{ trend_values|json_script:"trend-values" }}
+    {{ mix_labels|json_script:"mix-labels" }}
+    {{ mix_values|json_script:"mix-values" }}
 
     <script src="{% static 'owner/main.js' %}"></script>
 </body>

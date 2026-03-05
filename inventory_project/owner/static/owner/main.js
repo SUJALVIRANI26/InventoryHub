@@ -10,18 +10,37 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    const readJSON = function (id, fallback) {
+        const node = document.getElementById(id);
+        if (!node) {
+            return fallback;
+        }
+        try {
+            return JSON.parse(node.textContent);
+        } catch (error) {
+            return fallback;
+        }
+    };
+
+    const defaultTrendLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const defaultTrendValues = [3200, 3900, 3700, 4450, 4800, 4300, 5100];
+    const defaultMixLabels = ['Sales', 'Purchase', 'Stock Value'];
+    const defaultMixValues = [58, 27, 15];
+
+    const trendLabels = readJSON('trend-labels', defaultTrendLabels);
+    const trendValues = readJSON('trend-values', defaultTrendValues);
+    const mixLabels = readJSON('mix-labels', defaultMixLabels);
+    const mixValues = readJSON('mix-values', defaultMixValues);
+
     const chartEl = document.getElementById('ownerTrendChart');
     if (chartEl) {
-        const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const values = [3200, 3900, 3700, 4450, 4800, 4300, 5100];
-
         new Chart(chartEl, {
             type: 'line',
             data: {
-                labels,
+                labels: trendLabels,
                 datasets: [{
                     label: 'Revenue',
-                    data: values,
+                    data: trendValues,
                     borderColor: '#2e63f0',
                     backgroundColor: 'rgba(46, 99, 240, 0.14)',
                     fill: true,
@@ -49,9 +68,9 @@ document.addEventListener('DOMContentLoaded', function () {
         new Chart(pieEl, {
             type: 'doughnut',
             data: {
-                labels: ['Sales', 'Purchase', 'Stock Holding'],
+                labels: mixLabels,
                 datasets: [{
-                    data: [58, 27, 15],
+                    data: mixValues,
                     backgroundColor: ['#2e63f0', '#16a34a', '#f59e0b'],
                     borderWidth: 0,
                     hoverOffset: 6

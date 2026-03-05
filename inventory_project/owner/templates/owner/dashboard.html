@@ -24,6 +24,9 @@
         <a class="menu-item" href="{% url 'owner:sales_report' %}">Sales Report</a>
         <a class="menu-item" href="{% url 'owner:purchase_report' %}">Purchase Report</a>
         <a class="menu-item" href="{% url 'owner:top_products_report' %}">Top Products Report</a>
+
+        <div class="menu-category">Session</div>
+        <a class="menu-item" href="{% url 'logout' %}">Logout</a>
     </aside>
 
     <main class="main-content">
@@ -91,3 +94,4 @@
     <script src="{% static 'owner/main.js' %}"></script>
 </body>
 </html>
+
