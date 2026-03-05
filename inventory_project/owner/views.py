@@ -2,7 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import DecimalField, ExpressionWrapper, F, Sum
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Sum
 from django.db.models.functions import TruncDay, TruncMonth
 from django.shortcuts import render
 from django.utils import timezone
@@ -280,4 +280,3 @@ def top_products_report(request):
         'owner/reports/top_products_report.html',
         _build_report_context('Top Products Report', 'Best performing products by sales', 'monthly'),
     )
-

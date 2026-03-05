@@ -67,15 +67,7 @@
                 <p class="value">{{ orders_count }}</p>
                 <p class="delta">Low stock items: {{ low_stock_count }}</p>
             </div>
-
-            <div class="card span-3">
-                <h3>Performance Trend</h3>
-                <div class="chart-wrap">
-                    <canvas id="ownerTrendChart"></canvas>
-                </div>
-            </div>
-
-            <div class="card span-1">
+<div class="card span-1">
                 <h3>Business Mix</h3>
                 <div class="chart-wrap" style="height: 220px;">
                     <canvas id="ownerMixChart"></canvas>
@@ -115,12 +107,10 @@
             </div>
         </section>
     </main>
-
-    {{ trend_labels|json_script:"trend-labels" }}
-    {{ trend_values|json_script:"trend-values" }}
-    {{ mix_labels|json_script:"mix-labels" }}
+{{ mix_labels|json_script:"mix-labels" }}
     {{ mix_values|json_script:"mix-values" }}
 
     <script src="{% static 'owner/main.js' %}"></script>
 </body>
 </html>
+
