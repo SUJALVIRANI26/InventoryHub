@@ -2,6 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
+from accounts.decorators import owner_required
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Sum
 from django.db.models.functions import TruncDay, TruncMonth
 from django.shortcuts import render
@@ -190,6 +191,7 @@ def _build_report_context(title, subtitle, period):
 
 
 @login_required
+@owner_required
 def dashboard(request):
     return render(
         request,
@@ -202,6 +204,7 @@ def dashboard(request):
 
 
 @login_required
+@owner_required
 def daily_report(request):
     return render(
         request,
@@ -211,6 +214,7 @@ def daily_report(request):
 
 
 @login_required
+@owner_required
 def weekly_report(request):
     return render(
         request,
@@ -220,6 +224,7 @@ def weekly_report(request):
 
 
 @login_required
+@owner_required
 def monthly_report(request):
     return render(
         request,
@@ -229,6 +234,7 @@ def monthly_report(request):
 
 
 @login_required
+@owner_required
 def yearly_report(request):
     return render(
         request,
@@ -238,6 +244,7 @@ def yearly_report(request):
 
 
 @login_required
+@owner_required
 def profit_loss_report(request):
     return render(
         request,
@@ -247,6 +254,7 @@ def profit_loss_report(request):
 
 
 @login_required
+@owner_required
 def stock_report(request):
     return render(
         request,
@@ -256,6 +264,7 @@ def stock_report(request):
 
 
 @login_required
+@owner_required
 def sales_report(request):
     return render(
         request,
@@ -265,6 +274,7 @@ def sales_report(request):
 
 
 @login_required
+@owner_required
 def purchase_report(request):
     return render(
         request,
@@ -274,6 +284,7 @@ def purchase_report(request):
 
 
 @login_required
+@owner_required
 def top_products_report(request):
     return render(
         request,
