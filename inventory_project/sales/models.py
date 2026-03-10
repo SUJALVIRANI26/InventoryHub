@@ -17,6 +17,7 @@ CUSTOMER_TYPE_CHOICES = [
 ORDER_STATUS_CHOICES = [
     ('pending', 'Pending'),
     ('processing', 'Processing'),
+    ('backlog', 'Backlog'),
     ('shipped', 'Shipped'),
     ('completed', 'Completed'),
     ('cancelled', 'Cancelled'),
@@ -164,12 +165,21 @@ class SalesOrderItem(models.Model):
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
     def save(self, *args, **kwargs):
-        # Ensure price is stored as Decimal even if float is provided
-        if not isinstance(self.unit_price, Decimal):
-            self.unit_price = Decimal(str(self.unit_price))
-        if not isinstance(self.quantity, Decimal):
-            self.quantity = Decimal(str(self.quantity))
-        self.total_price = self.quantity * self.unit_price
+        """
+        Always derive unit_price from the product so sales
+        users cannot override pricing from the UI.
+        """
+        if self.product_id:
+            base_price = self.product.min_price if self.product.min_price is not None else self.product.price
+            # Ensure price is a Decimal
+            if not isinstance(base_price, Decimal):
+                base_price = Decimal(str(base_price))
+            self.unit_price = base_price
+
+        # Quantity is stored as an integer but used in Decimal math
+        quantity_decimal = Decimal(str(self.quantity))
+        self.total_price = quantity_decimal * self.unit_price
+
         super().save(*args, **kwargs)
     
     def __str__(self):

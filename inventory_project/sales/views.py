@@ -7,7 +7,7 @@ from django.utils.timezone import now, timedelta
 from datetime import datetime, timedelta
 from decimal import Decimal
 from .forms import OrderItemFormSet, SalesOrderForm, CustomerForm
-from .models import SalesOrder, Customer, SalesOrderItem 
+from .models import SalesOrder, Customer, SalesOrderItem
 from inventory_manager.models import Product
 from django.contrib.auth.decorators import login_required
 from admin_panel.models import UserProfile
@@ -17,6 +17,64 @@ from django.core.serializers.json import DjangoJSONEncoder
 from .models import ORDER_STATUS_CHOICES
 from django.core.paginator import Paginator
 from django.db import models
+
+
+def _apply_status_and_stock(order, new_status, old_status=None):
+    """
+    Central place to enforce stock rules and backlog behaviour
+    when an order's status changes.
+    """
+    if old_status is None:
+        old_status = order.status
+
+    # Statuses that require sufficient stock before moving forward.
+    stock_guard_statuses = {'processing', 'shipped', 'completed'}
+
+    # Any attempt to move into one of these statuses must pass stock checks.
+    if old_status != 'completed' and new_status in stock_guard_statuses:
+        insufficient_items = []
+        for item in order.items.select_related('product'):
+            product = item.product
+            if product.quantity < item.quantity:
+                insufficient_items.append((item, product))
+
+        if insufficient_items:
+            # Not enough stock: move/keep order in backlog instead.
+            order.status = 'backlog'
+            order.save()
+            names = ", ".join(f"{p.name}" for _, p in insufficient_items)
+            return False, f"Insufficient stock for: {names}. Order moved to backlog."
+
+        # Sufficient stock and moving specifically to completed:
+        if new_status == 'completed':
+            for item in order.items.select_related('product'):
+                product = item.product
+                product.quantity -= item.quantity
+                product.save()
+
+            order.status = 'completed'
+            order.save()
+            return True, "Order marked as completed and stock updated."
+
+        # Sufficient stock for processing/shipped: just update status.
+        order.status = new_status
+        order.save()
+        return True, "Order status updated."
+
+    # If moving away from completed, optionally restore stock.
+    if old_status == 'completed' and new_status != 'completed':
+        for item in order.items.select_related('product'):
+            product = item.product
+            product.quantity += item.quantity
+            product.save()
+        order.status = new_status
+        order.save()
+        return True, "Order status updated and stock restored."
+
+    # All other transitions simply update the status.
+    order.status = new_status
+    order.save()
+    return True, "Order status updated."
 
 
 @login_required
@@ -290,8 +348,10 @@ def profile_view(request):
 def sales_order_form(request, pk=None):
     if pk:
         order = get_object_or_404(SalesOrder, pk=pk)
+        old_status = order.status
     else:
         order = SalesOrder()   # ✅ create empty instance
+        old_status = order.status
 
     if request.method == 'POST':
         form = SalesOrderForm(request.POST, instance=order)
@@ -308,12 +368,19 @@ def sales_order_form(request, pk=None):
 
             order.calculate_totals()
             order.save()
-            
+
+            # Enforce stock rules based on chosen status
+            new_status = order.status
+            success, msg = _apply_status_and_stock(order, new_status, old_status)
+            if success:
+                messages.success(request, msg)
+            else:
+                messages.warning(request, msg)
+
             # Update customer statistics
             if order.customer:
                 order.customer.update_stats()
 
-            messages.success(request, 'Sales order saved successfully!')
             return redirect('sales_order_detail', pk=order.pk)
     else:
         form = SalesOrderForm(instance=order)
@@ -334,15 +401,17 @@ def update_order_status(request, pk, status):
     valid_statuses = [choice[0] for choice in ORDER_STATUS_CHOICES]
     if status in valid_statuses:
         old_status = order.status
-        order.status = status
-        order.save()
-        
+        success, msg = _apply_status_and_stock(order, status, old_status)
+
         # Update customer stats if status changed to/from completed
-        if old_status != status and (status == 'completed' or old_status == 'completed'):
+        if old_status != order.status and (order.status == 'completed' or old_status == 'completed'):
             if order.customer:
                 order.customer.update_stats()
-        
-        messages.success(request, f'Order status updated to {order.get_status_display()}')
+
+        if success:
+            messages.success(request, msg)
+        else:
+            messages.warning(request, msg)
     else:
         messages.error(request, 'Invalid status')
     
@@ -440,14 +509,19 @@ def sales_order_detail(request, pk):
     if request.method == 'POST' and 'update_status' in request.POST:
         new_status = request.POST.get('status')
         if new_status in dict(ORDER_STATUS_CHOICES):
-            order.status = new_status
-            order.save()
-            
+            old_status = order.status
+            success, msg = _apply_status_and_stock(order, new_status, old_status)
+
             # Update customer stats when order status changes
-            if order.customer:
-                order.customer.update_stats()
-            
-            messages.success(request, f'Order status updated to {order.get_status_display()}')
+            if old_status != order.status and (order.status == 'completed' or old_status == 'completed'):
+                if order.customer:
+                    order.customer.update_stats()
+
+            if success:
+                messages.success(request, msg)
+            else:
+                messages.warning(request, msg)
+
             return redirect('sales_order_detail', pk=order.pk)
     
     return render(request, 'sales/sales_order_detail.html', {'order': order})
