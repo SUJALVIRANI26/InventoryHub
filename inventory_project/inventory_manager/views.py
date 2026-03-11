@@ -5,6 +5,8 @@ from .models import *
 from .forms import *
 
 # ================= DASHBOARD =================
+@login_required
+@manager_required
 def dashboard(request):
     products = Product.objects.all()
     suppliers = Supplier.objects.all()
@@ -19,16 +21,18 @@ def dashboard(request):
         'recent_orders': orders.order_by('-id')[:5],
         'total_stock_value': sum(p.price * p.quantity for p in products),
     }
-
     return render(request, 'inventory_manager/dashboard.html', context)
 
 
 # ================= PRODUCT =================
+@login_required
+@manager_required
 def product_list(request):
     return render(request, 'inventory_manager/product_list.html',
                   {'products': Product.objects.all()})
 
-
+@login_required
+@manager_required
 def product_add(request):
     form = ProductForm(request.POST or None)
     if form.is_valid():
@@ -36,7 +40,8 @@ def product_add(request):
         return redirect('inventory_manager:product_list')
     return render(request, 'inventory_manager/product_add.html', {'form': form})
 
-
+@login_required
+@manager_required
 def product_edit(request, pk):
     product = get_object_or_404(Product, pk=pk)
     form = ProductForm(request.POST or None, instance=product)
@@ -46,13 +51,15 @@ def product_edit(request, pk):
     return render(request, 'inventory_manager/product_edit.html',
                   {'form': form, 'product': product})
 
-
+@login_required
+@manager_required
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
     return render(request, 'inventory_manager/product_details.html',
                   {'product': product})
 
-
+@login_required
+@manager_required
 def product_delete(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == "POST":
@@ -63,7 +70,8 @@ def product_delete(request, pk):
 
 
 # ================= SUPPLIER =================
-
+@login_required
+@manager_required
 def supplier_list(request):
 
     suppliers = Supplier.objects.all()
@@ -93,7 +101,8 @@ def supplier_list(request):
     return render(request, "inventory_manager/supplier_list.html", context)
 
 
-
+@login_required
+@manager_required
 def supplier_add(request):
     form = SupplierForm(request.POST or None)
     if form.is_valid():
@@ -101,7 +110,8 @@ def supplier_add(request):
         return redirect('inventory_manager:supplier_list')
     return render(request, 'inventory_manager/supplier_add.html', {'form': form})
 
-
+@login_required
+@manager_required
 def supplier_edit(request, pk):
     supplier = get_object_or_404(Supplier, pk=pk)
     form = SupplierForm(request.POST or None, instance=supplier)
@@ -111,7 +121,8 @@ def supplier_edit(request, pk):
     return render(request, 'inventory_manager/supplier_edit.html',
                   {'form': form, 'supplier': supplier})
 
-
+@login_required
+@manager_required
 def supplier_detail(request, pk):
 
     supplier = get_object_or_404(Supplier, pk=pk)
@@ -149,7 +160,8 @@ def supplier_detail(request, pk):
     )
 
 
-
+@login_required
+@manager_required
 def supplier_delete(request, pk):
     supplier = get_object_or_404(Supplier, pk=pk)
     if request.method == "POST":
@@ -160,11 +172,14 @@ def supplier_delete(request, pk):
 
 
 # ================= PURCHASE ORDER =================
+@login_required
+@manager_required
 def purchase_order_list(request):
     return render(request, 'inventory_manager/purchase_order_list.html',
                   {'purchase_orders': PurchaseOrder.objects.all()})
 
-
+@login_required
+@manager_required
 def purchase_order_create(request):
     form = PurchaseOrderForm(request.POST or None)
     formset = PurchaseOrderItemFormSet(request.POST or None)
@@ -179,6 +194,8 @@ def purchase_order_create(request):
                   {'form': form, 'formset': formset})
 
 @transaction.atomic
+@login_required
+@manager_required
 def purchase_order_edit(request, pk):
     purchase_order = get_object_or_404(PurchaseOrder, pk=pk)
 
@@ -214,13 +231,15 @@ def purchase_order_edit(request, pk):
         "purchase_order": purchase_order,
     })
 
-
+@login_required
+@manager_required
 def purchase_order_detail(request, pk):
     po = get_object_or_404(PurchaseOrder, pk=pk)
     return render(request, 'inventory_manager/purchase_order_details.html',
                   {'purchase_order': po})
 
-
+@login_required
+@manager_required
 def purchase_order_delete(request, pk):
     po = get_object_or_404(PurchaseOrder, pk=pk)
     if request.method == "POST":
