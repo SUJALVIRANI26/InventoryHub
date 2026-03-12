@@ -75,6 +75,7 @@
       padding: 10px;
       background: white;
       border-radius: 8px;
+      border: 1px solid #e3e6f0;
     }
     
     .item-total {
@@ -82,6 +83,9 @@
       color: #4e73df;
       text-align: right;
       padding: 0 10px;
+      background-color: #f0f4ff;
+      border-radius: 4px;
+      line-height: 38px;
     }
     
     .remove-item {
@@ -92,6 +96,7 @@
       font-size: 1.1rem;
       padding: 5px 10px;
       border-radius: 4px;
+      width: 100%;
     }
     
     .remove-item:hover {
@@ -133,6 +138,18 @@
       display: block;
     }
     
+    .price-error {
+      color: #e74a3b;
+      font-size: 0.75rem;
+      margin-top: 2px;
+      grid-column: span 5;
+    }
+    
+    .is-invalid {
+      border-color: #e74a3b !important;
+      background-color: #fff8f8;
+    }
+    
     .alert-danger {
       background: #fee2e2;
       color: #991b1b;
@@ -168,6 +185,21 @@
     
     .btn-primary:hover {
       background: #2e59d9;
+    }
+
+    /* Price input styling (read-only) */
+    .unit-price-input {
+      width: 100%;
+      background-color: #f3f4f6;
+      cursor: not-allowed;
+    }
+
+    /* Empty state styling */
+    .empty-items {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+      font-style: italic;
     }
   </style>
 {% endblock link %}
@@ -287,41 +319,48 @@
                     <div style="background: #f8f9fc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 15px; font-weight: 600; color: var(--secondary);">
                             <div>Product</div>
-                            <div>Price ($)</div>
+                            <div>Unit Price ($)</div>
                             <div>Quantity</div>
                             <div>Total</div>
                             <div>Action</div>
                         </div>
                         
-                        {% for item_form in formset %}
-                        <div class="order-item-row">
-                            {{ item_form.id }}
-                            <div>
-                                {{ item_form.product }}
-                                {% if item_form.product.errors %}
-                                <small class="error">{{ item_form.product.errors }}</small>
-                                {% endif %}
+                        <div id="items-body">
+                            {% for item_form in formset %}
+                            <div class="order-item-row" id="row-{{ forloop.counter0 }}">
+                                {{ item_form.id }}
+                                <div>
+                                    {{ item_form.product }}
+                                    {% if item_form.product.errors %}
+                                    <small class="error">{{ item_form.product.errors }}</small>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    {{ item_form.unit_price }}
+                                    <!-- <small class="base-price-hint" id="hint-{{ forloop.counter0 }}"></small> -->
+                                    {% if item_form.unit_price.errors %}
+                                    <small class="error">{{ item_form.unit_price.errors }}</small>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    {{ item_form.quantity }}
+                                    {% if item_form.quantity.errors %}
+                                    <small class="error">{{ item_form.quantity.errors }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="item-total" id="item-total-{{ forloop.counter0 }}">$0.00</div>
+                                <div>
+                                    <button type="button" class="remove-item" {% if forloop.first and formset.forms|length == 1 %}disabled{% endif %}>
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                {{ item_form.unit_price }}
-                                {% if item_form.unit_price.errors %}
-                                <small class="error">{{ item_form.unit_price.errors }}</small>
-                                {% endif %}
+                            {% empty %}
+                            <div class="empty-items" id="empty-items-message">
+                                <i class="fa-solid fa-cart-plus"></i> No items added yet. Click "Add Another Item" to start.
                             </div>
-                            <div>
-                                {{ item_form.quantity }}
-                                {% if item_form.quantity.errors %}
-                                <small class="error">{{ item_form.quantity.errors }}</small>
-                                {% endif %}
-                            </div>
-                            <div class="item-total">$0.00</div>
-                            <div>
-                                <button type="button" class="remove-item" {% if forloop.first and formset.forms|length == 1 %}disabled{% endif %}>
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
                 </div>
                 
@@ -373,9 +412,20 @@
 <!-- Empty item template for JavaScript -->
 <div id="empty-item-template" style="display: none;">
     <div class="order-item-row">
-        {{ formset.empty_form.product }}
-        {{ formset.empty_form.unit_price }}
-        {{ formset.empty_form.quantity }}
+        <div>
+            <select class="form-control product-select" name="items-__prefix__-product" id="id_items-__prefix__-product">
+                <option value="" selected>---------</option>
+                {% for product in formset.empty_form.fields.product.queryset %}
+                <option value="{{ product.id }}" data-price="{{ product.price }}">{{ product.name }} (${{ product.price }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <input type="number" name="items-__prefix__-unit_price" class="form-control unit-price-input" step="0.01" min="0" value="" id="id_items-__prefix__-unit_price">
+        </div>
+        <div>
+            <input type="number" name="items-__prefix__-quantity" class="form-control" value="1" min="1" id="id_items-__prefix__-quantity">
+        </div>
         <div class="item-total">$0.00</div>
         <div>
             <button type="button" class="remove-item">
@@ -388,6 +438,7 @@
 
 {% block linkJs %}
 {{ block.super }}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Add form-control class to all input, select, and textarea elements
@@ -397,21 +448,6 @@
                 element.type !== 'hidden' && 
                 !element.classList.contains('remove-item')) {
                 element.classList.add('form-control');
-            }
-        });
-        
-        // Set default values for number inputs
-        document.querySelectorAll('input[type="number"]').forEach(function(input) {
-            if (!input.value) {
-                if (input.name.includes('unit_price')) {
-                    input.value = '0.00';
-                } else if (input.name.includes('quantity')) {
-                    input.value = '1';
-                } else if (input.name.includes('shipping_cost')) {
-                    input.value = '0.00';
-                } else if (input.name.includes('tax_rate')) {
-                    input.value = '8.00';  // Default tax rate
-                }
             }
         });
         
@@ -425,89 +461,115 @@
             dateInput.value = yyyy + '-' + mm + '-' + dd;
         }
         
-        const container = document.getElementById('order-items-container');
+        // Set default values for number inputs (but not for unit_price in new rows)
+        document.querySelectorAll('input[type="number"]').forEach(function(input) {
+            if (!input.value) {
+                if (input.name.includes('shipping_cost')) {
+                    input.value = '0.00';
+                } else if (input.name.includes('tax_rate')) {
+                    input.value = '8.00';
+                } else if (input.name.includes('quantity') && !input.name.includes('__prefix__')) {
+                    input.value = '1';
+                }
+            }
+        });
+        
         const addButton = document.getElementById('add-item');
         const totalForms = document.getElementById('id_items-TOTAL_FORMS');
         const emptyTemplate = document.getElementById('empty-item-template').innerHTML;
+        const itemsBody = document.getElementById('items-body');
+        const emptyMessage = document.getElementById('empty-items-message');
+        
+        function getOrderItemRows() {
+            return itemsBody.querySelectorAll('.order-item-row');
+        }
         
         // Function to update remove buttons state
         function updateRemoveButtons() {
-            const rows = document.querySelectorAll('.order-item-row');
-            const removeButtons = document.querySelectorAll('.remove-item');
+            const rows = getOrderItemRows();
+            const removeButtons = itemsBody.querySelectorAll('.remove-item');
             
             removeButtons.forEach((button, index) => {
                 if (rows.length === 1) {
                     button.disabled = true;
                 } else {
                     button.disabled = false;
-                    
-                    // Remove existing event listener and add new one
-                    button.removeEventListener('click', removeHandler);
-                    button.addEventListener('click', removeHandler);
                 }
             });
+            
+            // Show/hide empty message
+            if (emptyMessage) {
+                if (rows.length === 0) {
+                    emptyMessage.style.display = 'block';
+                } else {
+                    emptyMessage.style.display = 'none';
+                }
+            }
         }
         
         // Remove item handler
         function removeHandler(e) {
             e.preventDefault();
             const row = e.target.closest('.order-item-row');
-            const rows = document.querySelectorAll('.order-item-row');
+            const rows = getOrderItemRows();
             
             if (rows.length > 1) {
                 row.remove();
-                const forms = document.querySelectorAll('.order-item-row');
+                const forms = getOrderItemRows();
                 totalForms.value = forms.length;
                 updateRemoveButtons();
                 calculateTotals();
             }
         }
         
-        // Add new item row
-        addButton.addEventListener('click', function() {
-            const formCount = parseInt(totalForms.value);
-            let newRowHtml = emptyTemplate.replace(/__prefix__/g, formCount);
-            
-            // Create a temporary div to parse the HTML
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = newRowHtml;
-            const newRow = tempDiv.firstElementChild;
-            
-            // Add form-control class to new row elements
-            newRow.querySelectorAll('input, select').forEach(el => {
-                el.classList.add('form-control');
-            });
-            
-            // Set default values
-            const priceInput = newRow.querySelector('[name$="unit_price"]');
-            const qtyInput = newRow.querySelector('[name$="quantity"]');
-            if (priceInput) priceInput.value = '0.00';
-            if (qtyInput) qtyInput.value = '1';
-            
-            // Add to container
-            const lastRow = container.querySelector('.order-item-row:last-child');
-            if (lastRow) {
-                lastRow.after(newRow);
-            } else {
-                container.querySelector('div[style*="background: #f8f9fc"]').appendChild(newRow);
-            }
-            
-            totalForms.value = formCount + 1;
-            updateRemoveButtons();
-            attachItemEvents(newRow);
-            calculateTotals();
+        // Attach remove event to buttons
+        document.querySelectorAll('.remove-item').forEach(button => {
+            button.removeEventListener('click', removeHandler);
+            button.addEventListener('click', removeHandler);
         });
+        
+        // Function to get product base price
+        function getProductBasePrice(productSelect) {
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            return parseFloat(selectedOption.getAttribute('data-price') || 0);
+        }
+        
+        // Function to update unit price with base price
+        function updateUnitPriceWithBase(row, basePrice) {
+            const unitPriceInput = row.querySelector('[name$="unit_price"]');
+            
+            if (unitPriceInput) {
+                unitPriceInput.value = basePrice.toFixed(2);
+                
+                unitPriceInput.min = basePrice;
+            }
+        }
+        
+        // Function to clear unit price when no product selected
+        function clearUnitPrice(row) {
+            const unitPriceInput = row.querySelector('[name$="unit_price"]');
+            
+            if (unitPriceInput) {
+                unitPriceInput.value = '';
+                unitPriceInput.min = 0;
+            }
+        }
+        
+        // Unit price is locked to base price now; no extra validation needed
+        function validateUnitPrice(row) {
+            return true;
+        }
         
         // Calculate totals for a specific row
         function calculateRowTotal(row) {
-            const priceInput = row.querySelector('[name$="unit_price"]');
+            const unitPriceInput = row.querySelector('[name$="unit_price"]');
             const qtyInput = row.querySelector('[name$="quantity"]');
+            const totalDiv = row.querySelector('.item-total');
             
-            const price = parseFloat(priceInput.value) || 0;
+            const price = parseFloat(unitPriceInput.value) || 0;
             const qty = parseInt(qtyInput.value) || 0;
             const total = price * qty;
             
-            const totalDiv = row.querySelector('.item-total');
             if (totalDiv) {
                 totalDiv.textContent = '$' + total.toFixed(2);
             }
@@ -519,8 +581,9 @@
         function calculateTotals() {
             let subtotal = 0;
             
-            document.querySelectorAll('.order-item-row').forEach(row => {
+            getOrderItemRows().forEach(row => {
                 subtotal += calculateRowTotal(row);
+                validateUnitPrice(row);
             });
             
             const shippingInput = document.querySelector('[name="shipping_cost"]');
@@ -544,19 +607,79 @@
         
         // Attach events to a specific row
         function attachItemEvents(row) {
+            const productSelect = row.querySelector('[name$="product"]');
             const priceInput = row.querySelector('[name$="unit_price"]');
             const qtyInput = row.querySelector('[name$="quantity"]');
             
-            if (priceInput) {
-                priceInput.addEventListener('input', calculateTotals);
+            if (productSelect) {
+                productSelect.addEventListener('change', function() {
+                    if (this.value) {
+                        const basePrice = getProductBasePrice(this);
+                        updateUnitPriceWithBase(row, basePrice);
+                    } else {
+                        // Clear price if no product selected
+                        clearUnitPrice(row);
+                    }
+                    calculateTotals();
+                });
+                
+                // Initialize if product is already selected (for editing)
+                if (productSelect.value) {
+                    const basePrice = getProductBasePrice(productSelect);
+                    updateUnitPriceWithBase(row, basePrice);
+                }
             }
+            
+            if (priceInput) {
+                // Prevent manual editing of price in the UI
+                priceInput.readOnly = true;
+            }
+            
             if (qtyInput) {
                 qtyInput.addEventListener('input', calculateTotals);
             }
+            
+            // Attach remove event to button in this row
+            const removeBtn = row.querySelector('.remove-item');
+            if (removeBtn) {
+                removeBtn.removeEventListener('click', removeHandler);
+                removeBtn.addEventListener('click', removeHandler);
+            }
         }
         
+        // Add new item row
+        addButton.addEventListener('click', function() {
+            const formCount = parseInt(totalForms.value);
+            let newRowHtml = emptyTemplate.replace(/__prefix__/g, formCount);
+            
+            // Create a temporary div to parse the HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = newRowHtml;
+            const newRow = tempDiv.firstElementChild;
+            
+            // Add form-control class to new row elements
+            newRow.querySelectorAll('input, select').forEach(el => {
+                el.classList.add('form-control');
+            });
+            
+            // Remove empty message if it exists
+            if (emptyMessage) {
+                emptyMessage.style.display = 'none';
+            }
+            
+            // Add to container
+            itemsBody.appendChild(newRow);
+            
+            totalForms.value = formCount + 1;
+            
+            // Attach events to new row
+            attachItemEvents(newRow);
+            updateRemoveButtons();
+            calculateTotals();
+        });
+        
         // Attach events to all existing rows
-        document.querySelectorAll('.order-item-row').forEach(row => {
+        getOrderItemRows().forEach(row => {
             attachItemEvents(row);
         });
         
@@ -574,6 +697,43 @@
         // Initial setup
         updateRemoveButtons();
         calculateTotals();
+        
+        // Form submission validation
+        const orderForm = document.getElementById('orderForm');
+        orderForm.addEventListener('submit', function(e) {
+            const rows = getOrderItemRows();
+            
+            if (rows.length === 0) {
+                e.preventDefault();
+                alert('Please add at least one item to the order.');
+                return;
+            }
+            
+            let hasInvalidPrices = false;
+            let hasEmptyProducts = false;
+            
+            rows.forEach(row => {
+                const productSelect = row.querySelector('[name$="product"]');
+                if (!productSelect || !productSelect.value) {
+                    hasEmptyProducts = true;
+                }
+                
+                if (!validateUnitPrice(row)) {
+                    hasInvalidPrices = true;
+                }
+            });
+            
+            if (hasEmptyProducts) {
+                e.preventDefault();
+                alert('Please select a product for each item.');
+                return;
+            }
+            
+            if (hasInvalidPrices) {
+                e.preventDefault();
+                alert('Please fix the invalid prices before submitting.');
+            }
+        });
     });
 </script>
 {% endblock linkJs %}

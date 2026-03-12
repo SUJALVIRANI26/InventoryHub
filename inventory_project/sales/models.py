@@ -17,7 +17,6 @@ CUSTOMER_TYPE_CHOICES = [
 ORDER_STATUS_CHOICES = [
     ('pending', 'Pending'),
     ('processing', 'Processing'),
-    ('backlog', 'Backlog'),
     ('shipped', 'Shipped'),
     ('completed', 'Completed'),
     ('cancelled', 'Cancelled'),
@@ -106,7 +105,7 @@ class SalesOrder(models.Model):
     
     # Financials
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=8.00) 
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=8.00)
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
@@ -166,22 +165,53 @@ class SalesOrderItem(models.Model):
     
     def save(self, *args, **kwargs):
         """
-        Always derive unit_price from the product so sales
-        users cannot override pricing from the UI.
+        Keep unit_price exactly equal to the product's base price
+        and keep inventory in sync whenever items are created or updated.
         """
         if self.product_id:
-            base_price = self.product.min_price if self.product.min_price is not None else self.product.price
-            # Ensure price is a Decimal
-            if not isinstance(base_price, Decimal):
-                base_price = Decimal(str(base_price))
+            base_price = self.product.price
+            # Force unit_price to always match the product's price
             self.unit_price = base_price
 
-        # Quantity is stored as an integer but used in Decimal math
+            # Adjust stock based on quantity and product changes
+            if self.pk:
+                original = SalesOrderItem.objects.get(pk=self.pk)
+
+                # If the product changed, return stock to old product and
+                # deduct from the new one.
+                if original.product_id != self.product_id:
+                    old_product = original.product
+                    old_product.quantity += original.quantity
+                    old_product.save()
+
+                    self.product.quantity -= self.quantity
+                    self.product.save()
+                else:
+                    # Same product, adjust by the delta in quantity
+                    delta_qty = self.quantity - original.quantity
+                    if delta_qty != 0:
+                        self.product.quantity -= delta_qty
+                        self.product.save()
+            else:
+                # New order item – reserve stock immediately
+                self.product.quantity -= self.quantity
+                self.product.save()
+
+        # Calculate total price
         quantity_decimal = Decimal(str(self.quantity))
         self.total_price = quantity_decimal * self.unit_price
 
         super().save(*args, **kwargs)
     
-    def __str__(self):
-        return f"{self.quantity} x {self.product.name}"
+    def delete(self, *args, **kwargs):
+        """
+        When an item is removed from an order, return its quantity to stock.
+        """
+        if self.product_id:
+            product = self.product
+            product.quantity += self.quantity
+            product.save()
+        super().delete(*args, **kwargs)
     
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name} (${self.unit_price} each)"

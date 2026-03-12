@@ -16,6 +16,6 @@ urlpatterns = [
     path('order/<int:pk>/status/<str:status>/', views.update_order_status, name='sales_order_update_status'),
     
     path('profile_view/',views.profile_view,name = 'profile'),
-    
-   
+     # AJAX endpoint for getting product details
+    path('get-product-details/<int:product_id>/', views.get_product_details, name='get_product_details'),
 ]

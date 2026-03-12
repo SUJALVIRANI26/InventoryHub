@@ -8,70 +8,43 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from .forms import OrderItemFormSet, SalesOrderForm, CustomerForm
 from .models import SalesOrder, Customer, SalesOrderItem
-from inventory_manager.models import Product
 from django.contrib.auth.decorators import login_required
 from admin_panel.models import UserProfile
 from accounts.decorators import staff_required
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from .models import ORDER_STATUS_CHOICES
-from django.core.paginator import Paginator
-from django.db import models
+from django.http import JsonResponse
+from inventory_manager.models import Product
 
 
 def _apply_status_and_stock(order, new_status, old_status=None):
     """
-    Central place to enforce stock rules and backlog behaviour
+    Central place to handle simple stock behaviour
     when an order's status changes.
+
+    Rules:
+    - Stock is reserved immediately when order items are created/updated.
+    - When an order is cancelled, reserved stock is returned to inventory.
+    - Other status changes do not touch inventory.
     """
     if old_status is None:
         old_status = order.status
 
-    # Statuses that require sufficient stock before moving forward.
-    stock_guard_statuses = {'processing', 'shipped', 'completed'}
+    if old_status == new_status:
+        return True, "Order status unchanged."
 
-    # Any attempt to move into one of these statuses must pass stock checks.
-    if old_status != 'completed' and new_status in stock_guard_statuses:
-        insufficient_items = []
-        for item in order.items.select_related('product'):
-            product = item.product
-            if product.quantity < item.quantity:
-                insufficient_items.append((item, product))
-
-        if insufficient_items:
-            # Not enough stock: move/keep order in backlog instead.
-            order.status = 'backlog'
-            order.save()
-            names = ", ".join(f"{p.name}" for _, p in insufficient_items)
-            return False, f"Insufficient stock for: {names}. Order moved to backlog."
-
-        # Sufficient stock and moving specifically to completed:
-        if new_status == 'completed':
-            for item in order.items.select_related('product'):
-                product = item.product
-                product.quantity -= item.quantity
-                product.save()
-
-            order.status = 'completed'
-            order.save()
-            return True, "Order marked as completed and stock updated."
-
-        # Sufficient stock for processing/shipped: just update status.
-        order.status = new_status
-        order.save()
-        return True, "Order status updated."
-
-    # If moving away from completed, optionally restore stock.
-    if old_status == 'completed' and new_status != 'completed':
+    # If order is being cancelled, return all reserved stock.
+    if new_status == 'cancelled' and old_status != 'cancelled':
         for item in order.items.select_related('product'):
             product = item.product
             product.quantity += item.quantity
             product.save()
-        order.status = new_status
+        order.status = 'cancelled'
         order.save()
-        return True, "Order status updated and stock restored."
+        return True, "Order cancelled and stock restored."
 
-    # All other transitions simply update the status.
+    # All other transitions simply update the status without touching stock.
     order.status = new_status
     order.save()
     return True, "Order status updated."
@@ -393,6 +366,27 @@ def sales_order_form(request, pk=None):
 
 @login_required
 @staff_required
+def get_product_details(request, product_id):
+    """AJAX view to get product details including base price"""
+    try:
+        product = Product.objects.get(id=product_id)
+        return JsonResponse({
+            'success': True,
+            'product_id': product.id,
+            'product_name': product.name,
+            'base_price': float(product.price),
+            'sku': product.sku,
+            'available_quantity': product.quantity,
+            'minimum_stock': product.minimum_stock
+        })
+    except Product.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Product not found'
+        }, status=404)
+
+@login_required
+@staff_required
 def update_order_status(request, pk, status):
     """Update the status of a sales order"""
     order = get_object_or_404(SalesOrder, pk=pk)
@@ -580,7 +574,6 @@ def customer_form(request, pk=None):
         
         if form.is_valid():
             form.save()
-            # messages.success(request, 'Customer saved successfully!')
             return redirect('customers')
     
     today = timezone.now().date()
