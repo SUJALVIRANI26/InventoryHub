@@ -1,6 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import F
+from django.contrib.auth.decorators import login_required
+from accounts.decorators import manager_required
 from django.db import transaction
+from django.contrib import messages
+from django.utils import timezone
+from datetime import timedelta
 from .models import *
 from .forms import *
 
@@ -10,14 +15,15 @@ from .forms import *
 def dashboard(request):
     products = Product.objects.all()
     suppliers = Supplier.objects.all()
-    orders = PurchaseOrder.objects.all()
+    # Show only pending purchase orders on the dashboard
+    orders = PurchaseOrder.objects.filter(status='pending')
 
     context = {
         'total_products': products.count(),
         'total_suppliers': suppliers.count(),
         'total_orders': orders.count(),
-        'low_stock_products': products.filter(quantity__lte=F('minimum_stock')).count(),
-        'low_stock_list': products.filter(quantity__lte=F('minimum_stock')),
+        'low_stock_products': products.filter(quantity__lt=F('minimum_stock')).count(),
+        'low_stock_list': products.filter(quantity__lt=F('minimum_stock')),
         'recent_orders': orders.order_by('-id')[:5],
         'total_stock_value': sum(p.price * p.quantity for p in products),
     }
@@ -175,6 +181,7 @@ def supplier_delete(request, pk):
 @login_required
 @manager_required
 def purchase_order_list(request):
+    # Show all purchase orders in the list view
     return render(request, 'inventory_manager/purchase_order_list.html',
                   {'purchase_orders': PurchaseOrder.objects.all()})
 
@@ -199,6 +206,11 @@ def purchase_order_create(request):
 def purchase_order_edit(request, pk):
     purchase_order = get_object_or_404(PurchaseOrder, pk=pk)
 
+    # Once delivered, the order cannot be edited
+    if purchase_order.status == "delivered":
+        messages.error(request, "Delivered purchase orders cannot be edited.")
+        return redirect("inventory_manager:purchase_order_detail", pk=purchase_order.pk)
+
     old_status = purchase_order.status
 
     if request.method == "POST":
@@ -207,9 +219,24 @@ def purchase_order_edit(request, pk):
 
         if form.is_valid() and formset.is_valid():
 
+            new_status = form.cleaned_data.get("status")
+            # Only allow Delivered if the order is already in Ordered state
+            if new_status == "delivered" and old_status != "ordered":
+                form.add_error("status", "You can mark an order as delivered only after it has been ordered.")
+                return render(request, "inventory_manager/purchase_order_edit.html", {
+                    "form": form,
+                    "formset": formset,
+                    "purchase_order": purchase_order,
+                })
+
             purchase_order = form.save()
 
             items = formset.save()
+
+            # If status changed from pending to ordered and no expected_delivery, set to 5 days after order_date
+            if old_status == "pending" and purchase_order.status == "ordered" and not purchase_order.expected_delivery:
+                purchase_order.expected_delivery = purchase_order.order_date + timedelta(days=5)
+                purchase_order.save()
 
             # ✅ STOCK UPDATE LOGIC HERE
             if old_status != "delivered" and purchase_order.status == "delivered":
@@ -247,3 +274,5 @@ def purchase_order_delete(request, pk):
         return redirect('inventory_manager:purchase_order_list')
     return render(request, 'inventory_manager/purchase_order_delete.html',
                   {'purchase_order': po})
+
+

@@ -57,7 +57,7 @@
                     <td>${{ product.price|floatformat:2 }}</td>
 
                     <td>
-                        {% if product.quantity <= product.minimum_stock %}
+                        {% if product.quantity < product.minimum_stock %}
                             <span class="badge danger">
                                 {{ product.quantity }}
                             </span>
@@ -73,7 +73,7 @@
                     <td>{{ product.supplier.name|default:"—" }}</td>
 
                     <td>
-                        {% if product.quantity <= product.minimum_stock %}
+                        {% if product.quantity < product.minimum_stock %}
                             <span class="badge warning">Low Stock</span>
                         {% else %}
                             <span class="badge success">Available</span>

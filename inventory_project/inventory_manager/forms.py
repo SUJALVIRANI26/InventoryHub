@@ -16,6 +16,17 @@ class SupplierForm(forms.ModelForm):
 
 
 class PurchaseOrderForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only allow ordering from active suppliers
+        self.fields["supplier"].queryset = Supplier.objects.filter(status="active")
+
+    def clean_supplier(self):
+        supplier = self.cleaned_data["supplier"]
+        if supplier.status != "active":
+            raise forms.ValidationError("You can create purchase orders only for active suppliers.")
+        return supplier
+
     class Meta:
         model = PurchaseOrder
         fields = '__all__'

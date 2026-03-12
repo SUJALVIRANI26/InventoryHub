@@ -26,4 +26,9 @@
        class="menu-item {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}">
         <i class="fa-solid fa-users"></i> Suppliers
     </a>
+
+    <div class="menu-category">Account</div>
+    <a href="{% url 'logout' %}" class="menu-item">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </a>
 </div>
