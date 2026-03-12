@@ -34,7 +34,7 @@
     <div class="header">
         <div class="page-title">
             <h2>Order Details</h2>
-            <span>Order #SO-2023-{{ order.id|stringformat:"03d" }}</span>
+            <span>Order #SO-{{ order.id|stringformat:"03d" }}</span>
         </div>
         <div class="user-actions">
            <a href="{% url 'profile' %}">

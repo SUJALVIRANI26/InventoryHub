@@ -237,12 +237,25 @@
             
             <form method="post" id="orderForm">
                 {% csrf_token %}
-                
-                {% if form.non_field_errors %}
-                <div class="alert-danger">
-                    {{ form.non_field_errors }}
-                </div>
-                {% endif %}
+                  
+    
+    <!-- Display formset non-form errors -->
+    {% if formset.non_form_errors %}
+        <div class="alert alert-error">
+            {% for error in formset.non_form_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <!-- Display formset non-form errors -->
+    {% if formset.non_form_errors %}
+        <div class="alert-danger" style="margin-bottom: 20px;">
+            {% for error in formset.non_form_errors %}
+                <p style="margin: 5px 0;">{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
                 
                 <div class="form-grid">
                     <div class="form-group">
@@ -442,27 +455,20 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Add form-control class to all input, select, and textarea elements
-        const formControls = document.querySelectorAll('input, select, textarea');
-        formControls.forEach(function(element) {
-            if (!element.classList.contains('form-control') && 
-                element.type !== 'hidden' && 
-                !element.classList.contains('remove-item')) {
-                element.classList.add('form-control');
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            if (!el.classList.contains('form-control') && el.type !== 'hidden' && !el.classList.contains('remove-item')) {
+                el.classList.add('form-control');
             }
         });
-        
+
         // Set default date to today if empty
         const dateInput = document.querySelector('input[type="date"]');
         if (dateInput && !dateInput.value) {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            dateInput.value = yyyy + '-' + mm + '-' + dd;
+            dateInput.value = new Date().toISOString().split('T')[0];
         }
-        
-        // Set default values for number inputs (but not for unit_price in new rows)
-        document.querySelectorAll('input[type="number"]').forEach(function(input) {
+
+        // Set default values for number inputs
+        document.querySelectorAll('input[type="number"]').forEach(input => {
             if (!input.value) {
                 if (input.name.includes('shipping_cost')) {
                     input.value = '0.00';
@@ -473,267 +479,274 @@
                 }
             }
         });
-        
-        const addButton = document.getElementById('add-item');
-        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
-        const emptyTemplate = document.getElementById('empty-item-template').innerHTML;
-        const itemsBody = document.getElementById('items-body');
-        const emptyMessage = document.getElementById('empty-items-message');
-        
-        function getOrderItemRows() {
-            return itemsBody.querySelectorAll('.order-item-row');
-        }
-        
-        // Function to update remove buttons state
-        function updateRemoveButtons() {
-            const rows = getOrderItemRows();
-            const removeButtons = itemsBody.querySelectorAll('.remove-item');
-            
-            removeButtons.forEach((button, index) => {
-                if (rows.length === 1) {
-                    button.disabled = true;
-                } else {
-                    button.disabled = false;
-                }
-            });
-            
-            // Show/hide empty message
-            if (emptyMessage) {
-                if (rows.length === 0) {
-                    emptyMessage.style.display = 'block';
-                } else {
-                    emptyMessage.style.display = 'none';
-                }
-            }
-        }
-        
-        // Remove item handler
-        function removeHandler(e) {
-            e.preventDefault();
-            const row = e.target.closest('.order-item-row');
-            const rows = getOrderItemRows();
-            
-            if (rows.length > 1) {
-                row.remove();
-                const forms = getOrderItemRows();
-                totalForms.value = forms.length;
-                updateRemoveButtons();
-                calculateTotals();
-            }
-        }
-        
-        // Attach remove event to buttons
-        document.querySelectorAll('.remove-item').forEach(button => {
-            button.removeEventListener('click', removeHandler);
-            button.addEventListener('click', removeHandler);
-        });
-        
-        // Function to get product base price
-        function getProductBasePrice(productSelect) {
-            const selectedOption = productSelect.options[productSelect.selectedIndex];
-            return parseFloat(selectedOption.getAttribute('data-price') || 0);
-        }
-        
-        // Function to update unit price with base price
-        function updateUnitPriceWithBase(row, basePrice) {
-            const unitPriceInput = row.querySelector('[name$="unit_price"]');
-            
-            if (unitPriceInput) {
-                unitPriceInput.value = basePrice.toFixed(2);
-                
-                unitPriceInput.min = basePrice;
-            }
-        }
-        
-        // Function to clear unit price when no product selected
-        function clearUnitPrice(row) {
-            const unitPriceInput = row.querySelector('[name$="unit_price"]');
-            
-            if (unitPriceInput) {
-                unitPriceInput.value = '';
-                unitPriceInput.min = 0;
-            }
-        }
-        
-        // Unit price is locked to base price now; no extra validation needed
-        function validateUnitPrice(row) {
-            return true;
-        }
-        
-        // Calculate totals for a specific row
+
+        // Function to calculate row total
         function calculateRowTotal(row) {
-            const unitPriceInput = row.querySelector('[name$="unit_price"]');
+            const priceInput = row.querySelector('[name$="unit_price"]');
             const qtyInput = row.querySelector('[name$="quantity"]');
             const totalDiv = row.querySelector('.item-total');
             
-            const price = parseFloat(unitPriceInput.value) || 0;
+            if (!priceInput || !qtyInput || !totalDiv) return 0;
+            
+            const price = parseFloat(priceInput.value) || 0;
             const qty = parseInt(qtyInput.value) || 0;
             const total = price * qty;
             
-            if (totalDiv) {
-                totalDiv.textContent = '$' + total.toFixed(2);
-            }
-            
+            totalDiv.textContent = '$' + total.toFixed(2);
             return total;
         }
-        
+
         // Calculate all totals
         function calculateTotals() {
             let subtotal = 0;
             
-            getOrderItemRows().forEach(row => {
-                subtotal += calculateRowTotal(row);
-                validateUnitPrice(row);
+            document.querySelectorAll('.order-item-row').forEach(row => {
+                // Skip hidden rows (marked for deletion)
+                if (row.style.display !== 'none') {
+                    subtotal += calculateRowTotal(row);
+                }
             });
-            
-            const shippingInput = document.querySelector('[name="shipping_cost"]');
-            const taxRateInput = document.querySelector('[name="tax_rate"]');
-            
-            const shipping = parseFloat(shippingInput.value) || 0;
-            const taxRate = parseFloat(taxRateInput.value) || 0;
+
+            const shipping = parseFloat(document.querySelector('[name="shipping_cost"]')?.value) || 0;
+            const taxRate = parseFloat(document.querySelector('[name="tax_rate"]')?.value) || 0;
             const tax = subtotal * (taxRate / 100);
-            
-            // Update tax rate display
+
             const taxRateDisplay = document.getElementById('tax-rate-display');
-            if (taxRateDisplay) {
-                taxRateDisplay.textContent = taxRate.toFixed(2);
-            }
+            if (taxRateDisplay) taxRateDisplay.textContent = taxRate.toFixed(2);
             
             document.getElementById('summary-subtotal').textContent = '$' + subtotal.toFixed(2);
             document.getElementById('summary-tax').textContent = '$' + tax.toFixed(2);
             document.getElementById('summary-shipping').textContent = '$' + shipping.toFixed(2);
             document.getElementById('summary-total').textContent = '$' + (subtotal + tax + shipping).toFixed(2);
         }
-        
-        // Attach events to a specific row
-        function attachItemEvents(row) {
-            const productSelect = row.querySelector('[name$="product"]');
+
+        // Function to update price based on selected product
+        function updatePriceFromProduct(select) {
+            const row = select.closest('.order-item-row');
             const priceInput = row.querySelector('[name$="unit_price"]');
-            const qtyInput = row.querySelector('[name$="quantity"]');
             
-            if (productSelect) {
-                productSelect.addEventListener('change', function() {
-                    if (this.value) {
-                        const basePrice = getProductBasePrice(this);
-                        updateUnitPriceWithBase(row, basePrice);
-                    } else {
-                        // Clear price if no product selected
-                        clearUnitPrice(row);
+            if (select.value && priceInput) {
+                const selectedOption = select.options[select.selectedIndex];
+                
+                // Try to get price from data-price attribute
+                let price = selectedOption.getAttribute('data-price');
+                
+                // If no data-price, try to extract from text
+                if (!price && selectedOption.text) {
+                    const match = selectedOption.text.match(/\$(\d+(?:\.\d+)?)/);
+                    if (match) {
+                        price = match[1];
                     }
-                    calculateTotals();
+                }
+                
+                if (price) {
+                    priceInput.value = parseFloat(price).toFixed(2);
+                }
+            } else if (priceInput) {
+                priceInput.value = '';
+            }
+            calculateTotals();
+        }
+
+        // Initialize all product selects
+        function initializeProductSelects() {
+            document.querySelectorAll('.product-select, [name$="product"]').forEach(select => {
+                // Store current value
+                const currentValue = select.value;
+                
+                // Create new select to ensure fresh event listeners
+                const newSelect = document.createElement('select');
+                newSelect.name = select.name;
+                newSelect.id = select.id;
+                newSelect.className = select.className;
+                newSelect.innerHTML = select.innerHTML;
+                newSelect.value = currentValue;
+                
+                // Replace old select
+                select.parentNode.replaceChild(newSelect, select);
+                
+                // Add change event listener
+                newSelect.addEventListener('change', function() {
+                    updatePriceFromProduct(this);
                 });
                 
-                // Initialize if product is already selected (for editing)
-                if (productSelect.value) {
-                    const basePrice = getProductBasePrice(productSelect);
-                    updateUnitPriceWithBase(row, basePrice);
+                // Trigger change to set initial price
+                if (newSelect.value) {
+                    updatePriceFromProduct(newSelect);
                 }
-            }
-            
-            if (priceInput) {
-                // Prevent manual editing of price in the UI
-                priceInput.readOnly = true;
-            }
-            
-            if (qtyInput) {
-                qtyInput.addEventListener('input', calculateTotals);
-            }
-            
-            // Attach remove event to button in this row
-            const removeBtn = row.querySelector('.remove-item');
-            if (removeBtn) {
-                removeBtn.removeEventListener('click', removeHandler);
-                removeBtn.addEventListener('click', removeHandler);
-            }
-        }
-        
-        // Add new item row
-        addButton.addEventListener('click', function() {
-            const formCount = parseInt(totalForms.value);
-            let newRowHtml = emptyTemplate.replace(/__prefix__/g, formCount);
-            
-            // Create a temporary div to parse the HTML
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = newRowHtml;
-            const newRow = tempDiv.firstElementChild;
-            
-            // Add form-control class to new row elements
-            newRow.querySelectorAll('input, select').forEach(el => {
-                el.classList.add('form-control');
             });
-            
-            // Remove empty message if it exists
-            if (emptyMessage) {
-                emptyMessage.style.display = 'none';
+        }
+
+        // Initialize quantity inputs
+        function initializeQuantityInputs() {
+            document.querySelectorAll('[name$="quantity"]').forEach(input => {
+                const newInput = input.cloneNode(true);
+                input.parentNode.replaceChild(newInput, input);
+                newInput.addEventListener('input', calculateTotals);
+            });
+        }
+
+        // Initialize remove buttons
+        function initializeRemoveButtons() {
+            document.querySelectorAll('.remove-item').forEach(button => {
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+                
+                newButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const row = this.closest('.order-item-row');
+                    const deleteCheckbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                    
+                    if (deleteCheckbox) {
+                        deleteCheckbox.checked = true;
+                        row.style.display = 'none';
+                    } else {
+                        row.remove();
+                    }
+                    
+                    // Update total forms count
+                    const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+                    if (totalForms) {
+                        const visibleRows = document.querySelectorAll('.order-item-row:not([style*="display: none"])').length;
+                        totalForms.value = visibleRows;
+                    }
+                    
+                    calculateTotals();
+                });
+            });
+        }
+
+        // Initialize shipping and tax inputs
+        function initializeShippingTax() {
+            const shippingInput = document.querySelector('[name="shipping_cost"]');
+            if (shippingInput) {
+                const newShipping = shippingInput.cloneNode(true);
+                shippingInput.parentNode.replaceChild(newShipping, shippingInput);
+                newShipping.addEventListener('input', calculateTotals);
             }
             
-            // Add to container
-            itemsBody.appendChild(newRow);
-            
-            totalForms.value = formCount + 1;
-            
-            // Attach events to new row
-            attachItemEvents(newRow);
-            updateRemoveButtons();
-            calculateTotals();
-        });
-        
-        // Attach events to all existing rows
-        getOrderItemRows().forEach(row => {
-            attachItemEvents(row);
-        });
-        
-        // Attach shipping and tax rate events
-        const shippingInput = document.querySelector('[name="shipping_cost"]');
-        if (shippingInput) {
-            shippingInput.addEventListener('input', calculateTotals);
-        }
-        
-        const taxRateInput = document.querySelector('[name="tax_rate"]');
-        if (taxRateInput) {
-            taxRateInput.addEventListener('input', calculateTotals);
-        }
-        
-        // Initial setup
-        updateRemoveButtons();
-        calculateTotals();
-        
-        // Form submission validation
-        const orderForm = document.getElementById('orderForm');
-        orderForm.addEventListener('submit', function(e) {
-            const rows = getOrderItemRows();
-            
-            if (rows.length === 0) {
-                e.preventDefault();
-                alert('Please add at least one item to the order.');
-                return;
+            const taxRateInput = document.querySelector('[name="tax_rate"]');
+            if (taxRateInput) {
+                const newTaxRate = taxRateInput.cloneNode(true);
+                taxRateInput.parentNode.replaceChild(newTaxRate, taxRateInput);
+                newTaxRate.addEventListener('input', calculateTotals);
             }
-            
-            let hasInvalidPrices = false;
-            let hasEmptyProducts = false;
-            
-            rows.forEach(row => {
-                const productSelect = row.querySelector('[name$="product"]');
-                if (!productSelect || !productSelect.value) {
-                    hasEmptyProducts = true;
+        }
+
+        // Add new item row
+        const addButton = document.getElementById('add-item');
+        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+        const itemsBody = document.getElementById('items-body');
+        const emptyMessage = document.getElementById('empty-items-message');
+        const template = document.getElementById('empty-item-template');
+
+        if (addButton && totalForms && itemsBody && template) {
+            addButton.addEventListener('click', function() {
+                const formCount = parseInt(totalForms.value);
+                let newRowHtml = template.innerHTML.replace(/__prefix__/g, formCount);
+                
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = newRowHtml;
+                const newRow = tempDiv.firstElementChild;
+                
+                if (emptyMessage) {
+                    emptyMessage.style.display = 'none';
                 }
                 
-                if (!validateUnitPrice(row)) {
-                    hasInvalidPrices = true;
+                itemsBody.appendChild(newRow);
+                totalForms.value = formCount + 1;
+                
+                // Initialize the new row elements
+                const newSelect = newRow.querySelector('.product-select, [name$="product"]');
+                if (newSelect) {
+                    newSelect.addEventListener('change', function() {
+                        updatePriceFromProduct(this);
+                    });
                 }
+                
+                const newQty = newRow.querySelector('[name$="quantity"]');
+                if (newQty) {
+                    newQty.addEventListener('input', calculateTotals);
+                }
+                
+                const newRemoveBtn = newRow.querySelector('.remove-item');
+                if (newRemoveBtn) {
+                    newRemoveBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const row = this.closest('.order-item-row');
+                        const deleteCheckbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                        
+                        if (deleteCheckbox) {
+                            deleteCheckbox.checked = true;
+                            row.style.display = 'none';
+                        } else {
+                            row.remove();
+                        }
+                        
+                        // Update total forms count
+                        const visibleRows = document.querySelectorAll('.order-item-row:not([style*="display: none"])').length;
+                        totalForms.value = visibleRows;
+                        
+                        calculateTotals();
+                    });
+                }
+                
+                calculateTotals();
             });
-            
-            if (hasEmptyProducts) {
-                e.preventDefault();
-                alert('Please select a product for each item.');
-                return;
-            }
-            
-            if (hasInvalidPrices) {
-                e.preventDefault();
-                alert('Please fix the invalid prices before submitting.');
-            }
-        });
+        }
+
+        // Initialize everything
+        initializeProductSelects();
+        initializeQuantityInputs();
+        initializeRemoveButtons();
+        initializeShippingTax();
+        calculateTotals();
+
+        // Form validation - FIXED VERSION
+        const orderForm = document.getElementById('orderForm');
+        if (orderForm) {
+            orderForm.addEventListener('submit', function(e) {
+                let hasValidProduct = false;
+                let visibleRows = 0;
+                
+                // Check each visible row
+                document.querySelectorAll('.order-item-row').forEach(row => {
+                    // Skip hidden rows (marked for deletion)
+                    if (row.style.display === 'none') return;
+                    
+                    visibleRows++;
+                    const productSelect = row.querySelector('[name$="product"]');
+                    
+                    // Check if product is selected and has a value
+                    if (productSelect && productSelect.value) {
+                        hasValidProduct = true;
+                        productSelect.classList.remove('is-invalid');
+                    } else if (productSelect) {
+                        productSelect.classList.add('is-invalid');
+                    }
+                });
+                
+                // If no visible rows, show error
+                if (visibleRows === 0) {
+                    e.preventDefault();
+                    alert('Please add at least one item to the order.');
+                    return;
+                }
+                
+                // If no valid product found, show error
+                if (!hasValidProduct) {
+                    e.preventDefault();
+                    alert('Please select a product for each item.');
+                    return;
+                }
+                
+                // If we get here, form is valid - let it submit
+                console.log('Form is valid, submitting...');
+            });
+        }
+
+        // Debug - log all product selects (remove in production)
+        console.log('Initialized product selects:', document.querySelectorAll('[name$="product"]').length);
     });
 </script>
 {% endblock linkJs %}

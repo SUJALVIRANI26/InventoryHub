@@ -4,8 +4,7 @@ from django.contrib import messages
 from django.db.models import Sum, F,Q,Count,Max  # Add F here
 from django.db.models.functions import TruncDate
 from django.utils.timezone import now, timedelta
-from datetime import datetime, timedelta
-from decimal import Decimal
+from datetime import  timedelta
 from .forms import OrderItemFormSet, SalesOrderForm, CustomerForm
 from .models import SalesOrder, Customer, SalesOrderItem
 from django.contrib.auth.decorators import login_required
@@ -14,7 +13,7 @@ from accounts.decorators import staff_required
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from .models import ORDER_STATUS_CHOICES
-from django.http import JsonResponse
+from django.http import JsonResponse,HttpResponse
 from inventory_manager.models import Product
 
 
@@ -318,43 +317,55 @@ def profile_view(request):
 
 @login_required
 @staff_required
+@login_required
+@staff_required
 def sales_order_form(request, pk=None):
     if pk:
         order = get_object_or_404(SalesOrder, pk=pk)
         old_status = order.status
     else:
-        order = SalesOrder()   # ✅ create empty instance
+        order = SalesOrder()
         old_status = order.status
 
     if request.method == 'POST':
         form = SalesOrderForm(request.POST, instance=order)
         formset = OrderItemFormSet(request.POST, instance=order)
 
+        # Clear any existing messages
+        storage = messages.get_messages(request)
+        storage.used = True
+
         if form.is_valid() and formset.is_valid():
-            order = form.save(commit=False)
-            order.subtotal = 0
-            order.total_amount = order.shipping_cost or 0
-            order.save()
+            try:
+                order = form.save(commit=False)
+                order.subtotal = 0
+                order.total_amount = order.shipping_cost or 0
+                order.save()
 
-            formset.instance = order
-            formset.save()
+                formset.instance = order
+                formset.save()
 
-            order.calculate_totals()
-            order.save()
+                order.calculate_totals()
+                order.save()
 
-            # Enforce stock rules based on chosen status
-            new_status = order.status
-            success, msg = _apply_status_and_stock(order, new_status, old_status)
-            if success:
-                messages.success(request, msg)
-            else:
-                messages.warning(request, msg)
+                # Enforce stock rules based on chosen status
+                new_status = order.status
+                success, msg = _apply_status_and_stock(order, new_status, old_status)
+                if success:
+                    messages.success(request, msg)
+                else:
+                    messages.warning(request, msg)
 
-            # Update customer statistics
-            if order.customer:
-                order.customer.update_stats()
+                # Update customer statistics
+                if order.customer:
+                    order.customer.update_stats()
 
-            return redirect('sales_order_detail', pk=order.pk)
+                return redirect('sales_order_detail', pk=order.pk)
+                
+            except ValueError as e:
+                # Catch stock errors from model save
+                messages.error(request, str(e))
+                # Don't redirect, show form again with errors
     else:
         form = SalesOrderForm(instance=order)
         formset = OrderItemFormSet(instance=order)

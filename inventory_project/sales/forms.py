@@ -34,19 +34,25 @@ class SalesOrderItemForm(ModelForm):
                 'readonly': 'readonly',
             }),
             'product': forms.Select(attrs={
-                'class': 'product-select'
+                'class': 'product-select form-control'
             })
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Add a data attribute to each product option with its price
+        # Set the product choices with data-price attributes
         if self.fields['product'].queryset.exists():
-            self.fields['product'].choices = [
-                (product.id, f"{product.name} (${product.price})") 
-                for product in self.fields['product'].queryset
-            ]
+            choices = []
+            for product in self.fields['product'].queryset:
+                choices.append((
+                    product.id, 
+                    f"{product.name} (${product.price})"
+                ))
+            self.fields['product'].choices = choices
+            
+            # Add data-price attribute to each option for JavaScript
+            self.fields['product'].widget.choices = self.fields['product'].choices
     
     def clean(self):
         cleaned_data = super().clean()
@@ -57,8 +63,6 @@ class SalesOrderItemForm(ModelForm):
             cleaned_data['unit_price'] = product.price
         
         return cleaned_data
-
-
 class OrderItemBaseFormSet(BaseInlineFormSet):
     def clean(self):
         super().clean()
@@ -66,11 +70,7 @@ class OrderItemBaseFormSet(BaseInlineFormSet):
         if any(self.errors):
             return
 
-        # Only enforce stock limits when creating a brand new order.
-        # For edits, we assume existing reservations are already reflected in stock.
-        enforce_stock_limits = self.instance.pk is None
-
-        # Track total requested quantity per product for this new order
+        # Track total requested quantity per product for this order
         product_requested_quantities = {}
 
         for form in self.forms:
@@ -79,23 +79,34 @@ class OrderItemBaseFormSet(BaseInlineFormSet):
             if form.cleaned_data.get("DELETE"):
                 continue
 
-            unit_price = form.cleaned_data.get("unit_price")
             product = form.cleaned_data.get("product")
             quantity = form.cleaned_data.get("quantity") or 0
 
-            # Ensure we don't order more than available stock when creating a new order
-            if enforce_stock_limits and product and quantity:
+            if product and quantity:
                 current_total = product_requested_quantities.get(product.pk, 0)
                 new_total = current_total + quantity
 
-                if new_total > product.quantity:
-                    raise forms.ValidationError(
-                        f"Not enough stock for {product.name}. "
-                        f"Available: {product.quantity}, requested: {new_total}."
+                # For existing orders, consider current quantity
+                if self.instance.pk:
+                    existing_items = SalesOrderItem.objects.filter(
+                        sales_order=self.instance,
+                        product=product
                     )
+                    existing_qty = existing_items.first().quantity if existing_items.exists() else 0
+                    net_change = quantity - existing_qty
+                    
+                    if net_change > product.quantity:
+                        form.add_error('quantity', 
+                            f"Cannot add {net_change} more of {product.name}. Only {product.quantity} available in stock."
+                        )
+                else:
+                    # For new orders
+                    if new_total > product.quantity:
+                        form.add_error('quantity', 
+                            f"Not enough stock for {product.name}. Available: {product.quantity}, requested: {new_total}."
+                        )
 
                 product_requested_quantities[product.pk] = new_total
-
 
 # This allows adding multiple products to one order
 OrderItemFormSet = inlineformset_factory(

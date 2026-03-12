@@ -195,6 +195,12 @@ def purchase_order_create(request):
         po = form.save()
         formset.instance = po
         formset.save()
+
+        if po.status == "delivered":
+            for item in po.items.all():
+                product = item.product
+                product.quantity += item.quantity
+                product.save()
         return redirect('inventory_manager:purchase_order_list')
 
     return render(request, 'inventory_manager/purchase_order_create.html',

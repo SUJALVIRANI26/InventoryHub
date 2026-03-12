@@ -5,10 +5,12 @@ from django.contrib.auth import authenticate, login as auth_login, logout
 from admin_panel.models import UserProfile
 from django.contrib.auth import authenticate, login as auth_login
 from django.contrib import messages
-
 from django.contrib.auth.decorators import login_required
 
 def login(request):
+    storage = messages.get_messages(request)
+    for msg in storage:
+        pass
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
