@@ -38,9 +38,11 @@ def login(request):
                     else:
                         return redirect('sales/')
                 else:
-                    messages.error(request, "Unauthorized: Role mismatch.")
+                    form.errors.pop('__all__', None)
+                    form.add_error(None, "Unauthorized: Role mismatch.")
             else:
-                messages.error(request, "Invalid email or password.")
+                form.errors.pop('__all__', None)
+                form.add_error(None, "Invalid username or password")
     else:
         form = LoginForm()
 

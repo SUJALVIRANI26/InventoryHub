@@ -65,11 +65,13 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
             <form id="loginForm" method="post">
                 {% csrf_token %}
-                  {% for msg in messages %}
-                  <p style="color:red">
-                    {{msg}}
-                  </p>
-                  {% endfor %}
+                {% if form.errors%}
+                  
+                 {% for error in form.non_field_errors %}
+                <p style="color:red;">{{ error }}</p>
+                {% endfor %}
+                  
+                  {% endif %}
                 <label>Email Address</label>
                 <div class="input-box">
                     <i class="fa-solid fa-envelope"></i>
