@@ -179,9 +179,31 @@ cursor:pointer;
 }
 </style>
 
+{{ product_defaults|json_script:"po-product-defaults" }}
+
 <!-- ================= JAVASCRIPT ================= -->
 <script>
 document.addEventListener("DOMContentLoaded", function(){
+
+const productDefaults = JSON.parse(document.getElementById("po-product-defaults").textContent);
+
+function applyProductDefaults(row){
+const productSelect = row.querySelector('select[name*="product"]');
+const qtyInput = row.querySelector('input[name*="quantity"]');
+const priceInput = row.querySelector('input[name*="unit_price"]');
+if(!productSelect || !qtyInput || !priceInput) return;
+
+priceInput.readOnly = true;
+const defaults = productDefaults[productSelect.value];
+if(!defaults) return;
+
+priceInput.value = Number(defaults.price).toFixed(2);
+if(defaults.is_low_stock){
+qtyInput.value = defaults.recommended_quantity;
+}
+
+calculateTotals();
+}
 
 function calculateTotals(){
 let grand = 0;
@@ -207,6 +229,18 @@ calculateTotals();
 }
 });
 
+function attachRowEvents(row){
+const productSelect = row.querySelector('select[name*="product"]');
+if(productSelect){
+productSelect.addEventListener("change", function(){
+applyProductDefaults(row);
+});
+applyProductDefaults(row);
+}
+}
+
+document.querySelectorAll(".item-row").forEach(attachRowEvents);
+
 document.getElementById("add-row").addEventListener("click", function(){
 
 const totalForms = document.getElementById("id_items-TOTAL_FORMS");
@@ -222,6 +256,8 @@ newRow.querySelectorAll("input").forEach(input=>input.value="");
 newRow.querySelectorAll("select").forEach(select=>select.selectedIndex=0);
 
 document.getElementById("items-body").appendChild(newRow);
+
+attachRowEvents(newRow);
 
 totalForms.value = formIndex + 1;
 

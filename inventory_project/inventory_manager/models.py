@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models 
 from django.utils import timezone
 from datetime import timedelta
 
@@ -114,9 +114,9 @@ class Product(models.Model):
         previous_quantity = None
         if self.pk:
             previous_quantity = Product.objects.filter(pk=self.pk).values_list("quantity", flat=True).first()
-
+    
         super().save(*args, **kwargs)
-
+    
         # Create automatic low-stock PO only when quantity changes
         if previous_quantity is None or previous_quantity != self.quantity:
             self._create_low_stock_purchase_order_if_needed()
@@ -160,3 +160,4 @@ class PurchaseOrderItem(models.Model):
 
     def total_price(self):
         return self.quantity * self.unit_price
+

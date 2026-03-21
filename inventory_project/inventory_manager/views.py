@@ -9,6 +9,18 @@ from datetime import timedelta
 from .models import *
 from .forms import *
 
+
+def _build_po_product_defaults():
+    defaults = {}
+    for product in Product.objects.all():
+        defaults[str(product.id)] = {
+            "price": float(product.price),
+            "is_low_stock": product.is_low_stock(),
+            "recommended_quantity": max(product.minimum_stock - product.quantity, 1),
+        }
+    return defaults
+
+
 # ================= DASHBOARD =================
 @login_required
 @manager_required
@@ -203,8 +215,9 @@ def purchase_order_create(request):
                 product.save()
         return redirect('inventory_manager:purchase_order_list')
 
+    product_defaults = _build_po_product_defaults()
     return render(request, 'inventory_manager/purchase_order_create.html',
-                  {'form': form, 'formset': formset})
+                  {'form': form, 'formset': formset, 'product_defaults': product_defaults})
 
 @transaction.atomic
 @login_required
@@ -233,6 +246,7 @@ def purchase_order_edit(request, pk):
                     "form": form,
                     "formset": formset,
                     "purchase_order": purchase_order,
+                    "product_defaults": _build_po_product_defaults(),
                 })
 
             purchase_order = form.save()
@@ -262,6 +276,7 @@ def purchase_order_edit(request, pk):
         "form": form,
         "formset": formset,
         "purchase_order": purchase_order,
+        "product_defaults": _build_po_product_defaults(),
     })
 
 @login_required
