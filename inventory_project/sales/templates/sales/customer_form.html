@@ -119,7 +119,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Phone Number</label>
+                            <label>Phone Number *</label>
                             {{ form.phone }}
                             {% if form.phone.errors %}
                             <small class="error">{{ form.phone.errors }}</small>
@@ -281,6 +281,7 @@
     document.querySelector('form').addEventListener('submit', function(e){
         const name = document.querySelector('[name="name"]').value.trim();
         const email = document.querySelector('[name="email"]').value.trim();
+        const phone = document.querySelector('[name="phone"]').value.trim();
 
         if(!name){
             alert("Customer name is required");
@@ -290,6 +291,12 @@
 
         if(!email){
             alert("Email address is required");
+            e.preventDefault();
+            return false;
+        }
+
+        if(!phone){
+            alert("Phone number is required");
             e.preventDefault();
             return false;
         }

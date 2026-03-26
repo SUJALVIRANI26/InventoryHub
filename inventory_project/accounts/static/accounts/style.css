@@ -1,171 +1,8 @@
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Segoe UI, sans-serif;
-}
+/* ============================================================
+   Smart Inventory – accounts/style.css
+   ============================================================ */
 
-body{
-background:#e4e7ee;
-display:flex;
-align-items:center;
-justify-content:center;
-min-height:100vh;
-}
-
-.main{
-width:1100px;
-height:650px;
-display:flex;
-border-radius:20px;
-overflow:hidden;
-box-shadow:0 25px 60px rgba(0,0,0,0.15);
-}
-
-/* LEFT */
-.left{
-flex:1;
-background:linear-gradient(135deg,#4c63d2,#3f57c6);
-color:white;
-padding:55px;
-display:flex;
-flex-direction:column;
-}
-
-.logo{
-display:flex;
-align-items:center;
-gap:18px;
-margin-bottom:70px;
-}
-
-.logo-box{
-width:70px;
-height:70px;
-border-radius:18px;
-background:rgba(255,255,255,0.2);
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:30px;
-}
-
-.feature{
-display:flex;
-gap:18px;
-margin-bottom:35px;
-}
-
-.icon{
-width:48px;
-height:48px;
-background:rgba(255,255,255,0.2);
-border-radius:12px;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:18px;
-}
-
-/* RIGHT */
-.right{
-flex:1;
-background:#f3f4f7;
-display:flex;
-align-items:center;
-justify-content:center;
-}
-
-.login-box{
-width:380px;
-}
-
-.login-box h1{
-font-size:34px;
-color:#222;
-margin-bottom:8px;
-}
-
-.subtitle{
-color:#777;
-margin-bottom:30px;
-}
-
-label{
-font-size:14px;
-font-weight:600;
-display:block;
-margin-bottom:6px;
-color:#444;
-}
-
-.input-box{
-display:flex;
-align-items:center;
-background:#e9ebef;
-border-radius:12px;
-padding:14px;
-margin-bottom:22px;
-}
-
-.input-box i{
-color:#777;
-margin-right:12px;
-}
-
-/* INPUT + SELECT SAME STYLE */
-.input-box input,
-.input-box select{
-border:none;
-background:transparent;
-outline:none;
-width:100%;
-font-size:15px;
-}
-
-/* REMOVE SELECT ARROW DEFAULT STYLE */
-.input-box select{
-appearance:none;
-cursor:pointer;
-}
-
-/* ROW */
-.row{
-display:flex;
-justify-content:flex-start;
-font-size:14px;
-margin-bottom:25px;
-}
-
-/* BUTTON */
-.login-btn{
-width:100%;
-padding:15px;
-border:none;
-border-radius:12px;
-background:#4c63d2;
-color:white;
-font-size:16px;
-font-weight:600;
-cursor:pointer;
-transition:0.3s;
-display:flex;
-align-items:center;
-justify-content:center;
-gap:10px;
-}
-
-.login-btn:hover{
-background:#3b4fc4;
-transform:translateY(-1px);
-box-shadow:0 8px 20px rgba(0,0,0,0.15);
-}
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: Segoe UI, sans-serif;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
 
 body {
     background: #e4e7ee;
@@ -175,6 +12,7 @@ body {
     min-height: 100vh;
 }
 
+/* ── Shell ─────────────────────────────────────────────── */
 .main {
     width: 1100px;
     height: 650px;
@@ -184,7 +22,7 @@ body {
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
 }
 
-/* LEFT */
+/* ── Left panel ─────────────────────────────────────────── */
 .left {
     flex: 1;
     background: linear-gradient(135deg, #4c63d2, #3f57c6);
@@ -194,42 +32,28 @@ body {
     flex-direction: column;
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    margin-bottom: 70px;
-}
+.logo { display: flex; align-items: center; gap: 18px; margin-bottom: 70px; }
 
 .logo-box {
-    width: 70px;
-    height: 70px;
+    width: 70px; height: 70px;
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 30px;
 }
 
-.feature {
-    display: flex;
-    gap: 18px;
-    margin-bottom: 35px;
-}
+.feature { display: flex; gap: 18px; margin-bottom: 35px; }
 
 .icon {
-    width: 48px;
-    height: 48px;
+    width: 48px; height: 48px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 18px;
+    flex-shrink: 0;
 }
 
-/* RIGHT */
+/* ── Right panel ─────────────────────────────────────────── */
 .right {
     flex: 1;
     background: #f3f4f7;
@@ -238,28 +62,15 @@ body {
     justify-content: center;
 }
 
-.login-box {
-    width: 380px;
-}
+/* ── Auth box (login + forgot-password steps share this) ─── */
+.auth-box { width: 380px; }
 
-.login-box h1 {
-    font-size: 34px;
-    color: #222;
-    margin-bottom: 8px;
-}
+.auth-box h1 { font-size: 34px; color: #222; margin-bottom: 8px; }
 
-.subtitle {
-    color: #777;
-    margin-bottom: 30px;
-}
+.subtitle { color: #777; margin-bottom: 30px; font-size: 14px; }
 
-label {
-    font-size: 14px;
-    font-weight: 600;
-    display: block;
-    margin-bottom: 6px;
-    color: #444;
-}
+/* ── Form elements ─────────────────────────────────────────── */
+label { font-size: 14px; font-weight: 600; display: block; margin-bottom: 6px; color: #444; }
 
 .input-box {
     display: flex;
@@ -267,14 +78,9 @@ label {
     background: #e9ebef;
     border-radius: 12px;
     padding: 14px;
-    /* margin-bottom reduced to make room for error msg */
-    margin-bottom: 5px; 
+    margin-bottom: 5px;
 }
-
-.input-box i {
-    color: #777;
-    margin-right: 12px;
-}
+.input-box i { color: #777; margin-right: 12px; flex-shrink: 0; }
 
 .input-box input,
 .input-box select {
@@ -284,30 +90,42 @@ label {
     width: 100%;
     font-size: 15px;
 }
+.input-box select { appearance: none; cursor: pointer; }
 
-.input-box select {
-    appearance: none;
-    cursor: pointer;
-}
-
-/* ERROR MESSAGE STYLE */
+/* Validation error */
 .error {
     color: #d93025;
     font-size: 12px;
     display: block;
-    margin-bottom: 15px;
+    margin-bottom: 14px;
     margin-left: 5px;
-    height: 15px; /* Keeps layout stable even when empty */
+    min-height: 16px;
 }
 
-.row {
-    display: flex;
-    justify-content: flex-start;
-    font-size: 14px;
-    margin-bottom: 25px;
+/* Django form-level error (non-field) */
+.form-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
 }
 
-.login-btn {
+/* ── Forgot password link ───────────────────────────────── */
+.forgot-link {
+    text-align: right;
+    margin-bottom: 20px;
+}
+.forgot-link a {
+    font-size: 13px;
+    color: #4c63d2;
+    text-decoration: none;
+}
+.forgot-link a:hover { text-decoration: underline; }
+
+/* ── Primary button ─────────────────────────────────────── */
+.auth-btn {
     width: 100%;
     padding: 15px;
     border: none;
@@ -322,10 +140,63 @@ label {
     align-items: center;
     justify-content: center;
     gap: 10px;
+    margin-top: 8px;
 }
-
-.login-btn:hover {
+.auth-btn:hover {
     background: #3b4fc4;
     transform: translateY(-1px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Back-to-login link below button */
+.back-link {
+    text-align: center;
+    margin-top: 18px;
+    font-size: 13px;
+    color: #777;
+}
+.back-link a { color: #4c63d2; text-decoration: none; }
+.back-link a:hover { text-decoration: underline; }
+
+/* Success banner (password changed) */
+.success-banner {
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* OTP input – larger, centred digits */
+.otp-input {
+    letter-spacing: 8px;
+    font-size: 20px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Step indicator */
+.step-indicator {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+.step-dot {
+    height: 6px;
+    border-radius: 3px;
+    background: #d1d5db;
+    flex: 1;
+    transition: background 0.3s;
+}
+.step-dot.active { background: #4c63d2; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .main { width: 100%; height: auto; flex-direction: column; border-radius: 0; }
+    .left { padding: 30px; }
+    .auth-box { width: 90%; }
 }

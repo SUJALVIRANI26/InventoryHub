@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Inventory – Verify OTP</title>
+    <link rel="stylesheet" href="{% static 'accounts/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="main">
+
+    <div class="left">
+        <div class="logo">
+            <div class="logo-box"><i class="fa-solid fa-boxes-stacked"></i></div>
+            <div><h2>Smart Inventory</h2><p>Management System</p></div>
+        </div>
+        <div class="features">
+            <div class="feature">
+                <div class="icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div><h4>Secure Reset</h4><p>OTP-based password recovery keeps your account safe</p></div>
+            </div>
+            <div class="feature">
+                <div class="icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
+                <div><h4>Email Verified</h4><p>We send a one-time code to your registered email only</p></div>
+            </div>
+            <div class="feature">
+                <div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <div><h4>Quick Recovery</h4><p>Back in your dashboard in under 2 minutes</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="auth-box">
+
+            <!-- Step indicator: 2 of 3 active -->
+            <div class="step-indicator">
+                <div class="step-dot active"></div>
+                <div class="step-dot active"></div>
+                <div class="step-dot"></div>
+            </div>
+
+            <h1>Enter OTP</h1>
+            <p class="subtitle">A 6-digit code was sent to <strong>{{ email }}</strong></p>
+
+            {% if error %}
+            <div class="form-error">{{ error }}</div>
+            {% endif %}
+
+            <form id="otpForm" method="post">
+                {% csrf_token %}
+
+                <label>One-Time Password</label>
+                <div class="input-box">
+                    <i class="fa-solid fa-key"></i>
+                    <input id="otp" name="otp" type="text" maxlength="6"
+                           class="otp-input" placeholder="_ _ _ _ _ _"
+                           autocomplete="one-time-code">
+                </div>
+                <small class="error" id="otpError"></small>
+
+                <button class="auth-btn" type="submit">
+                    <i class="fa-solid fa-check"></i> Verify OTP
+                </button>
+            </form>
+
+            <p class="back-link">
+                Didn't receive the code?
+                <a href="{% url 'forgot_password' %}">Resend OTP</a>
+            </p>
+        </div>
+    </div>
+
+</div>
+<script src="{% static 'accounts/validation.js' %}"></script>
+</body>
+</html>

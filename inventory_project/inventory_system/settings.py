@@ -127,7 +127,20 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS=[os.path.join(BASE_DIR, 'static')]
 
 
+# AUTHENTICATION_BACKENDS = [
+#     'accounts.backends.EmailBackend',  # Path to your new class
+#     'django.contrib.auth.backends.ModelBackend', # Keep default as fallback
+# ]
+
 AUTHENTICATION_BACKENDS = [
-    'accounts.backends.EmailBackend',  # Path to your new class
-    'django.contrib.auth.backends.ModelBackend', # Keep default as fallback
+    'accounts.backends.EmailBackend',
 ]
+ 
+# Email configuration (Gmail example – use App Password, not your real password)
+EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST          = 'smtp.gmail.com'
+EMAIL_PORT          = 587
+EMAIL_USE_TLS       = True
+EMAIL_HOST_USER     = 'inventory092226@gmail.com'      # ← change
+EMAIL_HOST_PASSWORD = 'iwjseawphzpbfaqy'    # ← change (Gmail App Password)
+DEFAULT_FROM_EMAIL  = 'Smart Inventory <inventory092226@gmail.com>'

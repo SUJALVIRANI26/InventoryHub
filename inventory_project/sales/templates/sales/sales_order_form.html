@@ -1,5 +1,6 @@
 {% extends "sales/base.html" %}
 {% load static %}
+{% load sales_extras %}
 
 {% block title %}
   {% if form.instance.pk %}Edit{% else %}Create{% endif %} Sales Order
@@ -8,18 +9,15 @@
 {% block link %}
   {{ block.super }}
   <style>
-    /* Form styling */
     .form-group {
       margin-bottom: 1.5rem;
     }
-    
     .form-group label {
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 500;
       color: #5a5c69;
     }
-    
     .form-control {
       width: 100%;
       padding: 0.75rem 1rem;
@@ -29,13 +27,11 @@
       transition: all 0.2s;
       background-color: white;
     }
-    
     .form-control:focus {
       outline: none;
       border-color: #4e73df;
       box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.1);
     }
-    
     select.form-control {
       appearance: none;
       -webkit-appearance: none;
@@ -46,26 +42,21 @@
       background-size: 15px;
       padding-right: 35px;
     }
-    
     textarea.form-control {
       resize: vertical;
       min-height: 80px;
     }
-    
     input[type="date"].form-control {
       min-height: 42px;
     }
-    
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 20px;
     }
-    
     .full-width {
       grid-column: span 2;
     }
-    
     .order-item-row {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr 1fr auto;
@@ -77,7 +68,6 @@
       border-radius: 8px;
       border: 1px solid #e3e6f0;
     }
-    
     .item-total {
       font-weight: 600;
       color: #4e73df;
@@ -87,7 +77,6 @@
       border-radius: 4px;
       line-height: 38px;
     }
-    
     .remove-item {
       color: #e74a3b;
       background: none;
@@ -98,22 +87,18 @@
       border-radius: 4px;
       width: 100%;
     }
-    
     .remove-item:hover {
       color: #c92127;
       background-color: #fee2e2;
     }
-    
     .remove-item:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-    
     .remove-item:disabled:hover {
       background-color: transparent;
       color: #e74a3b;
     }
-    
     #add-item {
       background: var(--light);
       color: var(--primary);
@@ -126,30 +111,19 @@
       transition: all 0.2s;
       font-size: 0.95rem;
     }
-    
     #add-item:hover {
       background: #e8ecf4;
     }
-    
     .error {
       color: #e74a3b;
       font-size: 0.8rem;
       margin-top: 3px;
       display: block;
     }
-    
-    .price-error {
-      color: #e74a3b;
-      font-size: 0.75rem;
-      margin-top: 2px;
-      grid-column: span 5;
-    }
-    
     .is-invalid {
       border-color: #e74a3b !important;
       background-color: #fff8f8;
     }
-    
     .alert-danger {
       background: #fee2e2;
       color: #991b1b;
@@ -158,7 +132,6 @@
       margin-bottom: 20px;
       border: 1px solid #fecaca;
     }
-    
     .btn-secondary {
       padding: 12px 30px;
       border: 1px solid #ddd;
@@ -168,11 +141,9 @@
       display: inline-block;
       background: white;
     }
-    
     .btn-secondary:hover {
       background: #f8f9fc;
     }
-    
     .btn-primary {
       padding: 12px 30px;
       background: var(--primary);
@@ -182,24 +153,43 @@
       cursor: pointer;
       font-size: 0.95rem;
     }
-    
     .btn-primary:hover {
       background: #2e59d9;
     }
-
-    /* Price input styling (read-only) */
     .unit-price-input {
       width: 100%;
       background-color: #f3f4f6;
       cursor: not-allowed;
     }
-
-    /* Empty state styling */
     .empty-items {
       text-align: center;
       padding: 40px;
       color: #888;
       font-style: italic;
+    }
+    /* Hide Django DELETE checkbox — JS handles removal visually */
+    input[name$="-DELETE"] {
+      display: none !important;
+    }
+    /* Stock warning – non-blocking yellow text under quantity */
+    .stock-warn {
+      display: none;
+      font-size: 0.75rem;
+      color: #b45309;
+      margin-top: 3px;
+    }
+    /* Backlog banner at top of form */
+    #backlog-banner {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 10px 15px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      display: none;
+      align-items: center;
+      gap: 10px;
     }
   </style>
 {% endblock link %}
@@ -213,16 +203,14 @@
         </div>
         <div class="user-actions">
             <a href="{% url 'profile' %}">
-            <div class="profile">
-                <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=random" alt="User">
-                
-                <div>
-                    <div style="font-weight: 600; font-size: 0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
-                    <div style="font-size: 0.75rem; color: #888;">{% if request.user.is_staff %}Admin{% else %}Sales Executive{% endif %}</div>
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=random" alt="User">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
+                        <div style="font-size: 0.75rem; color: #888;">{% if request.user.is_staff %}Admin{% else %}Sales Executive{% endif %}</div>
+                    </div>
                 </div>
-               
-            </div>
-             </a>
+            </a>
         </div>
     </div>
 
@@ -234,29 +222,31 @@
                     <i class="fa-solid fa-arrow-left"></i> Back to Orders
                 </a>
             </div>
-            
+
             <form method="post" id="orderForm">
                 {% csrf_token %}
-                  
-    
-    <!-- Display formset non-form errors -->
-    {% if formset.non_form_errors %}
-        <div class="alert alert-error">
-            {% for error in formset.non_form_errors %}
-                <p>{{ error }}</p>
-            {% endfor %}
-        </div>
-    {% endif %}
-    
-    <!-- Display formset non-form errors -->
-    {% if formset.non_form_errors %}
-        <div class="alert-danger" style="margin-bottom: 20px;">
-            {% for error in formset.non_form_errors %}
-                <p style="margin: 5px 0;">{{ error }}</p>
-            {% endfor %}
-        </div>
-    {% endif %}
-                
+
+                {% if formset.non_form_errors %}
+                <div class="alert-danger" style="margin-bottom: 20px;">
+                    {% for error in formset.non_form_errors %}
+                        <p style="margin: 5px 0;">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!--
+                  Frontend banner shown by JS from `static/sales/order_form.js`.
+                  It explains backlog visually, but it does not enforce the rule.
+                  The real status lock is enforced in:
+                  - `sales.views.sales_order_form()`
+                  - `sales.views._apply_status_and_stock()`
+                -->
+                <div id="backlog-banner">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Some items exceed available stock. The shortfall will go to <strong>Backlog</strong>
+                    and a purchase order will be raised automatically. The order will still be created, but it must stay <strong>Pending</strong> until the backlog is cleared.</span>
+                </div>
+
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="{{ form.customer.id_for_label }}">Customer *</label>
@@ -265,7 +255,7 @@
                         <small class="error">{{ form.customer.errors }}</small>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="{{ form.order_date.id_for_label }}">Order Date *</label>
                         {{ form.order_date }}
@@ -273,7 +263,7 @@
                         <small class="error">{{ form.order_date.errors }}</small>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="{{ form.status.id_for_label }}">Order Status</label>
                         {{ form.status }}
@@ -281,7 +271,7 @@
                         <small class="error">{{ form.status.errors }}</small>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="{{ form.payment_method.id_for_label }}">Payment Method</label>
                         {{ form.payment_method }}
@@ -289,7 +279,7 @@
                         <small class="error">{{ form.payment_method.errors }}</small>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="{{ form.shipping_method.id_for_label }}">Shipping Method</label>
                         {{ form.shipping_method }}
@@ -297,7 +287,7 @@
                         <small class="error">{{ form.shipping_method.errors }}</small>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="{{ form.shipping_cost.id_for_label }}">Shipping Cost ($)</label>
                         {{ form.shipping_cost }}
@@ -305,8 +295,7 @@
                         <small class="error">{{ form.shipping_cost.errors }}</small>
                         {% endif %}
                     </div>
-                    
-                    <!-- Tax Rate Field - Exactly like shipping cost field -->
+
                     <div class="form-group">
                         <label for="{{ form.tax_rate.id_for_label }}">Tax Rate (%)</label>
                         {{ form.tax_rate }}
@@ -315,7 +304,7 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="form-group full-width">
                     <label for="{{ form.notes.id_for_label }}">Order Notes</label>
                     {{ form.notes }}
@@ -323,11 +312,11 @@
                     <small class="error">{{ form.notes.errors }}</small>
                     {% endif %}
                 </div>
-                
+
                 <h4 style="margin: 30px 0 15px 0; color: var(--dark);">Order Items</h4>
-                
+
                 {{ formset.management_form }}
-                
+
                 <div id="order-items-container">
                     <div style="background: #f8f9fc; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 15px; font-weight: 600; color: var(--secondary);">
@@ -337,33 +326,41 @@
                             <div>Total</div>
                             <div>Action</div>
                         </div>
-                        
+
                         <div id="items-body">
                             {% for item_form in formset %}
                             <div class="order-item-row" id="row-{{ forloop.counter0 }}">
                                 {{ item_form.id }}
+                                {# DELETE checkbox hidden by CSS – JS checks it when removing #}
+                                {{ item_form.DELETE }}
+
                                 <div>
                                     {{ item_form.product }}
                                     {% if item_form.product.errors %}
                                     <small class="error">{{ item_form.product.errors }}</small>
                                     {% endif %}
                                 </div>
+
                                 <div>
                                     {{ item_form.unit_price }}
-                                    <!-- <small class="base-price-hint" id="hint-{{ forloop.counter0 }}"></small> -->
                                     {% if item_form.unit_price.errors %}
                                     <small class="error">{{ item_form.unit_price.errors }}</small>
                                     {% endif %}
                                 </div>
+
                                 <div>
                                     {{ item_form.quantity }}
                                     {% if item_form.quantity.errors %}
                                     <small class="error">{{ item_form.quantity.errors }}</small>
                                     {% endif %}
+                                    <small class="stock-warn"></small>
                                 </div>
+
                                 <div class="item-total" id="item-total-{{ forloop.counter0 }}">$0.00</div>
+
                                 <div>
-                                    <button type="button" class="remove-item" {% if forloop.first and formset.forms|length == 1 %}disabled{% endif %}>
+                                    <button type="button" class="remove-item"
+                                        {% if forloop.first and formset.forms|length == 1 %}disabled{% endif %}>
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </div>
@@ -376,16 +373,13 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <button type="button" id="add-item">
                     <i class="fa-solid fa-plus"></i> Add Another Item
                 </button>
-                
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px;">
-                    <div>
-                        <!-- Empty for spacing -->
-                    </div>
-                    
+                    <div><!-- spacer --></div>
                     <div>
                         <h4 style="margin-bottom: 15px; color: var(--dark);">Order Summary</h4>
                         <div style="background: #f8f9fc; padding: 20px; border-radius: 10px;">
@@ -408,13 +402,12 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;">
-                    <a href="{% url 'sales_order' %}" class="btn-secondary">
-                        Cancel
-                    </a>
+                    <a href="{% url 'sales_order' %}" class="btn-secondary">Cancel</a>
                     <button type="submit" class="btn-primary">
-                        <i class="fa-solid fa-check"></i> {% if form.instance.pk %}Update{% else %}Create{% endif %} Order
+                        <i class="fa-solid fa-check"></i>
+                        {% if form.instance.pk %}Update{% else %}Create{% endif %} Order
                     </button>
                 </div>
             </form>
@@ -422,22 +415,36 @@
     </div>
 </div>
 
-<!-- Empty item template for JavaScript -->
 <div id="empty-item-template" style="display: none;">
     <div class="order-item-row">
         <div>
-            <select class="form-control product-select" name="items-__prefix__-product" id="id_items-__prefix__-product">
+            <select class="form-control product-select"
+                    name="items-__prefix__-product"
+                    id="id_items-__prefix__-product">
                 <option value="" selected>---------</option>
                 {% for product in formset.empty_form.fields.product.queryset %}
-                <option value="{{ product.id }}" data-price="{{ product.price }}">{{ product.name }} (${{ product.price }})</option>
+                <option value="{{ product.id }}"
+                        data-price="{{ product.price|sales_price }}"
+                        data-stock="{{ product.quantity }}">
+                    {{ product.name }} (${{ product.price|sales_price }})
+                    {% if product.quantity <= 0 %}[OUT OF STOCK]
+                    {% elif product.quantity < product.minimum_stock %}[LOW: {{ product.quantity }}]
+                    {% endif %}
+                </option>
                 {% endfor %}
             </select>
         </div>
         <div>
-            <input type="number" name="items-__prefix__-unit_price" class="form-control unit-price-input" step="0.01" min="0" value="" id="id_items-__prefix__-unit_price">
+            <input type="number" name="items-__prefix__-unit_price"
+                   class="form-control unit-price-input"
+                   step="0.01" min="0" value=""
+                   id="id_items-__prefix__-unit_price" readonly>
         </div>
         <div>
-            <input type="number" name="items-__prefix__-quantity" class="form-control" value="1" min="1" id="id_items-__prefix__-quantity">
+            <input type="number" name="items-__prefix__-quantity"
+                   class="form-control" value="1" min="1"
+                   id="id_items-__prefix__-quantity">
+            <small class="stock-warn"></small>
         </div>
         <div class="item-total">$0.00</div>
         <div>
@@ -450,303 +457,6 @@
 {% endblock main-content %}
 
 {% block linkJs %}
-{{ block.super }}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add form-control class to all input, select, and textarea elements
-        document.querySelectorAll('input, select, textarea').forEach(el => {
-            if (!el.classList.contains('form-control') && el.type !== 'hidden' && !el.classList.contains('remove-item')) {
-                el.classList.add('form-control');
-            }
-        });
-
-        // Set default date to today if empty
-        const dateInput = document.querySelector('input[type="date"]');
-        if (dateInput && !dateInput.value) {
-            dateInput.value = new Date().toISOString().split('T')[0];
-        }
-
-        // Set default values for number inputs
-        document.querySelectorAll('input[type="number"]').forEach(input => {
-            if (!input.value) {
-                if (input.name.includes('shipping_cost')) {
-                    input.value = '0.00';
-                } else if (input.name.includes('tax_rate')) {
-                    input.value = '8.00';
-                } else if (input.name.includes('quantity') && !input.name.includes('__prefix__')) {
-                    input.value = '1';
-                }
-            }
-        });
-
-        // Function to calculate row total
-        function calculateRowTotal(row) {
-            const priceInput = row.querySelector('[name$="unit_price"]');
-            const qtyInput = row.querySelector('[name$="quantity"]');
-            const totalDiv = row.querySelector('.item-total');
-            
-            if (!priceInput || !qtyInput || !totalDiv) return 0;
-            
-            const price = parseFloat(priceInput.value) || 0;
-            const qty = parseInt(qtyInput.value) || 0;
-            const total = price * qty;
-            
-            totalDiv.textContent = '$' + total.toFixed(2);
-            return total;
-        }
-
-        // Calculate all totals
-        function calculateTotals() {
-            let subtotal = 0;
-            
-            document.querySelectorAll('.order-item-row').forEach(row => {
-                // Skip hidden rows (marked for deletion)
-                if (row.style.display !== 'none') {
-                    subtotal += calculateRowTotal(row);
-                }
-            });
-
-            const shipping = parseFloat(document.querySelector('[name="shipping_cost"]')?.value) || 0;
-            const taxRate = parseFloat(document.querySelector('[name="tax_rate"]')?.value) || 0;
-            const tax = subtotal * (taxRate / 100);
-
-            const taxRateDisplay = document.getElementById('tax-rate-display');
-            if (taxRateDisplay) taxRateDisplay.textContent = taxRate.toFixed(2);
-            
-            document.getElementById('summary-subtotal').textContent = '$' + subtotal.toFixed(2);
-            document.getElementById('summary-tax').textContent = '$' + tax.toFixed(2);
-            document.getElementById('summary-shipping').textContent = '$' + shipping.toFixed(2);
-            document.getElementById('summary-total').textContent = '$' + (subtotal + tax + shipping).toFixed(2);
-        }
-
-        // Function to update price based on selected product
-        function updatePriceFromProduct(select) {
-            const row = select.closest('.order-item-row');
-            const priceInput = row.querySelector('[name$="unit_price"]');
-            
-            if (select.value && priceInput) {
-                const selectedOption = select.options[select.selectedIndex];
-                
-                // Try to get price from data-price attribute
-                let price = selectedOption.getAttribute('data-price');
-                
-                // If no data-price, try to extract from text
-                if (!price && selectedOption.text) {
-                    const match = selectedOption.text.match(/\$(\d+(?:\.\d+)?)/);
-                    if (match) {
-                        price = match[1];
-                    }
-                }
-                
-                if (price) {
-                    priceInput.value = parseFloat(price).toFixed(2);
-                }
-            } else if (priceInput) {
-                priceInput.value = '';
-            }
-            calculateTotals();
-        }
-
-        // Initialize all product selects
-        function initializeProductSelects() {
-            document.querySelectorAll('.product-select, [name$="product"]').forEach(select => {
-                // Store current value
-                const currentValue = select.value;
-                
-                // Create new select to ensure fresh event listeners
-                const newSelect = document.createElement('select');
-                newSelect.name = select.name;
-                newSelect.id = select.id;
-                newSelect.className = select.className;
-                newSelect.innerHTML = select.innerHTML;
-                newSelect.value = currentValue;
-                
-                // Replace old select
-                select.parentNode.replaceChild(newSelect, select);
-                
-                // Add change event listener
-                newSelect.addEventListener('change', function() {
-                    updatePriceFromProduct(this);
-                });
-                
-                // Trigger change to set initial price
-                if (newSelect.value) {
-                    updatePriceFromProduct(newSelect);
-                }
-            });
-        }
-
-        // Initialize quantity inputs
-        function initializeQuantityInputs() {
-            document.querySelectorAll('[name$="quantity"]').forEach(input => {
-                const newInput = input.cloneNode(true);
-                input.parentNode.replaceChild(newInput, input);
-                newInput.addEventListener('input', calculateTotals);
-            });
-        }
-
-        // Initialize remove buttons
-        function initializeRemoveButtons() {
-            document.querySelectorAll('.remove-item').forEach(button => {
-                const newButton = button.cloneNode(true);
-                button.parentNode.replaceChild(newButton, button);
-                
-                newButton.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const row = this.closest('.order-item-row');
-                    const deleteCheckbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
-                    
-                    if (deleteCheckbox) {
-                        deleteCheckbox.checked = true;
-                        row.style.display = 'none';
-                    } else {
-                        row.remove();
-                    }
-                    
-                    // Update total forms count
-                    const totalForms = document.getElementById('id_items-TOTAL_FORMS');
-                    if (totalForms) {
-                        const visibleRows = document.querySelectorAll('.order-item-row:not([style*="display: none"])').length;
-                        totalForms.value = visibleRows;
-                    }
-                    
-                    calculateTotals();
-                });
-            });
-        }
-
-        // Initialize shipping and tax inputs
-        function initializeShippingTax() {
-            const shippingInput = document.querySelector('[name="shipping_cost"]');
-            if (shippingInput) {
-                const newShipping = shippingInput.cloneNode(true);
-                shippingInput.parentNode.replaceChild(newShipping, shippingInput);
-                newShipping.addEventListener('input', calculateTotals);
-            }
-            
-            const taxRateInput = document.querySelector('[name="tax_rate"]');
-            if (taxRateInput) {
-                const newTaxRate = taxRateInput.cloneNode(true);
-                taxRateInput.parentNode.replaceChild(newTaxRate, taxRateInput);
-                newTaxRate.addEventListener('input', calculateTotals);
-            }
-        }
-
-        // Add new item row
-        const addButton = document.getElementById('add-item');
-        const totalForms = document.getElementById('id_items-TOTAL_FORMS');
-        const itemsBody = document.getElementById('items-body');
-        const emptyMessage = document.getElementById('empty-items-message');
-        const template = document.getElementById('empty-item-template');
-
-        if (addButton && totalForms && itemsBody && template) {
-            addButton.addEventListener('click', function() {
-                const formCount = parseInt(totalForms.value);
-                let newRowHtml = template.innerHTML.replace(/__prefix__/g, formCount);
-                
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = newRowHtml;
-                const newRow = tempDiv.firstElementChild;
-                
-                if (emptyMessage) {
-                    emptyMessage.style.display = 'none';
-                }
-                
-                itemsBody.appendChild(newRow);
-                totalForms.value = formCount + 1;
-                
-                // Initialize the new row elements
-                const newSelect = newRow.querySelector('.product-select, [name$="product"]');
-                if (newSelect) {
-                    newSelect.addEventListener('change', function() {
-                        updatePriceFromProduct(this);
-                    });
-                }
-                
-                const newQty = newRow.querySelector('[name$="quantity"]');
-                if (newQty) {
-                    newQty.addEventListener('input', calculateTotals);
-                }
-                
-                const newRemoveBtn = newRow.querySelector('.remove-item');
-                if (newRemoveBtn) {
-                    newRemoveBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const row = this.closest('.order-item-row');
-                        const deleteCheckbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
-                        
-                        if (deleteCheckbox) {
-                            deleteCheckbox.checked = true;
-                            row.style.display = 'none';
-                        } else {
-                            row.remove();
-                        }
-                        
-                        // Update total forms count
-                        const visibleRows = document.querySelectorAll('.order-item-row:not([style*="display: none"])').length;
-                        totalForms.value = visibleRows;
-                        
-                        calculateTotals();
-                    });
-                }
-                
-                calculateTotals();
-            });
-        }
-
-        // Initialize everything
-        initializeProductSelects();
-        initializeQuantityInputs();
-        initializeRemoveButtons();
-        initializeShippingTax();
-        calculateTotals();
-
-        // Form validation - FIXED VERSION
-        const orderForm = document.getElementById('orderForm');
-        if (orderForm) {
-            orderForm.addEventListener('submit', function(e) {
-                let hasValidProduct = false;
-                let visibleRows = 0;
-                
-                // Check each visible row
-                document.querySelectorAll('.order-item-row').forEach(row => {
-                    // Skip hidden rows (marked for deletion)
-                    if (row.style.display === 'none') return;
-                    
-                    visibleRows++;
-                    const productSelect = row.querySelector('[name$="product"]');
-                    
-                    // Check if product is selected and has a value
-                    if (productSelect && productSelect.value) {
-                        hasValidProduct = true;
-                        productSelect.classList.remove('is-invalid');
-                    } else if (productSelect) {
-                        productSelect.classList.add('is-invalid');
-                    }
-                });
-                
-                // If no visible rows, show error
-                if (visibleRows === 0) {
-                    e.preventDefault();
-                    alert('Please add at least one item to the order.');
-                    return;
-                }
-                
-                // If no valid product found, show error
-                if (!hasValidProduct) {
-                    e.preventDefault();
-                    alert('Please select a product for each item.');
-                    return;
-                }
-                
-                // If we get here, form is valid - let it submit
-                console.log('Form is valid, submitting...');
-            });
-        }
-
-        // Debug - log all product selects (remove in production)
-        console.log('Initialized product selects:', document.querySelectorAll('[name$="product"]').length);
-    });
-</script>
+  {{ block.super }}
+  <script src="{% static 'sales/order_form.js' %}"></script>
 {% endblock linkJs %}

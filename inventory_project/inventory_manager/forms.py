@@ -11,6 +11,22 @@ class ProductForm(forms.ModelForm):
 
 
 class SupplierForm(forms.ModelForm):
+    required_fields = (
+        'category',
+        'contact_person',
+        'email',
+        'phone',
+        'address',
+        'city',
+        'state',
+        'country',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in self.required_fields:
+            self.fields[field_name].required = True
+
     class Meta:
         model = Supplier
         fields = '__all__'

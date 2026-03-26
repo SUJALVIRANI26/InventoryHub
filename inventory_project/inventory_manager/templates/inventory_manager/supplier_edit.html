@@ -40,6 +40,12 @@
         <form method="POST">
             {% csrf_token %}
 
+            {% if form.non_field_errors %}
+            <div style="margin-bottom:20px; padding:12px 14px; border-radius:10px; background:#fdecea; color:#b42318;">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
             <!-- ================= COMPANY DETAILS ================= -->
             <h4 style="margin-bottom:20px; color:var(--primary);">
                 <i class="fa-solid fa-building"></i> Company Details
@@ -47,23 +53,27 @@
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Company Name</label>
+                    <label>Company Name *</label>
                     {{ form.name }}
+                    {{ form.name.errors }}
                 </div>
 
                 <div class="form-group">
                     <label>Supplier Code</label>
                     {{ form.supplier_code }}
+                    {{ form.supplier_code.errors }}
                 </div>
 
                 <div class="form-group">
-                    <label>Category</label>
+                    <label>Category *</label>
                     {{ form.category }}
+                    {{ form.category.errors }}
                 </div>
 
                 <div class="form-group">
                     <label>Status</label>
                     {{ form.status }}
+                    {{ form.status.errors }}
                 </div>
             </div>
 
@@ -74,18 +84,21 @@
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Contact Person</label>
+                    <label>Contact Person *</label>
                     {{ form.contact_person }}
+                    {{ form.contact_person.errors }}
                 </div>
 
                 <div class="form-group">
-                    <label>Email</label>
+                    <label>Email *</label>
                     {{ form.email }}
+                    {{ form.email.errors }}
                 </div>
 
                 <div class="form-group">
-                    <label>Phone</label>
+                    <label>Phone *</label>
                     {{ form.phone }}
+                    {{ form.phone.errors }}
                 </div>
             </div>
 
@@ -96,28 +109,33 @@
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Street Address</label>
+                    <label>Street Address *</label>
                     {{ form.address }}
+                    {{ form.address.errors }}
                 </div>
 
                 <div class="form-group">
-                    <label>City</label>
+                    <label>City *</label>
                     {{ form.city }}
+                    {{ form.city.errors }}
                 </div>
 
                 <div class="form-group">
-                    <label>State</label>
+                    <label>State *</label>
                     {{ form.state }}
+                    {{ form.state.errors }}
                 </div>
 
                 <div class="form-group">
                     <label>ZIP Code</label>
                     {{ form.zip_code }}
+                    {{ form.zip_code.errors }}
                 </div>
 
                 <div class="form-group">
-                    <label>Country</label>
+                    <label>Country *</label>
                     {{ form.country }}
+                    {{ form.country.errors }}
                 </div>
             </div>
 
@@ -149,6 +167,13 @@
     display:block;
     margin-bottom:8px;
     font-weight:500;
+}
+
+.form-group ul.errorlist {
+    margin:8px 0 0;
+    padding-left:18px;
+    color:#b42318;
+    font-size:0.85rem;
 }
 
 input, select, textarea {

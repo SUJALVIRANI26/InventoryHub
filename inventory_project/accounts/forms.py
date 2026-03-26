@@ -1,37 +1,37 @@
 from django import forms
+
 ROLE_CHOICES = [
-    ("MANAGER", "Inventory Manager"),
-    ("STAFF", "Staff"),
-    ("ADMIN", "Admin"),
-    ("OWNER", "Owner"),
-   ]
+    ('MANAGER', 'Inventory Manager'),
+    ('STAFF',   'Staff'),
+    ('ADMIN',   'Admin'),
+    ('OWNER',   'Owner'),
+]
+
 
 class LoginForm(forms.Form):
-    email = forms.EmailField(
-        required=True,
+    email    = forms.EmailField()
+    password = forms.CharField(min_length=6)
+    role     = forms.ChoiceField(choices=ROLE_CHOICES)
+
+
+class ForgotPasswordForm(forms.Form):
+    email = forms.EmailField(label='Registered Email')
+
+
+class OTPForm(forms.Form):
+    otp = forms.CharField(
+        label='One-Time Password',
+        min_length=6, max_length=6,
+        widget=forms.TextInput(attrs={'autocomplete': 'one-time-code'}),
     )
 
-    password = forms.CharField(
-        required=True,
-        min_length=6,
-       
-    )
 
-    role = forms.ChoiceField(
-        required=True,
-        choices=ROLE_CHOICES,
-       
-    )
+class ResetPasswordForm(forms.Form):
+    new_password     = forms.CharField(min_length=6, widget=forms.PasswordInput)
+    confirm_password = forms.CharField(widget=forms.PasswordInput)
 
-    # remember_me = forms.BooleanField(
-    #     required=False
-    # )
-
-
-        
-    
-    
-
-    
-
-    
+    def clean(self):
+        data = super().clean()
+        if data.get('new_password') != data.get('confirm_password'):
+            raise forms.ValidationError('Passwords do not match.')
+        return data

@@ -12,7 +12,7 @@
       background: #e0e7ff;
       color: #4e73df;
     }
-    
+
     .btn-secondary {
       padding: 12px 30px;
       border: 1px solid #ddd;
@@ -22,9 +22,109 @@
       text-decoration: none;
       display: inline-block;
     }
-    
+
     .btn-secondary:hover {
       background: #f8f9fc;
+    }
+
+    /* Disabled action button – shown instead of real button when backlog blocks it */
+    .btn-disabled {
+      padding: 12px 30px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #f3f4f6;
+      color: #9ca3af;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+
+    /* Backlog alert banner */
+    .backlog-alert {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .backlog-alert i {
+      color: #d97706;
+      font-size: 1.2rem;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .backlog-alert-title {
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 4px;
+    }
+
+    .backlog-alert-body {
+      color: #78350f;
+      font-size: 0.88rem;
+    }
+
+    .backlog-items-list {
+      margin-top: 10px;
+      border-top: 1px solid #fde68a;
+      padding-top: 10px;
+    }
+
+    .backlog-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 0.85rem;
+      color: #78350f;
+      border-bottom: 1px dashed #fde68a;
+    }
+
+    .backlog-item-row:last-child {
+      border-bottom: none;
+    }
+
+    .backlog-qty-badge {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    /* Messages */
+    .alert-success {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border: 1px solid #a7f3d0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .alert-error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border: 1px solid #fecaca;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
   </style>
 {% endblock link %}
@@ -37,17 +137,15 @@
             <span>Order #SO-{{ order.id|stringformat:"03d" }}</span>
         </div>
         <div class="user-actions">
-           <a href="{% url 'profile' %}">
-            <div class="profile">
-                <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=random" alt="User">
-                
-                <div>
-                    <div style="font-weight: 600; font-size: 0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
-                    <div style="font-size: 0.75rem; color: #888;">{% if request.user.is_staff %}Admin{% else %}Sales Executive{% endif %}</div>
+            <a href="{% url 'profile' %}">
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=random" alt="User">
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">{{ request.user.get_full_name|default:request.user.username }}</div>
+                        <div style="font-size: 0.75rem; color: #888;">{% if request.user.is_staff %}Admin{% else %}Sales Executive{% endif %}</div>
+                    </div>
                 </div>
-               
-            </div>
-             </a>
+            </a>
         </div>
     </div>
 
@@ -59,7 +157,56 @@
                     <i class="fa-solid fa-arrow-left"></i> Back to Orders
                 </a>
             </div>
-            
+
+            {# ── Django messages (success / error from status change) ── #}
+            {% if messages %}
+                {% for message in messages %}
+                    {% if message.tags == 'success' %}
+                    <div class="alert-success">
+                        <i class="fa-solid fa-circle-check"></i> {{ message }}
+                    </div>
+                    {% else %}
+                    <div class="alert-error">
+                        <i class="fa-solid fa-circle-xmark"></i> {{ message }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            {# ── Backlog warning banner ───────────────────────────────── #}
+            {% if has_backlog %}
+            <div class="backlog-alert">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                    <div class="backlog-alert-title">
+                        This order has items on backlog
+                    </div>
+                    <div class="backlog-alert-body">
+                        The following products do not have enough stock.
+                        A purchase order has been raised automatically.
+                        <strong>This order must remain Pending until all backlog is cleared.</strong>
+                    </div>
+
+                    {% if open_backlogs %}
+                    <div class="backlog-items-list">
+                        {% for bl in open_backlogs %}
+                        <div class="backlog-item-row">
+                            <span>
+                                <i class="fa-solid fa-box" style="margin-right:6px;color:#d97706;"></i>
+                                {{ bl.product.name }}
+                            </span>
+                            <span class="backlog-qty-badge">
+                                {{ bl.quantity_on_backlog }} unit{{ bl.quantity_on_backlog|pluralize }} on backlog
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── Customer + Order info panels ────────────────────────── #}
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
                 <div>
                     <h4 style="margin-bottom: 15px; color: var(--dark);">Customer Information</h4>
@@ -70,13 +217,13 @@
                         <p><strong>Address:</strong> {{ order.customer.address_line1 }}, {{ order.customer.city }}, {{ order.customer.state }} {{ order.customer.zip_code }}</p>
                     </div>
                 </div>
-                
+
                 <div>
                     <h4 style="margin-bottom: 15px; color: var(--dark);">Order Details</h4>
                     <div style="background: #f8f9fc; padding: 20px; border-radius: 10px;">
                         <p><strong>Order Date:</strong> {{ order.order_date|date:"M d, Y" }}</p>
-                        <p><strong>Order Status:</strong> 
-                            <span class="badge 
+                        <p><strong>Order Status:</strong>
+                            <span class="badge
                                 {% if order.status == 'completed' %}success
                                 {% elif order.status == 'cancelled' %}danger
                                 {% elif order.status == 'pending' %}warning
@@ -85,6 +232,11 @@
                                 {% endif %}">
                                 {{ order.get_status_display|default:order.status|title }}
                             </span>
+                            {% if has_backlog %}
+                            <span class="badge warning" style="margin-left:6px;">
+                                <i class="fa-solid fa-clock"></i> Backlog Pending
+                            </span>
+                            {% endif %}
                         </p>
                         <p><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
                         <p><strong>Shipping Method:</strong> {{ order.get_shipping_method_display }}</p>
@@ -95,9 +247,9 @@
                     </div>
                 </div>
             </div>
-            
-            <h4 style="margin-bottom: 15px; color: var(--dark);">Order Items</h4>
 
+            {# ── Order items table ────────────────────────────────────── #}
+            <h4 style="margin-bottom: 15px; color: var(--dark);">Order Items</h4>
             <div class="table-container">
                 <table>
                     <thead>
@@ -107,6 +259,7 @@
                             <th>Price</th>
                             <th>Quantity</th>
                             <th>Total</th>
+                            <th>Backlog</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -117,16 +270,32 @@
                             <td>${{ item.unit_price|floatformat:2 }}</td>
                             <td>{{ item.quantity }}</td>
                             <td>${{ item.total_price|floatformat:2 }}</td>
+                            <td>
+                                {# Show backlog qty for this specific item if any #}
+                                {% with bl_qty=item.backordered_qty %}
+                                {% if bl_qty > 0 %}
+                                <span class="badge warning">
+                                    <i class="fa-solid fa-hourglass-half"></i>
+                                    {{ bl_qty }} on backlog
+                                </span>
+                                {% else %}
+                                <span class="badge success">
+                                    <i class="fa-solid fa-check"></i> Fulfilled
+                                </span>
+                                {% endif %}
+                                {% endwith %}
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" style="text-align: center;">No items in this order</td>
+                            <td colspan="6" style="text-align: center;">No items in this order</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-            
+
+            {# ── Totals ──────────────────────────────────────────────── #}
             <div style="display: flex; justify-content: flex-end; margin-top: 30px;">
                 <div style="width: 300px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
@@ -147,25 +316,62 @@
                     </div>
                 </div>
             </div>
-            
-            <div style="display: flex; gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+
+            {# ── Action buttons ───────────────────────────────────────── #}
+            <div style="display: flex; gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; flex-wrap: wrap; align-items: center;">
+
+                {# Mark as Shipped – blocked if backlog is open #}
                 {% if order.status != 'shipped' and order.status != 'completed' and order.status != 'cancelled' %}
-                <a href="{% url 'sales_order_update_status' order.pk 'shipped' %}" class="btn-primary" style="text-decoration: none;">
-                    <i class="fa-solid fa-check"></i> Mark as Shipped
-                </a>
+                    {% if has_backlog %}
+                    <span class="btn-disabled" title="Cannot ship — items are on backlog">
+                        <i class="fa-solid fa-ban"></i> Mark as Shipped
+                    </span>
+                    {% else %}
+                    <a href="{% url 'sales_order_update_status' order.pk 'shipped' %}"
+                       class="btn-primary" style="text-decoration: none;">
+                        <i class="fa-solid fa-truck"></i> Mark as Shipped
+                    </a>
+                    {% endif %}
                 {% endif %}
-                
+
+                {# Mark as Completed – blocked if backlog is open #}
+                {% if order.status == 'shipped' %}
+                    {% if has_backlog %}
+                    <span class="btn-disabled" title="Cannot complete — items are on backlog">
+                        <i class="fa-solid fa-ban"></i> Mark as Completed
+                    </span>
+                    {% else %}
+                    <a href="{% url 'sales_order_update_status' order.pk 'completed' %}"
+                       class="btn-primary" style="text-decoration: none; background: #1cc88a;">
+                        <i class="fa-solid fa-circle-check"></i> Mark as Completed
+                    </a>
+                    {% endif %}
+                {% endif %}
+
+                {# Cancel – always allowed unless already cancelled/completed #}
                 {% if order.status != 'cancelled' and order.status != 'completed' %}
-                <a href="{% url 'sales_order_update_status' order.pk 'cancelled' %}" class="btn-danger" style="text-decoration: none;">
+                <a href="{% url 'sales_order_update_status' order.pk 'cancelled' %}"
+                   class="btn-danger" style="text-decoration: none;"
+                   onclick="return confirm('Are you sure you want to cancel this order? Stock will be restored.')">
                     <i class="fa-solid fa-times"></i> Cancel Order
                 </a>
                 {% endif %}
-                
+
+                {# Edit – only for pending/processing #}
                 {% if order.status == 'pending' or order.status == 'processing' %}
                 <a href="{% url 'sales_order_edit' order.pk %}" class="btn-secondary">
                     <i class="fa-solid fa-edit"></i> Edit Order
                 </a>
                 {% endif %}
+
+                {# Backlog hint next to disabled buttons #}
+                {% if has_backlog and order.status != 'cancelled' and order.status != 'completed' %}
+                <span style="font-size: 0.8rem; color: #92400e; display: flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-circle-info"></i>
+                    The order can move out of Pending only after all backlog is fulfilled.
+                </span>
+                {% endif %}
+
             </div>
         </div>
     </div>

@@ -1,596 +1,633 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 from django.contrib import messages
-from django.db.models import Sum, F,Q,Count,Max  # Add F here
-from django.db.models.functions import TruncDate
-from django.utils.timezone import now, timedelta
-from datetime import  timedelta
-from .forms import OrderItemFormSet, SalesOrderForm, CustomerForm
-from .models import SalesOrder, Customer, SalesOrderItem
+from django.db.models import Sum, Q, Count, Max
+from datetime import timedelta, date as date_type
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+import json
+from decimal import Decimal
+
+from .forms import OrderItemFormSet, SalesOrderForm, CustomerForm
+from .models import SalesOrder, Customer, SalesOrderItem, ORDER_STATUS_CHOICES
 from admin_panel.models import UserProfile
 from accounts.decorators import staff_required
-import json
-from django.core.serializers.json import DjangoJSONEncoder
-from .models import ORDER_STATUS_CHOICES
-from django.http import JsonResponse,HttpResponse
-from inventory_manager.models import Product
+from inventory_manager.models import Product, BacklogEntry
+
+
+# ─────────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────────
+
+def get_time_ago(d):
+    diff = (timezone.now().date() - d).days
+    if diff == 0:  return 'Today'
+    if diff == 1:  return 'Yesterday'
+    if diff < 7:   return f'{diff} days ago'
+    if diff < 30:
+        w = diff // 7
+        return f'{w} week{"s" if w > 1 else ""} ago'
+    return d.strftime('%b %d, %Y')
+
+
+def _revenue_growth(current, previous):
+    if not previous:
+        return 0
+    return round(((float(current) - float(previous)) / float(previous)) * 100)
+
+
+def _order_has_open_backlog(order):
+    # Backend-only helper. No direct frontend or JS call reaches this.
+    #
+    # Used by:
+    # - `_normalize_backlog_status()`
+    # - `_apply_status_and_stock()`
+    # - `sales_order_detail()`
+    #
+    # Frontend file that consumes the final result:
+    # - `templates/sales/sales_order_detail.html`
+    #
+    # This only returns a boolean; it does not render a response itself.
+    if not order.pk:
+        return False
+
+    # Primary backlog check uses the sales order items directly because
+    # `backordered_qty` is the closest source of truth for what the order still
+    # has outstanding.
+    if order.items.filter(backordered_qty__gt=0).exists():
+        return True
+
+    # Keep a fallback on BacklogEntry rows as well, using `sales_order_id`
+    # instead of only `sales_order_item_id`, so older rows cannot slip past the
+    # status guard.
+    return BacklogEntry.objects.filter(
+        sales_order_id=order.pk,
+        quantity_on_backlog__gt=0,
+    ).exists()
+
+
+def _normalize_backlog_status(order):
+    # Safety net for old/bad data.
+    #
+    # Called from:
+    # - `sales_order_detail()`
+    # - `sales_order_form()`
+    # - `update_order_status()`
+    #
+    # If an order already has backlog but was somehow saved as
+    # processing/shipped/completed earlier, this helper pushes it back to
+    # `pending` before the frontend is rendered again.
+    if (
+        order.pk
+        and order.status not in ('pending', 'cancelled')
+        and _order_has_open_backlog(order)
+    ):
+        order.status = 'pending'
+        order.save(update_fields=['status'])
+        return True
+    return False
 
 
 def _apply_status_and_stock(order, new_status, old_status=None):
     """
-    Central place to handle simple stock behaviour
-    when an order's status changes.
-
-    Rules:
-    - Stock is reserved immediately when order items are created/updated.
-    - When an order is cancelled, reserved stock is returned to inventory.
-    - Other status changes do not touch inventory.
+    Handle order status transitions.
+    - orders with open backlog must remain pending
+    - cancelled returns only deducted stock and clears backlog
+    Returns (success: bool, message: str)
     """
-    if old_status is None:
-        old_status = order.status
+    # Central backend gate for order status changes.
+    #
+    # Called from:
+    # - `sales_order_form()` after create/edit submit
+    # - `sales_order_detail()` on POST
+    # - `update_order_status()` from action links
+    #
+    # Frontend files affected by the result:
+    # - `templates/sales/sales_order_form.html`
+    # - `templates/sales/sales_order_detail.html`
+    # - `templates/sales/sales_order_list.html`
+    #
+    # This returns a `(success, message)` tuple. The message is passed to the
+    # frontend through Django messages, not through fetch/AJAX.
+    old_status = old_status or order.status
+    has_backlog = _order_has_open_backlog(order)
+
+    if has_backlog and new_status not in ('pending', 'cancelled'):
+        # This is the actual business rule: backlog means the order cannot move
+        # beyond pending until stock is fulfilled.
+        if order.status != 'pending':
+            order.status = 'pending'
+            order.save(update_fields=['status'])
+        return False, (
+            "This order has items on backlog, so it must remain in Pending status "
+            "until all backlog quantities are fulfilled."
+        )
 
     if old_status == new_status:
         return True, "Order status unchanged."
 
-    # If order is being cancelled, return all reserved stock.
     if new_status == 'cancelled' and old_status != 'cancelled':
-        for item in order.items.select_related('product'):
-            product = item.product
-            product.quantity += item.quantity
-            product.save()
+        for item in order.items.select_related('product').all():
+            if item.deducted_qty > 0:
+                item.product.quantity += item.deducted_qty
+                item.product.save()
+            BacklogEntry.objects.filter(
+                sales_order_item_id=item.pk,
+                quantity_on_backlog__gt=0,
+            ).update(quantity_on_backlog=0, fulfilled_at=timezone.now())
+            SalesOrderItem.objects.filter(pk=item.pk).update(
+                backordered_qty=0, deducted_qty=0,
+            )
         order.status = 'cancelled'
         order.save()
         return True, "Order cancelled and stock restored."
 
-    # All other transitions simply update the status without touching stock.
     order.status = new_status
     order.save()
     return True, "Order status updated."
 
 
+# ─────────────────────────────────────────────
+# DASHBOARD
+# All calculations done in pure Python — avoids TruncDate / Sum
+# annotations that crash SQLite on Python 3.14.
+# ─────────────────────────────────────────────
+
 @login_required
 @staff_required
 def dashboard(request):
-    # Get date filters from request
     period = request.GET.get('period', '7')
-    
-    # Calculate date ranges
-    today = timezone.now().date()
-    
-    if period == '30':
-        start_date = today - timedelta(days=30)
-    elif period == '90':
-        start_date = today - timedelta(days=90)
-    else:  # 7 days default
-        start_date = today - timedelta(days=7)
-    
-    # 1. STAT CARDS DATA
-    # Total Revenue (all time from completed orders)
-    total_revenue = SalesOrder.objects.filter(
-        status='completed'
-    ).aggregate(
-        total=Sum('total_amount')
-    )['total'] or 0
-    
-    # Revenue growth (compare current period with previous period)
-    if period == '7':
-        prev_start_date = start_date - timedelta(days=7)
-    elif period == '30':
-        prev_start_date = start_date - timedelta(days=30)
+    today  = timezone.now().date()
+    days   = {'30': 30, '90': 90}.get(period, 7)
+    start  = today - timedelta(days=days)
+    prev_start = start - timedelta(days=days)
+    yesterday  = today - timedelta(days=1)
+
+    # ── Pull raw order data once ──────────────────────────────
+    # Using values() returns dicts – no custom DB functions involved
+    all_orders = list(
+        SalesOrder.objects.values(
+            'id', 'status', 'order_date', 'total_amount', 'customer_id'
+        )
+    )
+
+    # ── Revenue ───────────────────────────────────────────────
+    def _sum_amount(rows):
+        return sum(float(r['total_amount'] or 0) for r in rows)
+
+    completed_orders = [o for o in all_orders if o['status'] == 'completed']
+    total_revenue    = _sum_amount(completed_orders)
+    cur_rev  = _sum_amount(
+        o for o in completed_orders if o['order_date'] >= start
+    )
+    prev_rev = _sum_amount(
+        o for o in completed_orders
+        if prev_start <= o['order_date'] < start
+    )
+
+    # ── Order counts ──────────────────────────────────────────
+    orders_today     = sum(1 for o in all_orders if o['order_date'] == today)
+    orders_yesterday = sum(1 for o in all_orders if o['order_date'] == yesterday)
+
+    # ── Customers ─────────────────────────────────────────────
+    thirty_days_ago = today - timedelta(days=30)
+    all_customers   = list(Customer.objects.values('id', 'status', 'customer_since'))
+    total_customers = sum(1 for c in all_customers if c['status'] == 'active')
+    new_customers   = sum(1 for c in all_customers
+                          if c['customer_since'] >= thirty_days_ago)
+
+    # ── Product stock counts (pure Python, no F()) ────────────
+    all_products = list(Product.objects.values('id', 'quantity', 'minimum_stock'))
+    products_in_stock = sum(1 for p in all_products if p['quantity'] > 0)
+    low_stock_items   = sum(1 for p in all_products
+                            if 0 < p['quantity'] <= p['minimum_stock'])
+    out_of_stock      = sum(1 for p in all_products if p['quantity'] == 0)
+
+    # Products with open backlog entries
+    backlog_product_ids = set(
+        BacklogEntry.objects.filter(quantity_on_backlog__gt=0)
+        .values_list('product_id', flat=True)
+    )
+    backlog_items  = len(backlog_product_ids)
+
+    low_list_ids   = [p['id'] for p in all_products
+                      if p['quantity'] < p['minimum_stock']]
+    low_stock_list = Product.objects.filter(id__in=low_list_ids)
+
+    # ── Sales chart – grouped by date in Python ───────────────
+    fmt          = '%a' if period == '7' else '%b %d'
+    date_range   = [start + timedelta(days=i) for i in range(days + 1)]
+    sales_dict   = {}  # date → float amount
+
+    for o in completed_orders:
+        d = o['order_date']
+        if d >= start:
+            sales_dict[d] = sales_dict.get(d, 0.0) + float(o['total_amount'] or 0)
+
+    sales_chart_labels = [d.strftime(fmt) for d in date_range]
+    sales_chart_data   = [round(sales_dict.get(d, 0.0), 2) for d in date_range]
+
+    # ── Product chart – top 4 by units sold ───────────────────
+    # Pull order-item quantities in Python to avoid Sum annotation crash
+    sold_items = list(
+        SalesOrderItem.objects.filter(
+            sales_order__status='completed',
+            sales_order__order_date__gte=start,
+        ).values('product__name', 'quantity')
+    )
+
+    product_qty: dict = {}
+    for si in sold_items:
+        name = si['product__name']
+        product_qty[name] = product_qty.get(name, 0) + (si['quantity'] or 0)
+
+    top4 = sorted(product_qty.items(), key=lambda x: x[1], reverse=True)[:4]
+
+    if top4:
+        product_labels = [item[0] for item in top4]
+        product_data   = [float(item[1]) for item in top4]
     else:
-        prev_start_date = start_date - timedelta(days=90)
-    
-    current_period_revenue = SalesOrder.objects.filter(
-        status='completed',
-        order_date__gte=start_date
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
-    
-    previous_period_revenue = SalesOrder.objects.filter(
-        status='completed',
-        order_date__gte=prev_start_date,
-        order_date__lt=start_date
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
-    
-    revenue_growth = 0
-    if previous_period_revenue > 0:
-        revenue_growth = round(((current_period_revenue - previous_period_revenue) / previous_period_revenue) * 100)
-    
-    # Orders Today
-    orders_today = SalesOrder.objects.filter(
-        order_date=today
-    ).count()
-    
-    # Orders growth
-    yesterday = today - timedelta(days=1)
-    orders_yesterday = SalesOrder.objects.filter(order_date=yesterday).count()
-    
-    orders_growth = 0
-    if orders_yesterday > 0:
-        orders_growth = round(((orders_today - orders_yesterday) / orders_yesterday) * 100)
-    
-    # Total Customers
-    total_customers = Customer.objects.filter(status='active').count()
-    
-    # Customer growth
-    last_month = today - timedelta(days=30)
-    new_customers = Customer.objects.filter(customer_since__gte=last_month).count()
-    customer_growth = round((new_customers / total_customers) * 100) if total_customers > 0 else 0
-    
-    # Products in Stock (using inventory_manager Product model)
-    products_in_stock = Product.objects.filter(
-        quantity__gt=0  # Using 'quantity' field from inventory_manager
-    ).count()
-    
-    # Low stock items (using minimum_stock from inventory_manager)
-    low_stock_items = Product.objects.filter(
-        quantity__lte=F('minimum_stock'),
-        quantity__gt=0
-    ).count()
-    
-    # 2. SALES CHART DATA
-    sales_orders = SalesOrder.objects.filter(
-        status='completed',
-        order_date__gte=start_date
-    ).annotate(
-        date=TruncDate('order_date')
-    ).values('date').annotate(
-        total=Sum('total_amount')
-    ).order_by('date')
-    
-    # Create date range for missing dates
-    date_range = []
-    current_date = start_date
-    while current_date <= today:
-        date_range.append(current_date)
-        current_date += timedelta(days=1)
-    
-    # Map sales data to dates
-    sales_dict = {item['date']: float(item['total']) for item in sales_orders if item['date']}
-    
-    sales_chart_labels = []
-    sales_chart_data = []
-    
-    for date in date_range:
-        if period == '7':
-            sales_chart_labels.append(date.strftime('%a'))
-        else:
-            sales_chart_labels.append(date.strftime('%b %d'))
-        sales_chart_data.append(sales_dict.get(date, 0))
-    
-    # 3. PRODUCT CHART DATA (Top products by quantity sold from sales orders)
-    top_products = SalesOrderItem.objects.filter(
-        sales_order__status='completed',
-        sales_order__order_date__gte=start_date
-    ).values(
-        'product__name'  # Product name from inventory_manager
-    ).annotate(
-        total_quantity=Sum('quantity'),
-        total_revenue=Sum(F('quantity') * F('unit_price'))
-    ).order_by('-total_quantity')[:4]
-    
-    product_labels = [item['product__name'] for item in top_products]
-    product_data = [float(item['total_quantity']) for item in top_products]
-    
-    # If no data, use products from inventory_manager as fallback
-    if not product_labels:
-        # Get top products by stock quantity as placeholder
-        top_stocked_products = Product.objects.order_by('-quantity')[:4]
-        product_labels = [p.name for p in top_stocked_products]
-        product_data = [float(p.quantity) for p in top_stocked_products]
-    
-    # 4. RECENT ORDERS
-    recent_orders = SalesOrder.objects.select_related('customer').order_by('-order_date', '-id')[:5]
-    
-    # 5. QUICK STATS
-    pending_orders = SalesOrder.objects.filter(
-        status__in=['pending', 'processing']
-    ).count()
-    
-    completed_today = SalesOrder.objects.filter(
-        status='completed',
-        order_date=today
-    ).count()
-    
-    # Get products that are out of stock from inventory_manager
-    out_of_stock = Product.objects.filter(quantity=0).count()
-    
-    # Get critical stock items (below minimum_stock)
-    critical_stock = Product.objects.filter(
-        quantity__lte=F('minimum_stock') * 0.5,
-        quantity__gt=0
-    ).count()
-    
-    # 6. RECENT ACTIVITIES
+        fb = Product.objects.order_by('-quantity')[:4]
+        product_labels = [p.name for p in fb]
+        product_data   = [float(max(p.quantity, 0)) for p in fb]
+
+    # ── Recent orders ─────────────────────────────────────────
+    recent_orders = (
+        SalesOrder.objects.select_related('customer')
+        .order_by('-order_date', '-id')[:5]
+    )
+
+    # ── Recent activities ─────────────────────────────────────
     recent_activities = []
-    
-    # Recent orders
-    recent_order_activities = SalesOrder.objects.select_related('customer').order_by('-order_date', '-id')[:3]
-    for order in recent_order_activities:
+    for order in SalesOrder.objects.select_related('customer').order_by(
+            '-order_date', '-id')[:3]:
         recent_activities.append({
-            'type': 'order',
             'description': f"New order #{order.id} from {order.customer.name}",
-            'time_ago': get_time_ago(order.order_date),
-            'icon': 'fa-solid fa-cart-plus',
-            'color': '#4e73df'
+            'time_ago':    get_time_ago(order.order_date),
+            'icon':        'fa-solid fa-cart-plus',
+            'color':       '#4e73df',
         })
-    
-    # Low stock alerts from inventory_manager
-    low_stock_products = Product.objects.filter(
-        quantity__lte=F('minimum_stock'),
-        quantity__gt=0
-    )[:3]
-    for product in low_stock_products:
+    for bl in BacklogEntry.objects.filter(
+            quantity_on_backlog__gt=0).select_related('product')[:3]:
         recent_activities.append({
-            'type': 'stock',
-            'description': f"Low stock: {product.name} ({product.quantity} left, min: {product.minimum_stock})",
-            'time_ago': 'Urgent',
-            'icon': 'fa-solid fa-exclamation-triangle',
-            'color': '#e74a3b'
+            'description': (f"Backlog: {bl.product.name} – "
+                            f"{bl.quantity_on_backlog} units owed"),
+            'time_ago':    'Backlog',
+            'icon':        'fa-solid fa-triangle-exclamation',
+            'color':       '#e74a3b',
         })
-    
-    # New customers
-    new_customers = Customer.objects.order_by('-customer_since')[:2]
-    for customer in new_customers:
-        recent_activities.append({
-            'type': 'customer',
-            'description': f"New customer registered: {customer.name}",
-            'time_ago': get_time_ago(customer.customer_since),
-            'icon': 'fa-solid fa-user-plus',
-            'color': '#1cc88a'
-        })
-    
+
+    # ── Pending / completed today ─────────────────────────────
+    pending_orders  = sum(1 for o in all_orders
+                          if o['status'] in ('pending', 'processing'))
+    completed_today = sum(1 for o in all_orders
+                          if o['status'] == 'completed' and o['order_date'] == today)
+
     context = {
-        # Stat cards
-        'total_revenue': total_revenue,
-        'revenue_growth': revenue_growth,
-        'orders_today': orders_today,
-        'orders_growth': orders_growth,
-        'total_customers': total_customers,
-        'customer_growth': customer_growth,
-        'products_in_stock': products_in_stock,
-        'low_stock_items': low_stock_items,
-        'out_of_stock': out_of_stock,
-        'critical_stock': critical_stock,
-        
-        # Chart data
-        'sales_chart_labels': json.dumps(sales_chart_labels, cls=DjangoJSONEncoder),
-        'sales_chart_data': json.dumps(sales_chart_data, cls=DjangoJSONEncoder),
-        'product_chart_labels': json.dumps(product_labels, cls=DjangoJSONEncoder),
-        'product_chart_data': json.dumps(product_data, cls=DjangoJSONEncoder),
-        
-        # Recent orders
-        'recent_orders': recent_orders,
-        
-        # Quick stats
-        'pending_orders': pending_orders,
-        'completed_today': completed_today,
-        
-        # Recent activities
-        'recent_activities': recent_activities,
-        
-        # Selected period
-        'selected_period': period,
-        'today': today,
+        'total_revenue':      round(total_revenue, 2),
+        'revenue_growth':     _revenue_growth(cur_rev, prev_rev),
+        'orders_today':       orders_today,
+        'orders_growth':      _revenue_growth(orders_today, orders_yesterday),
+        'total_customers':    total_customers,
+        'customer_growth':    (round((new_customers / total_customers) * 100)
+                               if total_customers else 0),
+        'products_in_stock':  products_in_stock,
+        'low_stock_items':    low_stock_items,
+        'backlog_items':      backlog_items,
+        'out_of_stock':       out_of_stock,
+        'low_stock_list':     low_stock_list,
+        'sales_chart_labels': json.dumps(sales_chart_labels),
+        'sales_chart_data':   json.dumps(sales_chart_data),
+        'product_chart_labels': json.dumps(product_labels),
+        'product_chart_data':   json.dumps(product_data),
+        'recent_orders':      recent_orders,
+        'recent_activities':  recent_activities,
+        'pending_orders':     pending_orders,
+        'completed_today':    completed_today,
+        'selected_period':    period,
+        'today':              today,
+        'yesterday':          yesterday,
     }
-    
     return render(request, 'sales/dashboard.html', context)
 
-def get_time_ago(date):
-    """Helper function to get time ago string"""
-    today = timezone.now().date()
-    diff = (today - date).days
-    
-    if diff == 0:
-        return 'Today'
-    elif diff == 1:
-        return 'Yesterday'
-    elif diff < 7:
-        return f'{diff} days ago'
-    elif diff < 30:
-        weeks = diff // 7
-        return f'{weeks} week{"s" if weeks > 1 else ""} ago'
-    else:
-        return date.strftime('%b %d, %Y')
 
+# ─────────────────────────────────────────────
+# PROFILE
+# ─────────────────────────────────────────────
 
 @login_required
 @staff_required
 def profile_view(request):
-    # Get the current logged-in user
-    user = request.user
-    
-    # Get the user's profile
-    try:
-        profile = UserProfile.objects.get(user=user)
-        
-    except UserProfile.DoesNotExist:
-        # Create profile if it doesn't exist (just in case)
-        profile = UserProfile.objects.create(
-            user=user,
-            contact="",
-            role='STAFF' 
-        )
-    
-    return render(request, 'sales/profile.html', {"profile": profile})
-    
+    profile, _ = UserProfile.objects.get_or_create(
+        user=request.user, defaults={'contact': '', 'role': 'STAFF'}
+    )
+    return render(request, 'sales/profile.html', {'profile': profile})
+
+
+# ─────────────────────────────────────────────
+# CUSTOMERS
+# ─────────────────────────────────────────────
 
 @login_required
 @staff_required
+def customer(request):
+    customers = Customer.objects.annotate(
+        order_count=Count('salesorder'),
+        total_spent_calc=Sum('salesorder__total_amount',
+                             filter=Q(salesorder__status='completed')),
+        last_order_date_calc=Max('salesorder__order_date'),
+    ).order_by('-customer_since')
+
+    # Revenue in Python to avoid SQLite crash
+    all_completed = list(
+        SalesOrder.objects.filter(status='completed').values('total_amount')
+    )
+    total_revenue = sum(float(o['total_amount'] or 0) for o in all_completed)
+
+    context = {
+        'customers':        customers,
+        'total_customers':  customers.count(),
+        'active_customers': customers.filter(status='active').count(),
+        'total_orders':     SalesOrder.objects.count(),
+        'total_revenue':    round(total_revenue, 2),
+    }
+    return render(request, 'sales/customer.html', context)
+
+
+@login_required
+@staff_required
+def customer_form(request, pk=None):
+    instance = get_object_or_404(Customer, pk=pk) if pk else None
+    form = CustomerForm(request.POST or None, instance=instance)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('customers')
+    return render(request, 'sales/customer_form.html', {'form': form})
+
+
+# ─────────────────────────────────────────────
+# SALES ORDERS — LIST
+# ─────────────────────────────────────────────
+
+@login_required
+@staff_required
+def sales_order(request):
+    today  = timezone.now().date()
+    orders = SalesOrder.objects.all().order_by('-order_date')
+
+    # All amounts in Python to avoid SQLite crash
+    all_orders_data = list(orders.values(
+        'id', 'status', 'order_date', 'total_amount', 'customer_id'
+    ))
+
+    month_start      = today.replace(day=1)
+    last_month_end   = month_start - timedelta(days=1)
+    last_month_start = last_month_end.replace(day=1)
+
+    completed_data = [o for o in all_orders_data if o['status'] == 'completed']
+    total_revenue  = sum(float(o['total_amount'] or 0) for o in completed_data)
+
+    cur_rev  = sum(float(o['total_amount'] or 0) for o in completed_data
+                   if o['order_date'] >= month_start)
+    prev_rev = sum(float(o['total_amount'] or 0) for o in completed_data
+                   if last_month_start <= o['order_date'] <= last_month_end)
+
+    total_orders  = len(all_orders_data)
+    total_items   = SalesOrderItem.objects.filter(
+        sales_order__in=orders).count()
+    avg_order_val = (total_revenue / max(len(completed_data), 1))
+    avg_items     = round(total_items / total_orders, 1) if total_orders else 0
+
+    highest_order = orders.order_by('-total_amount').first()
+
+    orders_today   = sum(1 for o in all_orders_data if o['order_date'] == today)
+    pending_orders = sum(1 for o in all_orders_data
+                         if o['status'] in ('pending', 'processing'))
+    completed_today = sum(1 for o in all_orders_data
+                          if o['status'] == 'completed' and o['order_date'] == today)
+
+    status_counts = {}
+    for s, _ in ORDER_STATUS_CHOICES:
+        c = sum(1 for o in all_orders_data if o['status'] == s)
+        if c > 0:
+            status_counts[s] = c
+
+    context = {
+        'orders':              orders,
+        'total_orders':        total_orders,
+        'total_revenue':       round(total_revenue, 2),
+        'revenue_growth':      _revenue_growth(cur_rev, prev_rev),
+        'avg_order_value':     round(avg_order_val, 2),
+        'avg_items_per_order': avg_items,
+        'highest_order':       highest_order,
+        'orders_today':        orders_today,
+        'pending_orders':      pending_orders,
+        'completed_today':     completed_today,
+        'status_counts':       status_counts,
+    }
+    return render(request, 'sales/sales_order_list.html', context)
+
+
+# ─────────────────────────────────────────────
+# SALES ORDER — DETAIL
+# ─────────────────────────────────────────────
+
+@login_required
+@staff_required
+def sales_order_detail(request, pk):
+    # Detail page controller for a single sales order.
+    #
+    # Template rendered:
+    # - `templates/sales/sales_order_detail.html`
+    #
+    # Data passed to frontend:
+    # - `order`
+    # - `has_backlog`
+    # - `open_backlogs`
+    # - `backlog_locked`
+    #
+    # Frontend call pattern:
+    # - normal GET renders the page
+    # - normal POST from the same page can request a status change
+    # - there is no JS fetch/AJAX call here
+    order = get_object_or_404(SalesOrder, pk=pk)
+    _normalize_backlog_status(order)
+
+    if request.method == 'POST' and 'update_status' in request.POST:
+        # Posted by the order-detail frontend when the user tries to update
+        # status from this page.
+        new_status = request.POST.get('status')
+        if new_status in dict(ORDER_STATUS_CHOICES):
+            old_status = order.status
+            success, msg = _apply_status_and_stock(order, new_status, old_status)
+            if old_status != order.status and order.customer:
+                order.customer.update_stats()
+            if success:
+                messages.success(request, msg)
+            else:
+                messages.error(request, msg)
+        return redirect('sales_order_detail', pk=order.pk)
+
+    has_backlog   = _order_has_open_backlog(order)
+    item_ids      = list(order.items.values_list('id', flat=True))
+    open_backlogs = (
+        BacklogEntry.objects.filter(
+            sales_order_item_id__in=item_ids,
+            quantity_on_backlog__gt=0,
+        ).select_related('product')
+        if item_ids else BacklogEntry.objects.none()
+    )
+
+    return render(request, 'sales/sales_order_detail.html', {
+        'order':         order,
+        'has_backlog':   has_backlog,
+        'open_backlogs': open_backlogs,
+        'backlog_locked': has_backlog and order.status != 'cancelled',
+    })
+
+
+# ─────────────────────────────────────────────
+# SALES ORDER — CREATE / EDIT
+# ─────────────────────────────────────────────
+
 @login_required
 @staff_required
 def sales_order_form(request, pk=None):
-    if pk:
-        order = get_object_or_404(SalesOrder, pk=pk)
-        old_status = order.status
-    else:
-        order = SalesOrder()
-        old_status = order.status
+    # Create/edit page controller for sales orders.
+    #
+    # Template rendered:
+    # - `templates/sales/sales_order_form.html`
+    #
+    # Data passed to frontend:
+    # - `form` for order-level fields
+    # - `formset` for line items
+    #
+    # Frontend integration:
+    # - page enhancement JS lives in `static/sales/order_form.js`
+    # - status enforcement is still backend-only and happens here plus in
+    #   `_apply_status_and_stock()`
+    order      = get_object_or_404(SalesOrder, pk=pk) if pk else SalesOrder()
+    if order.pk:
+        _normalize_backlog_status(order)
+    old_status = order.status
 
     if request.method == 'POST':
-        form = SalesOrderForm(request.POST, instance=order)
+        # Submit path for the create/edit frontend form.
+        form    = SalesOrderForm(request.POST, instance=order)
         formset = OrderItemFormSet(request.POST, instance=order)
-
-        # Clear any existing messages
-        storage = messages.get_messages(request)
-        storage.used = True
+        list(messages.get_messages(request))
 
         if form.is_valid() and formset.is_valid():
             try:
                 order = form.save(commit=False)
-                order.subtotal = 0
+                order.subtotal     = 0
                 order.total_amount = order.shipping_cost or 0
                 order.save()
 
                 formset.instance = order
                 formset.save()
-
                 order.calculate_totals()
                 order.save()
 
-                # Enforce stock rules based on chosen status
-                new_status = order.status
-                success, msg = _apply_status_and_stock(order, new_status, old_status)
+                requested_status = form.cleaned_data['status']
+                # Final server-side check after form submit. Even if someone
+                # bypasses frontend restrictions, backlog keeps the order in
+                # `pending`.
+                success, msg = _apply_status_and_stock(order, requested_status, old_status)
                 if success:
                     messages.success(request, msg)
                 else:
-                    messages.warning(request, msg)
+                    messages.error(request, msg)
 
-                # Update customer statistics
                 if order.customer:
                     order.customer.update_stats()
 
                 return redirect('sales_order_detail', pk=order.pk)
-                
             except ValueError as e:
-                # Catch stock errors from model save
                 messages.error(request, str(e))
-                # Don't redirect, show form again with errors
     else:
-        form = SalesOrderForm(instance=order)
+        form    = SalesOrderForm(instance=order)
         formset = OrderItemFormSet(instance=order)
 
     return render(request, 'sales/sales_order_form.html', {
-        'form': form,
-        'formset': formset
+        'form': form, 'formset': formset,
     })
 
-@login_required
-@staff_required
-def get_product_details(request, product_id):
-    """AJAX view to get product details including base price"""
-    try:
-        product = Product.objects.get(id=product_id)
-        return JsonResponse({
-            'success': True,
-            'product_id': product.id,
-            'product_name': product.name,
-            'base_price': float(product.price),
-            'sku': product.sku,
-            'available_quantity': product.quantity,
-            'minimum_stock': product.minimum_stock
-        })
-    except Product.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Product not found'
-        }, status=404)
+
+# ─────────────────────────────────────────────
+# STATUS UPDATE (URL-based)
+# ─────────────────────────────────────────────
 
 @login_required
 @staff_required
 def update_order_status(request, pk, status):
-    """Update the status of a sales order"""
+    # URL-based action endpoint used by buttons/links in the order detail page.
+    #
+    # Frontend source:
+    # - `templates/sales/sales_order_detail.html`
+    #
+    # Behavior:
+    # - applies backend transition rules
+    # - stores a Django message
+    # - redirects back to the detail page
     order = get_object_or_404(SalesOrder, pk=pk)
-    
-    # Validate status
-    valid_statuses = [choice[0] for choice in ORDER_STATUS_CHOICES]
-    if status in valid_statuses:
+    _normalize_backlog_status(order)
+    valid = [s for s, _ in ORDER_STATUS_CHOICES]
+    if status in valid:
         old_status = order.status
         success, msg = _apply_status_and_stock(order, status, old_status)
-
-        # Update customer stats if status changed to/from completed
-        if old_status != order.status and (order.status == 'completed' or old_status == 'completed'):
-            if order.customer:
-                order.customer.update_stats()
-
+        if old_status != order.status and order.customer:
+            order.customer.update_stats()
         if success:
             messages.success(request, msg)
         else:
-            messages.warning(request, msg)
+            messages.error(request, msg)
     else:
-        messages.error(request, 'Invalid status')
-    
+        messages.error(request, 'Invalid status.')
     return redirect('sales_order_detail', pk=order.pk)
 
-@login_required
-@staff_required
-def sales_order(request):
-    orders = SalesOrder.objects.all().order_by('-order_date')
-    
-    # Calculate statistics
-    total_orders = orders.count()
-    
-    # Total revenue from completed orders
-    total_revenue = SalesOrder.objects.filter(
-        status='completed'
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
-    
-    # Revenue growth (compare with last month)
-    today = timezone.now().date()
-    last_month_start = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
-    last_month_end = today.replace(day=1) - timedelta(days=1)
-    
-    current_month_revenue = SalesOrder.objects.filter(
-        status='completed',
-        order_date__gte=today.replace(day=1)
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
-    
-    last_month_revenue = SalesOrder.objects.filter(
-        status='completed',
-        order_date__gte=last_month_start,
-        order_date__lte=last_month_end
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
-    
-    revenue_growth = 0
-    if last_month_revenue > 0:
-        revenue_growth = round(((current_month_revenue - last_month_revenue) / last_month_revenue) * 100)
-    
-    # Average order value
-    completed_orders = SalesOrder.objects.filter(status='completed')
-    if completed_orders.exists():
-        avg_order_value = completed_orders.aggregate(
-            avg=Sum('total_amount') / Count('id')
-        )['avg'] or 0
-    else:
-        avg_order_value = 0
-    
-    # Average items per order
-    total_items = SalesOrderItem.objects.filter(
-        sales_order__in=orders
-    ).count()
-    avg_items_per_order = round(total_items / total_orders, 1) if total_orders > 0 else 0
-    
-    # Highest order
-    highest_order = orders.order_by('-total_amount').first()
-    
-    # Orders today
-    orders_today = orders.filter(order_date=today).count()
-    
-    # Pending orders
-    pending_orders = orders.filter(status__in=['pending', 'processing']).count()
-    
-    # Completed today
-    completed_today = orders.filter(status='completed', order_date=today).count()
-    
-    # Status counts for distribution
-    status_counts = {}
-    for status, _ in ORDER_STATUS_CHOICES:
-        count = orders.filter(status=status).count()
-        if count > 0:
-            status_counts[status] = count
-    
-    context = {
-        'orders': orders,
-        'total_revenue': total_revenue,
-        'revenue_growth': revenue_growth,
-        'total_orders': total_orders,
-        'avg_order_value': avg_order_value,
-        'avg_items_per_order': avg_items_per_order,
-        'highest_order': highest_order,
-        'orders_today': orders_today,
-        'pending_orders': pending_orders,
-        'completed_today': completed_today,
-        'status_counts': status_counts,
-    }
-    
-    return render(request, 'sales/sales_order_list.html', context)
+
+# ─────────────────────────────────────────────
+# BACKLOG LIST
+# ─────────────────────────────────────────────
 
 @login_required
 @staff_required
-def sales_order_detail(request, pk):
-    order = get_object_or_404(SalesOrder, pk=pk)
-    
-    # Handle status update via POST
-    if request.method == 'POST' and 'update_status' in request.POST:
-        new_status = request.POST.get('status')
-        if new_status in dict(ORDER_STATUS_CHOICES):
-            old_status = order.status
-            success, msg = _apply_status_and_stock(order, new_status, old_status)
-
-            # Update customer stats when order status changes
-            if old_status != order.status and (order.status == 'completed' or old_status == 'completed'):
-                if order.customer:
-                    order.customer.update_stats()
-
-            if success:
-                messages.success(request, msg)
-            else:
-                messages.warning(request, msg)
-
-            return redirect('sales_order_detail', pk=order.pk)
-    
-    return render(request, 'sales/sales_order_detail.html', {'order': order})
-
-
-@login_required
-@staff_required
-def customer(request):
-    # Get all customers
-    customers = Customer.objects.all().order_by('-customer_since')
-    
-    # Annotate each customer with real-time order data
-    
-    customers = customers.annotate(
-        order_count=Count('salesorder'),
-        total_spent_calc=Sum('salesorder__total_amount', filter=Q(salesorder__status='completed')),
-        last_order_date_calc=Max('salesorder__order_date')
+def backlog_list(request):
+    open_backlogs = (
+        BacklogEntry.objects.filter(quantity_on_backlog__gt=0)
+        .select_related('product')
+        .order_by('created_at')
     )
-    
-    # Calculate statistics
-    total_customers = customers.count()
-    active_customers = customers.filter(status='active').count()
-    
-    # Total orders and revenue from all customers
-    from .models import SalesOrder, SalesOrderItem
-    
-    total_orders = SalesOrder.objects.count()
-    total_revenue = SalesOrder.objects.filter(
-        status='completed'
-    ).aggregate(total=Sum('total_amount'))['total'] or 0
-    
-    context = {
-        'customers': customers,
-        'total_customers': total_customers,
-        'active_customers': active_customers,
-        'total_orders': total_orders,
-        'total_revenue': total_revenue,
-    }
-    
-    return render(request, 'sales/customer.html', context)
+    return render(request, 'sales/backlog_list.html',
+                  {'open_backlogs': open_backlogs})
+
+
+# ─────────────────────────────────────────────
+# AJAX
+# ─────────────────────────────────────────────
 
 @login_required
 @staff_required
-def customer_form(request, pk=None):
-    if pk:
-        customer = get_object_or_404(Customer, pk=pk)
-        form = CustomerForm(instance=customer)
-    else:
-        form = CustomerForm()
-    
-    if request.method == 'POST':
-        if pk:
-            form = CustomerForm(request.POST, instance=customer)
-        else:
-            form = CustomerForm(request.POST)
-        
-        if form.is_valid():
-            form.save()
-            return redirect('customers')
-    
-    today = timezone.now().date()
-    return render(request, 'sales/customer_form.html', {
-        'form': form,
-        'today': today
-    })
-
-
+def get_product_details(request, product_id):
+    try:
+        p = Product.objects.get(id=product_id)
+        open_backlog = sum(
+            bl.quantity_on_backlog
+            for bl in BacklogEntry.objects.filter(
+                product=p, quantity_on_backlog__gt=0
+            )
+        )
+        return JsonResponse({
+            'success':            True,
+            'product_id':         p.id,
+            'product_name':       p.name,
+            'base_price':         float(p.price),
+            'sku':                p.sku,
+            'available_quantity': p.quantity,
+            'minimum_stock':      p.minimum_stock,
+            'open_backlog':       open_backlog,
+        })
+    except Product.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Product not found'}, status=404)

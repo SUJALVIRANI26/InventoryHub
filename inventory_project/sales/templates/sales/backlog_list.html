@@ -1,0 +1,92 @@
+{% extends "sales/base.html" %}
+{% load static %}
+
+{% block title %}Backlog Orders{% endblock %}
+
+{% block main-content %}
+<div class="main-content">
+    <div class="header">
+        <div class="page-title">
+            <h2>Backlog Orders</h2>
+            <span>Sales orders waiting for stock to be replenished</span>
+        </div>
+        <div class="user-actions">
+            <a href="{% url 'profile' %}">
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name={{ request.user.get_full_name|default:request.user.username|urlencode }}&background=random" alt="User">
+                    <div>
+                        <div class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                        <div class="profile-role">{% if request.user.is_staff %}Admin{% else %}Sales Executive{% endif %}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card col-span-3">
+            <div class="chart-header">
+                <h3>Open Backlog Entries</h3>
+                <span class="badge danger">{{ open_backlogs|length }} item{{ open_backlogs|length|pluralize }} on backlog</span>
+            </div>
+
+            {% if open_backlogs %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Stock Now</th>
+                            <th>Units on Backlog</th>
+                            <th>Units Ordered</th>
+                            <th>Waiting Since</th>
+                            <th>Auto-PO Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bl in open_backlogs %}
+                        <tr>
+                            <td>
+                                <strong>{{ bl.product.name }}</strong>
+                                <div style="font-size:.75rem;color:var(--secondary);">SKU: {{ bl.product.sku }}</div>
+                            </td>
+                            <td>
+                                {% if bl.product.quantity < 0 %}
+                                <span class="badge danger">{{ bl.product.quantity }} (negative)</span>
+                                {% else %}
+                                <span class="badge warning">{{ bl.product.quantity }}</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge danger">{{ bl.quantity_on_backlog }}</span></td>
+                            <td>{{ bl.quantity_ordered }}</td>
+                            <td>{{ bl.created_at|date:"M d, Y H:i" }}</td>
+                            <td>
+                                {% with po_item=bl.product.purchaseorderitem_set.filter %}
+                                {% with pending_po=bl.product.purchaseorderitem_set.all %}
+                                    {% for poi in pending_po %}
+                                        {% if poi.purchase_order.status == 'ordered' or poi.purchase_order.status == 'pending' %}
+                                        <span class="badge {% if poi.purchase_order.status == 'ordered' %}info{% else %}warning{% endif %}">
+                                            PO-{{ poi.purchase_order.id }} {{ poi.purchase_order.status|title }}
+                                        </span>
+                                        {% endif %}
+                                    {% empty %}
+                                        <span class="badge danger">No PO</span>
+                                    {% endfor %}
+                                {% endwith %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="text-align:center;padding:40px;color:var(--secondary);">
+                <i class="fa-solid fa-circle-check" style="font-size:2rem;color:var(--success);margin-bottom:10px;"></i>
+                <p>No backlog entries – all orders are fulfilled!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

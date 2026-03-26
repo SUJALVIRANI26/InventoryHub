@@ -1,77 +1,56 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Inventory</title>
-
-<link rel="stylesheet" href="{% static 'accounts/style.css' %}">
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Inventory – Sign In</title>
+    <link rel="stylesheet" href="{% static 'accounts/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-
 <body>
-
 <div class="main">
 
-    <!-- LEFT PANEL -->
+    <!-- Left branding panel -->
     <div class="left">
         <div class="logo">
-            <div class="logo-box">
-                <i class="fa-solid fa-boxes-stacked"></i>
-            </div>
+            <div class="logo-box"><i class="fa-solid fa-boxes-stacked"></i></div>
             <div>
                 <h2>Smart Inventory</h2>
                 <p>Management System</p>
             </div>
         </div>
-
         <div class="features">
             <div class="feature">
                 <div class="icon"><i class="fa-solid fa-microchip"></i></div>
-                <div>
-                    <h4>AI-Powered Analytics</h4>
-                    <p>Predict demand and optimize stock levels automatically</p>
-                </div>
+                <div><h4>AI-Powered Analytics</h4><p>Predict demand and optimize stock levels automatically</p></div>
             </div>
-
             <div class="feature">
                 <div class="icon"><i class="fa-solid fa-bolt"></i></div>
-                <div>
-                    <h4>Real-Time Tracking</h4>
-                    <p>Monitor inventory across multiple locations instantly</p>
-                </div>
+                <div><h4>Real-Time Tracking</h4><p>Monitor inventory across multiple locations instantly</p></div>
             </div>
-
             <div class="feature">
                 <div class="icon"><i class="fa-solid fa-chart-line"></i></div>
-                <div>
-                    <h4>Smart Reports</h4>
-                    <p>Generate insights with automated reporting tools</p>
-                </div>
+                <div><h4>Smart Reports</h4><p>Generate insights with automated reporting tools</p></div>
             </div>
         </div>
     </div>
 
-    <!-- RIGHT PANEL -->
+    <!-- Right login panel -->
     <div class="right">
-        <div class="login-box">
-
+        <div class="auth-box">
             <h1>Welcome Back</h1>
             <p class="subtitle">Sign in to access your inventory dashboard</p>
 
+            {% if form.non_field_errors %}
+            <div class="form-error">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
             <form id="loginForm" method="post">
                 {% csrf_token %}
-                {% if form.errors%}
-                  
-                 {% for error in form.non_field_errors %}
-                <p style="color:red;">{{ error }}</p>
-                {% endfor %}
-                  
-                  {% endif %}
+
                 <label>Email Address</label>
                 <div class="input-box">
                     <i class="fa-solid fa-envelope"></i>
@@ -99,18 +78,18 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
                 </div>
                 <small class="error" id="roleError"></small>
 
-                <button class="login-btn" type="submit">
-                    <i class="fa-solid fa-right-to-bracket"></i>
-                    Sign In
+                <div class="forgot-link">
+                    <a href="{% url 'forgot_password' %}">Forgot password?</a>
+                </div>
+
+                <button class="auth-btn" type="submit">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign In
                 </button>
             </form>
-
         </div>
     </div>
 
 </div>
-
-<script src="{% static 'accounts/validation.js'%}"></script>
-
+<script src="{% static 'accounts/validation.js' %}"></script>
 </body>
 </html>
